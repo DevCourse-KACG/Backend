@@ -33,19 +33,19 @@ jobs:
         uses: actions-ecosystem/action-add-labels@v1
         with:
           labels: feat
-          
+
       - name: fix 라벨 할당
         if: contains(github.event.pull_request.title, 'fix')
         uses: actions-ecosystem/action-add-labels@v1
         with:
           labels: fix
-          
+
       - name: refactor 라벨 할당
         if: contains(github.event.pull_request.title, 'refactor')
         uses: actions-ecosystem/action-add-labels@v1
         with:
           labels: refactor
-          
+
       - name: chore 라벨 할당
         if: contains(github.event.pull_request.title, 'chore')
         uses: actions-ecosystem/action-add-labels@v1
