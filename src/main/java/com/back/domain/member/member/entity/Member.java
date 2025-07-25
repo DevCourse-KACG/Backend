@@ -34,7 +34,7 @@ public class Member {
   @OneToOne(cascade = CascadeType.ALL, fetch = FetchType.LAZY, mappedBy = "member")
   private MemberInfo memberInfo; // 상세 정보 (회원 전용)
 
-  @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.LAZY, mappedBy = "member")
+  @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.LAZY, mappedBy = "owner")
   private List<Preset> presets; // 프리셋 목록 (회원 전용)
 
   // 친구 관계 (내가 포함된 모든 관계)
