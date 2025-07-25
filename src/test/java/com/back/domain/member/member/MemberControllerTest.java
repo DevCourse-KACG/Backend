@@ -113,4 +113,15 @@ public class MemberControllerTest {
         assertNotNull(apiKey);
         assertTrue(apiKey.startsWith("api_"));
     }
+
+    @Test
+    @DisplayName("AccessToken 발급 - 정상")
+    public void generateAccessToken_success() throws Exception {
+        String validApiKey = "api_123456abcdef";
+
+        String accessToken = authService.generateAccessToken(validApiKey);
+
+        assertNotNull(accessToken);
+        assertTrue(accessToken.startsWith("Bearer "));
+    }
 }
