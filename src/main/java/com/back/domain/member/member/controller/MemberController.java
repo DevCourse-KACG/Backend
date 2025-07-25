@@ -4,14 +4,14 @@ import com.back.domain.member.member.dto.MemberDto;
 import com.back.domain.member.member.service.MemberService;
 import com.back.global.rsData.RsData;
 import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 import java.util.Map;
 
-@Controller
+@RestController
 @RequiredArgsConstructor
 @RequestMapping("api/v1/members")
 public class MemberController {
@@ -26,6 +26,6 @@ public class MemberController {
             "accessToken", ""
         );
 
-        return RsData.of(201, "회원가입 성공", result);
+        return RsData.of(200, "회원가입 성공", result);
     };
 }

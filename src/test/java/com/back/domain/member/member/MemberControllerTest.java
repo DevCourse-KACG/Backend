@@ -3,7 +3,6 @@ package com.back.domain.member.member;
 import com.back.domain.member.member.controller.MemberController;
 import com.back.domain.member.member.entity.Member;
 import com.back.domain.member.member.entity.MemberInfo;
-import com.back.domain.member.member.repository.MemberRepository;
 import com.back.domain.member.member.service.MemberService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -18,6 +17,7 @@ import support.MemberFixture;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -26,8 +26,11 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @AutoConfigureMockMvc
 public class MemberControllerTest {
     MemberFixture memberFixture;
-    MemberRepository memberRepository;
+
+    @Autowired
     MemberService memberService;
+
+    @Autowired
     MemberController memberController;
 
     @Autowired
@@ -92,6 +95,7 @@ public class MemberControllerTest {
         mockMvc.perform(post("/api/v1/members/auth/register")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(requestBody))
+                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value(200))
                 .andExpect(jsonPath("$.message").value("회원가입 성공"));

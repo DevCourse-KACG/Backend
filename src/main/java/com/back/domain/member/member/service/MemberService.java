@@ -9,7 +9,7 @@ import org.springframework.stereotype.Service;
 @Service
 @RequiredArgsConstructor
 public class MemberService {
-    MemberRepository memberRepository;
+    final MemberRepository memberRepository;
 
     public void register(MemberDto memberDto) {
         Member member = Member.builder()
