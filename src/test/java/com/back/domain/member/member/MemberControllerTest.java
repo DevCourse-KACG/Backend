@@ -1,6 +1,7 @@
 package com.back.domain.member.member;
 
 import com.back.domain.api.service.ApiKeyService;
+import com.back.domain.auth.service.AuthService;
 import com.back.domain.member.member.controller.MemberController;
 import com.back.domain.member.member.entity.Member;
 import com.back.domain.member.member.entity.MemberInfo;
@@ -38,6 +39,9 @@ public class MemberControllerTest {
 
     @Autowired
     private ApiKeyService apiKeyService;
+
+    @Autowired
+    private AuthService authService;
 
     @Test
     @DisplayName("회원가입 - 정상 기입 / 객체 정상 생성")
