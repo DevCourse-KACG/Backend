@@ -44,6 +44,6 @@ public class Member {
   private List<Friend> friendshipsAsMember2;
 
   @OneToMany(mappedBy = "member", cascade = CascadeType.ALL, orphanRemoval = true)
-  private List<GroupMember> groupMembers; // 친구 목록 (회원 전용
+  private List<GroupMember> groupMembers; // 소속 그룹 목록
 
 }

@@ -77,9 +77,11 @@ public class Group {
 
   @Description("구성원")
   @OneToMany(mappedBy = "group", cascade = CascadeType.ALL, orphanRemoval = true)
+  @Builder.Default
   private List<GroupMember> groupMembers = new ArrayList<>();
 
   @Description("일정 목록")
   @OneToMany(mappedBy = "group", cascade = CascadeType.ALL, orphanRemoval = true)
+  @Builder.Default
   private List<Schedule> groupSchedules = new ArrayList<>();
 }

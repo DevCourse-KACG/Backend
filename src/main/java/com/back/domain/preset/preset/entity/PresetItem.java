@@ -8,6 +8,8 @@ import lombok.*;
 @Entity
 @Getter
 @NoArgsConstructor
+@AllArgsConstructor
+@Builder
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
 public class PresetItem {
     @Id
