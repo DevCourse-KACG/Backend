@@ -46,11 +46,11 @@ public class Club {
 
   @Description("인원 모집 여부")
   @Column(nullable = false)
-  private boolean recruitingStatus;
+  private boolean recruitingStatus = true;
 
   @Description("모집 유형")
   @Column(length = 20, nullable = false)
-  private String eventType;
+  private String eventType; // TODO : enum 으로 분리
 
   @Description("시작 날짜")
   @Column(columnDefinition = "TIMESTAMP")
