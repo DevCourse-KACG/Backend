@@ -2,28 +2,35 @@ package com.back.domain.preset.preset.controller;
 
 import com.back.domain.preset.preset.dto.PresetDto;
 import com.back.domain.preset.preset.dto.PresetWriteReqDto;
+import com.back.domain.preset.preset.entity.PresetItem;
 import com.back.domain.preset.preset.service.PresetService;
 import com.back.global.rsData.RsData;
+import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/api/v1/presets")
 @RequiredArgsConstructor
-@Tag(name="PresetController", description="프리셋 API")
-public class PresetController {
-
+@Tag(name="PresetController", description="프리셋 API V1 컨트롤러")
+public class ApiV1PresetController {
   private final PresetService presetService;
 
+  @PostMapping
+  @Operation(summary = "프리셋 생성")
+  @Transactional
   public ResponseEntity<RsData<PresetDto>> write(@Valid @RequestBody PresetWriteReqDto presetWriteReqDto) {
+    RsData<PresetDto> presetDto = presetService.write(presetWriteReqDto);
 
-    RsData<PresetDto> presetDto = presetService.write(presetReqDto);
-
-    return ResponseEntity.status(201).body(presetDto);
+    return ResponseEntity.status(presetDto.code()).body(presetDto);
   }
 }

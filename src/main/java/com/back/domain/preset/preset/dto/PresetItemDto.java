@@ -1,4 +1,23 @@
 package com.back.domain.preset.preset.dto;
 
-public record PresetItemDto() {
+import com.back.domain.preset.preset.entity.Preset;
+import com.back.domain.preset.preset.entity.PresetItem;
+import com.back.global.enums.CheckListItemCategory;
+
+public record PresetItemDto(
+    Long id,
+    String content,
+    CheckListItemCategory category,
+    int sequence,
+    Preset preset
+) {
+  public PresetItemDto(PresetItem presetItem) {
+    this(
+        presetItem.getId(),
+        presetItem.getContent(),
+        presetItem.getCategory(),
+        presetItem.getSequence(),
+        presetItem.getPreset()
+    );
+  }
 }
