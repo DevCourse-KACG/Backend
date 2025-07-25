@@ -2,17 +2,26 @@ package com.back.domain.member.member;
 
 import com.back.domain.member.member.entity.Member;
 import com.back.domain.member.member.entity.MemberInfo;
+import com.back.domain.member.member.repository.MemberRepository;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.event.RecordApplicationEvents;
 import org.springframework.transaction.annotation.Transactional;
+import support.MemberFixture;
 
+import java.util.List;
+
+import static org.assertj.core.api.BDDAssumptions.given;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 @SpringBootTest
 @Transactional
+@RecordApplicationEvents
 public class MemberControllerTest {
+    MemberFixture memberFixture;
+    MemberRepository memberRepository;
 
     @Test
     @DisplayName("회원가입 - 정상 기입 / 객체 정상 생성")
@@ -40,6 +49,8 @@ public class MemberControllerTest {
     @Test
     @DisplayName("회원가입 - 닉네임 중복 시 예외 발생")
     public void registerWithDuplicateNicknameThrowsException() {
+        List<Member> memberList = MemberFixture.createMembersWithDuplicateNickname(3);
 
+        given(memberRepository.existsByNickname(duplicateNickname)).willReturn(true);
     }
 }
