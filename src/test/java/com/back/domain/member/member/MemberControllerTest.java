@@ -128,4 +128,8 @@ public class MemberControllerTest {
         assertNotNull(accessToken);
         assertTrue(accessToken.startsWith("Bearer "));
     }
+    
+    //Todo:yml에 접근해서 액세스토큰 생성하기
+    //TOdo:닉네임 중복 불가처리
+    //Todo: 컨트롤러 단위 오류처리
 }
