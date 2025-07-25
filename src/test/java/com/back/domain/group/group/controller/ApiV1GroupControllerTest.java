@@ -21,7 +21,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @SpringBootTest
 @AutoConfigureMockMvc
 @Transactional
-class GroupControllerTest {
+class ApiV1GroupControllerTest {
     @Autowired
     private MockMvc mvc;
     @Autowired
@@ -47,7 +47,7 @@ class GroupControllerTest {
                                             "endDate" : "2023-10-31",
                                             "isPublic": true,
                                             "leaderId": 1,
-                                            "memberList" : []
+                                            "groupMembers" : []
                                         }
                                         """.stripIndent())
                 )
@@ -55,7 +55,7 @@ class GroupControllerTest {
 
         // then
         resultActions
-                .andExpect(handler().handlerType(GroupController.class))
+                .andExpect(handler().handlerType(ApiV1GroupController.class))
                 .andExpect(handler().methodName("createGroup"))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.code").value(201))
