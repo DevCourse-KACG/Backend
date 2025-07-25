@@ -103,6 +103,11 @@ public class MemberControllerTest {
     @Test
     @DisplayName("API key 발급 - 정상")
     public void generateApiKey_success() throws Exception {
+        Long userId = 1L;
 
+        String apiKey = apiKeyService.generateApiKey(userId);
+
+        assertNotNull(apiKey);
+        assertTrue(apiKey.startsWith("api_"));
     }
 }
