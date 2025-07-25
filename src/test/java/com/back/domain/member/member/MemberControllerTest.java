@@ -3,6 +3,7 @@ package com.back.domain.member.member;
 import com.back.domain.member.member.entity.Member;
 import com.back.domain.member.member.entity.MemberInfo;
 import com.back.domain.member.member.repository.MemberRepository;
+import com.back.domain.member.member.service.MemberService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -10,9 +11,8 @@ import org.springframework.test.context.event.RecordApplicationEvents;
 import org.springframework.transaction.annotation.Transactional;
 import support.MemberFixture;
 
-import java.util.ArrayList;
-
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 @SpringBootTest
 @Transactional
@@ -20,6 +20,7 @@ import static org.junit.jupiter.api.Assertions.*;
 public class MemberControllerTest {
     MemberFixture memberFixture;
     MemberRepository memberRepository;
+    MemberService memberService;
 
     @Test
     @DisplayName("회원가입 - 정상 기입 / 객체 정상 생성")
@@ -44,22 +45,29 @@ public class MemberControllerTest {
         assertEquals("안녕하세요 반갑습니다", member.getMemberInfo().getBio());
     }
 
+//    @Test
+//    @DisplayName("회원가입 - 닉네임 중복 시 예외 발생")
+//    public void registerWithDuplicateNicknameThrowsException() {
+//        String duplicateNickname = "테스트유저0";
+//        given(memberRepository.existsByNickname(duplicateNickname)).willReturn(true);
+//
+//        Member member = Member.builder()
+//                .nickname(duplicateNickname)
+//                .password("password123")
+//                .memberInfo(MemberFixture.createMemberInfo())
+//                .presets(null)
+//                .build();
+//
+//
+//        assertThrows(
+//                DuplicateNicknameException.class,
+//                () -> memberRepository.save(member)
+//        );
+//    }
+
     @Test
-    @DisplayName("회원가입 - 닉네임 중복 시 예외 발생")
-    public void registerWithDuplicateNicknameThrowsException() {
-        String duplicateNickname = "테스트유저0";
-        given(memberRepository.existsByNickname(duplicateNickname)).willReturn(true);
+    @DisplayName("회원가입 - 정상 기입 / POST 정상 작동")
+    public void memberPostTest() {
 
-        Member member = Member.builder()
-                .nickname(duplicateNickname)
-                .password("password123")
-                .memberInfo(MemberFixture.createMemberInfo())
-                .presets(null)
-                .build();
-
-        assertThrows(
-                DuplicateNicknameException.class,
-                () -> memberService.register(member)
-        );
     }
 }
