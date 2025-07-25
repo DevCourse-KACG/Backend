@@ -1,23 +1,27 @@
 package com.back.domain.group.group.entity;
 
+import com.back.domain.group.groupMember.entity.GroupMember;
+import com.back.domain.schedule.schedule.entity.Schedule;
 import jakarta.persistence.*;
 import jdk.jfr.Description;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
 @Getter
+@EqualsAndHashCode(onlyExplicitlyIncluded = true)
 public class Group {
 
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
+  @Setter(AccessLevel.PRIVATE)
+  @EqualsAndHashCode.Include
   private Long id;
 
   @Description("그룹 이름")
@@ -30,11 +34,11 @@ public class Group {
 
   @Description("그룹 카테고리")
   @Column(length = 50, nullable = false)
-  private String category;
+  private String category; //TODO : enum 으로 분리
 
   @Description("주 모임 장소")
   @Column(length = 256, nullable = false)
-  private String mainSpot;
+  private String mainSpot; // TODO : 지도 연동하면 좌표로 바꿔야 됨
 
   @Description("최대 인원")
   @Column(nullable = false)
@@ -70,4 +74,12 @@ public class Group {
   @Description("활성화 상태")
   @Column(nullable = false)
   private boolean stats = true;
+
+  @Description("구성원")
+  @OneToMany(mappedBy = "group", cascade = CascadeType.ALL, orphanRemoval = true)
+  private List<GroupMember> groupMembers = new ArrayList<>();
+
+  @Description("일정 목록")
+  @OneToMany(mappedBy = "group", cascade = CascadeType.ALL, orphanRemoval = true)
+  private List<Schedule> groupSchedules = new ArrayList<>();
 }
