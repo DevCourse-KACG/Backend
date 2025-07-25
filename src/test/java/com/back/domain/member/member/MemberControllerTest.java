@@ -36,4 +36,10 @@ public class MemberControllerTest {
         assertEquals("qkqek6223@naver.com", member.getMemberInfo().getEmail());
         assertEquals("안녕하세요 반갑습니다", member.getMemberInfo().getBio());
     }
+
+    @Test
+    @DisplayName("회원가입 - 닉네임 중복 시 예외 발생")
+    public void registerWithDuplicateNicknameThrowsException() {
+
+    }
 }
