@@ -82,7 +82,6 @@ public class MemberControllerTest {
     @Test
     @DisplayName("회원가입 - 정상 기입 / POST 정상 작동")
     public void memberPostTest() throws  Exception {
-        //controller에게 post를 보내면 정상적으로 처리되었다는 메세지가 반환되어야함
         String requestBody = """
                 {
                     "email": "qkek6223@naver.com",
@@ -99,5 +98,11 @@ public class MemberControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value(200))
                 .andExpect(jsonPath("$.message").value("회원가입 성공"));
+    }
+
+    @Test
+    @DisplayName("API key 발급 - 정상")
+    public void generateApiKey_success() throws Exception {
+
     }
 }
