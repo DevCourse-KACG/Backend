@@ -1,10 +1,10 @@
-package com.back.domain.group.groupMember.entity;
+package com.back.domain.club.clubMember.entity;
 
 import com.back.domain.checkList.itemAssign.entity.ItemAssign;
-import com.back.domain.group.group.entity.Group;
+import com.back.domain.club.club.entity.Club;
 import com.back.domain.member.member.entity.Member;
-import com.back.global.enums.GroupMemberRole;
-import com.back.global.enums.GroupMemberState;
+import com.back.global.enums.ClubMemberRole;
+import com.back.global.enums.ClubMemberState;
 import jakarta.persistence.*;
 import jdk.jfr.Description;
 import lombok.*;
@@ -17,7 +17,7 @@ import java.util.List;
 @Builder
 @Getter
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
-public class GroupMember {
+public class ClubMember {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -31,17 +31,17 @@ public class GroupMember {
 
     @Description("역할")
     @Enumerated(EnumType.STRING)
-    private GroupMemberRole role;
+    private ClubMemberRole role;
 
     @Description("가입 상태")
     @Enumerated(EnumType.STRING)
-    private GroupMemberState state;
+    private ClubMemberState state;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "group_id", nullable = false)
-    private Group group;
+    @JoinColumn(name = "club_id", nullable = false)
+    private Club club;
 
     @Description("체크리스트 아이템 할당 정보")
-    @OneToMany(mappedBy = "groupMember", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "clubMember", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<ItemAssign> itemAssigns;
 }

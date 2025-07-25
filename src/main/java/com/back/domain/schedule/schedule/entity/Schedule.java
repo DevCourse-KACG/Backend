@@ -1,6 +1,6 @@
 package com.back.domain.schedule.schedule.entity;
 
-import com.back.domain.group.group.entity.Group;
+import com.back.domain.club.club.entity.Club;
 import jakarta.persistence.*;
 import jdk.jfr.Description;
 import lombok.*;
@@ -37,7 +37,7 @@ public class Schedule {
     private String spot; //TODO : 나중에 지도 연동하면 좌표로 변경
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    private Group group; // 그룹 일정
+    private Club club; // 그룹 일정
 
 
 }
