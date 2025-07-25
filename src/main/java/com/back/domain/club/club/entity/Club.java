@@ -2,6 +2,7 @@ package com.back.domain.club.club.entity;
 
 import com.back.domain.club.clubMember.entity.ClubMember;
 import com.back.domain.schedule.schedule.entity.Schedule;
+import com.back.global.enums.GroupCategory;
 import jakarta.persistence.*;
 import jdk.jfr.Description;
 import lombok.*;
@@ -34,7 +35,8 @@ public class Club {
 
   @Description("그룹 카테고리")
   @Column(length = 50, nullable = false)
-  private String category; //TODO : enum 으로 분리
+  @Enumerated(EnumType.STRING)
+  private GroupCategory category;
 
   @Description("주 모임 장소")
   @Column(length = 256, nullable = false)
