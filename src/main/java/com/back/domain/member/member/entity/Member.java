@@ -1,7 +1,7 @@
 package com.back.domain.member.member.entity;
 
 
-import com.back.domain.group.groupMember.entity.GroupMember;
+import com.back.domain.club.clubMember.entity.ClubMember;
 import com.back.domain.member.friend.entity.Friend;
 import com.back.domain.preset.preset.entity.Preset;
 import jakarta.persistence.*;
@@ -44,7 +44,7 @@ public class Member {
   private List<Friend> friendshipsAsMember2;
 
   @OneToMany(mappedBy = "member", cascade = CascadeType.ALL, orphanRemoval = true)
-  private List<GroupMember> groupMembers; // 소속 그룹 목록
+  private List<ClubMember> clubMembers; // 소속 그룹 목록
 
   @Builder
   public Member(MemberInfo memberInfo, String nickname, String password) {

@@ -26,8 +26,8 @@ public class SpringDocConfig {
     @Bean
     public GroupedOpenApi groupApiV1() {
         return GroupedOpenApi.builder()
-                .group("api")
-                .pathsToMatch("/api/**")
+                .group("api-v1")
+                .pathsToMatch("/api/v1/**")
                 .build();
     }
 }

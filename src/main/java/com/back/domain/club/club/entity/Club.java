@@ -1,6 +1,6 @@
-package com.back.domain.group.group.entity;
+package com.back.domain.club.club.entity;
 
-import com.back.domain.group.groupMember.entity.GroupMember;
+import com.back.domain.club.clubMember.entity.ClubMember;
 import com.back.domain.schedule.schedule.entity.Schedule;
 import jakarta.persistence.*;
 import jdk.jfr.Description;
@@ -16,7 +16,7 @@ import java.util.List;
 @Builder
 @Getter
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
-public class Group {
+public class Club {
 
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -76,12 +76,12 @@ public class Group {
   private boolean stats = true;
 
   @Description("구성원")
-  @OneToMany(mappedBy = "group", cascade = CascadeType.ALL, orphanRemoval = true)
+  @OneToMany(mappedBy = "club", cascade = CascadeType.ALL, orphanRemoval = true)
   @Builder.Default
-  private List<GroupMember> groupMembers = new ArrayList<>();
+  private List<ClubMember> clubMembers = new ArrayList<>();
 
   @Description("일정 목록")
-  @OneToMany(mappedBy = "group", cascade = CascadeType.ALL, orphanRemoval = true)
+  @OneToMany(mappedBy = "club", cascade = CascadeType.ALL, orphanRemoval = true)
   @Builder.Default
-  private List<Schedule> groupSchedules = new ArrayList<>();
+  private List<Schedule> clubSchedules = new ArrayList<>();
 }
