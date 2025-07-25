@@ -10,11 +10,9 @@ import org.springframework.test.context.event.RecordApplicationEvents;
 import org.springframework.transaction.annotation.Transactional;
 import support.MemberFixture;
 
-import java.util.List;
+import java.util.ArrayList;
 
-import static org.assertj.core.api.BDDAssumptions.given;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBootTest
 @Transactional
@@ -49,8 +47,19 @@ public class MemberControllerTest {
     @Test
     @DisplayName("회원가입 - 닉네임 중복 시 예외 발생")
     public void registerWithDuplicateNicknameThrowsException() {
-        List<Member> memberList = MemberFixture.createMembersWithDuplicateNickname(3);
-
+        String duplicateNickname = "테스트유저0";
         given(memberRepository.existsByNickname(duplicateNickname)).willReturn(true);
+
+        Member member = Member.builder()
+                .nickname(duplicateNickname)
+                .password("password123")
+                .memberInfo(MemberFixture.createMemberInfo())
+                .presets(null)
+                .build();
+
+        assertThrows(
+                DuplicateNicknameException.class,
+                () -> memberService.register(member)
+        );
     }
 }

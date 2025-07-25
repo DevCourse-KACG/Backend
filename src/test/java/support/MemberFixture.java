@@ -27,7 +27,7 @@ public class MemberFixture {
     public static List<Member> createMultipleMember(int count) {
         List<Member> memberInfoList = new ArrayList<>();
         for (int i = 0; i <= count; i++) {
-            memberInfoList.add(createMember("테스트 유저" + i));
+            memberInfoList.add(createMember("테스트유저" + i));
         }
 
         return memberInfoList;
