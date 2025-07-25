@@ -1,6 +1,7 @@
 package com.back.domain.member.member.controller;
 
 import com.back.domain.member.member.dto.MemberDto;
+import com.back.domain.member.member.dto.MemberResisterResponse;
 import com.back.domain.member.member.service.MemberService;
 import com.back.global.rsData.RsData;
 import lombok.RequiredArgsConstructor;
@@ -9,8 +10,6 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.util.Map;
-
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("api/v1/members")
@@ -18,14 +17,9 @@ public class MemberController {
     final MemberService memberService;
 
     @PostMapping("/auth/register")
-    public RsData<Map<String, String>> register(@RequestBody MemberDto memberDto) {
-        memberService.register(memberDto);
+    public RsData<MemberResisterResponse> register(@RequestBody MemberDto memberDto) {
+        MemberResisterResponse response = memberService.register(memberDto);
 
-        Map<String, String> result = Map.of(
-            "apiKey", "",
-            "accessToken", ""
-        );
-
-        return RsData.of(200, "회원가입 성공", result);
+        return RsData.of(200, "회원가입 성공", response);
     };
 }

@@ -1,5 +1,6 @@
 package com.back.domain.member.member;
 
+import com.back.domain.api.service.ApiKeyService;
 import com.back.domain.member.member.controller.MemberController;
 import com.back.domain.member.member.entity.Member;
 import com.back.domain.member.member.entity.MemberInfo;
@@ -14,8 +15,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
 import support.MemberFixture;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -25,16 +25,19 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @Transactional
 @AutoConfigureMockMvc
 public class MemberControllerTest {
-    MemberFixture memberFixture;
+    private MemberFixture memberFixture;
 
     @Autowired
-    MemberService memberService;
+    private MemberService memberService;
 
     @Autowired
-    MemberController memberController;
+    private MemberController memberController;
 
     @Autowired
     private MockMvc mockMvc;
+
+    @Autowired
+    private ApiKeyService apiKeyService;
 
     @Test
     @DisplayName("회원가입 - 정상 기입 / 객체 정상 생성")
