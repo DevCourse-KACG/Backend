@@ -1,26 +1,37 @@
 package com.back.domain.member.member;
 
+import com.back.domain.member.member.controller.MemberController;
 import com.back.domain.member.member.entity.Member;
 import com.back.domain.member.member.entity.MemberInfo;
 import com.back.domain.member.member.repository.MemberRepository;
 import com.back.domain.member.member.service.MemberService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.context.event.RecordApplicationEvents;
+import org.springframework.http.MediaType;
+import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
 import support.MemberFixture;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @SpringBootTest
 @Transactional
-@RecordApplicationEvents
+@AutoConfigureMockMvc
 public class MemberControllerTest {
     MemberFixture memberFixture;
     MemberRepository memberRepository;
     MemberService memberService;
+    MemberController memberController;
+
+    @Autowired
+    private MockMvc mockMvc;
 
     @Test
     @DisplayName("회원가입 - 정상 기입 / 객체 정상 생성")
@@ -67,7 +78,22 @@ public class MemberControllerTest {
 
     @Test
     @DisplayName("회원가입 - 정상 기입 / POST 정상 작동")
-    public void memberPostTest() {
+    public void memberPostTest() throws  Exception {
+        //controller에게 post를 보내면 정상적으로 처리되었다는 메세지가 반환되어야함
+        String requestBody = """
+                {
+                    "email": "qkek6223@naver.com",
+                    "password": "password123",
+                    "nickname": "안수지",
+                    "bio": "안녕하세요"
+                }
+                """;
 
+        mockMvc.perform(post("/api/v1/members/auth/register")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(requestBody))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value(200))
+                .andExpect(jsonPath("$.message").value("회원가입 성공"));
     }
 }

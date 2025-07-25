@@ -13,7 +13,7 @@ import java.util.Map;
 
 @Controller
 @RequiredArgsConstructor
-@RequestMapping("members")
+@RequestMapping("api/v1/members")
 public class MemberController {
     final MemberService memberService;
 
