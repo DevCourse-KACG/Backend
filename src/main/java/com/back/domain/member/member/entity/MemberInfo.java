@@ -30,4 +30,12 @@ public class MemberInfo {
     @JoinColumn(name = "member_id", unique = true) // member_id 컬럼이 생성되어 Member와 연결됨
     private Member member;
 
+
+    @Builder
+    public MemberInfo(String email, String bio, String profileImageUrl, Member member) {
+        this.email = email;
+        this.bio = bio;
+        this.profileImageUrl = profileImageUrl;
+        this.member = member;
+    }
 }

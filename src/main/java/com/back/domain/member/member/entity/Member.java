@@ -46,4 +46,10 @@ public class Member {
   @OneToMany(mappedBy = "member", cascade = CascadeType.ALL, orphanRemoval = true)
   private List<GroupMember> groupMembers; // 소속 그룹 목록
 
+  @Builder
+  public Member(MemberInfo memberInfo, String nickname, String password) {
+    this.memberInfo = memberInfo;
+    this.nickname = nickname;
+    this.password = password;
+  }
 }
