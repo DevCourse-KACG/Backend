@@ -104,6 +104,4 @@ public class MemberControllerTest {
         assertNotNull(accessToken);
         assertTrue(accessToken.startsWith("Bearer "));
     }
-
-    //Todo: 컨트롤러 단위 오류처리
 }
