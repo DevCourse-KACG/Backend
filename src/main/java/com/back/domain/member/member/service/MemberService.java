@@ -22,40 +22,53 @@ public class MemberService {
     private final ApiKeyService apiKeyService;
     private final AuthService authService;
 
-    public MemberRegisterResponse register(MemberDto memberDto) {
-        if (memberRepository.findByNickname(memberDto.nickname()).isPresent()) {
+    public MemberRegisterResponse register(MemberDto dto) {
+        validateDuplicate(dto);
+        Member member = createAndSaveMember(dto);
+        MemberInfo memberInfo = createAndSaveMemberInfo(dto, member);
+        connectMemberAndInfo(member, memberInfo);
+
+        String apiKey = apiKeyService.generateApiKey(member.getId());
+        String accessToken = authService.generateAccessToken(apiKey);
+
+        return new MemberRegisterResponse(apiKey, accessToken);
+    }
+
+
+    private void validateDuplicate(MemberDto dto) {
+        if (memberRepository.findByNickname(dto.nickname()).isPresent()) {
             throw new IllegalArgumentException("이미 사용 중인 닉네임입니다.");
         }
 
-        if (memberInfoRepository.findByEmail(memberDto.email()).isPresent()) {
+        if (memberInfoRepository.findByEmail(dto.email()).isPresent()) {
             throw new IllegalArgumentException("이미 사용 중인 이메일입니다.");
         }
+    }
 
-        BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
-        String hashedPassword = encoder.encode(memberDto.password());
+    private Member createAndSaveMember(MemberDto dto) {
+        String hashedPassword = new BCryptPasswordEncoder().encode(dto.password());
 
         Member member = Member.builder()
-                .memberInfo(null)
-                .nickname(memberDto.nickname())
+                .nickname(dto.nickname())
                 .password(hashedPassword)
                 .build();
 
-        memberRepository.save(member);
+        return memberRepository.save(member);
+    }
 
-        MemberInfo memberInfo = MemberInfo.builder()
-                .email(memberDto.email())
-                .bio(memberDto.bio())
+    private MemberInfo createAndSaveMemberInfo(MemberDto dto, Member member) {
+        MemberInfo info = MemberInfo.builder()
+                .email(dto.email())
+                .bio(dto.bio())
                 .profileImageUrl("")
                 .member(member)
                 .build();
 
-        memberInfoRepository.save(memberInfo);
-
-        //Todo: 양방향 관계 세팅
-
-        String apikey = apiKeyService.generateApiKey(member.getId());
-        String accessToken = authService.generateAccessToken(apikey);
-
-        return new MemberRegisterResponse(apikey, accessToken);
+        return memberInfoRepository.save(info);
     }
+
+    private void connectMemberAndInfo(Member member, MemberInfo info) {
+        // 양방향 관계 세팅
+    }
+
 }
