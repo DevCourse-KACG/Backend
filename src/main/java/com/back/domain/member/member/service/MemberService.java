@@ -17,6 +17,10 @@ public class MemberService {
     final AuthService authService;
 
     public MemberResisterResponse register(MemberDto memberDto) {
+        if (memberRepository.findByNickname(memberDto.nickname()).isPresent()) {
+            throw new IllegalArgumentException("이미 사용 중인 닉네임입니다.");
+        }
+
         Member member = Member.builder()
                 .memberInfo(null)
                 .nickname(memberDto.nickname())

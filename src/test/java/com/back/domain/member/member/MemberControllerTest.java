@@ -104,8 +104,6 @@ public class MemberControllerTest {
         assertNotNull(accessToken);
         assertTrue(accessToken.startsWith("Bearer "));
     }
-    
 
-    //TOdo:닉네임 중복 불가처리
     //Todo: 컨트롤러 단위 오류처리
 }
