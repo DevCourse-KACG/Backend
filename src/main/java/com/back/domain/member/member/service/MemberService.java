@@ -8,6 +8,7 @@ import com.back.domain.member.member.entity.Member;
 import com.back.domain.member.member.entity.MemberInfo;
 import com.back.domain.member.member.repository.MemberInfoRepository;
 import com.back.domain.member.member.repository.MemberRepository;
+import com.back.global.exception.ServiceException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -37,11 +38,11 @@ public class MemberService {
 
     private void validateDuplicate(MemberDto dto) {
         if (memberRepository.findByNickname(dto.nickname()).isPresent()) {
-            throw new IllegalArgumentException("이미 사용 중인 닉네임입니다.");
+            throw new ServiceException(400, "이미 사용 중인 닉네임입니다.");
         }
 
         if (memberInfoRepository.findByEmail(dto.email()).isPresent()) {
-            throw new IllegalArgumentException("이미 사용 중인 이메일입니다.");
+            throw new ServiceException(400, "이미 사용 중인 이메일입니다.");
         }
     }
 

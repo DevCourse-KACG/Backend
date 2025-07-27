@@ -4,6 +4,7 @@ import com.back.domain.member.member.dto.MemberDto;
 import com.back.domain.member.member.entity.Member;
 import com.back.domain.member.member.repository.MemberRepository;
 import com.back.domain.member.member.service.MemberService;
+import com.back.global.exception.ServiceException;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -33,7 +34,7 @@ public class MemberServiceTest {
 
         assertThatThrownBy(() -> {
             memberService.register(memberDto2);
-        }).isInstanceOf(IllegalArgumentException.class);
+        }).isInstanceOf(ServiceException.class);
     }
 
     @Test
@@ -46,7 +47,7 @@ public class MemberServiceTest {
 
         assertThatThrownBy(() -> {
             memberService.register(memberDto2);
-        }).isInstanceOf(IllegalArgumentException.class);
+        }).isInstanceOf(ServiceException.class);
     }
 
     @Test
