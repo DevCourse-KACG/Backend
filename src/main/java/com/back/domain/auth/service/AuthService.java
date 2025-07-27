@@ -14,8 +14,8 @@ public class AuthService {
     private final long expirationSeconds;
 
     public AuthService(JwtProperties jwtProperties) {
-        this.secretKey = Keys.hmacShaKeyFor(jwtProperties.getSecretKey().getBytes());
-        this.expirationSeconds = Long.parseLong(jwtProperties.getExpirationSeconds());
+        this.secretKey = Keys.hmacShaKeyFor(jwtProperties.getJwt().getSecretKey().getBytes());
+        this.expirationSeconds = jwtProperties.getExpirationSecondsAsLong();
     }
 
     public String generateAccessToken(String validApiKey) {

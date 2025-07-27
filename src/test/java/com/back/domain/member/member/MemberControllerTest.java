@@ -66,25 +66,11 @@ public class MemberControllerTest {
         assertEquals("안녕하세요 반갑습니다", member.getMemberInfo().getBio());
     }
 
-//    @Test
-//    @DisplayName("회원가입 - 닉네임 중복 시 예외 발생")
-//    public void registerWithDuplicateNicknameThrowsException() {
-//        String duplicateNickname = "테스트유저0";
-//        given(memberRepository.existsByNickname(duplicateNickname)).willReturn(true);
-//
-//        Member member = Member.builder()
-//                .nickname(duplicateNickname)
-//                .password("password123")
-//                .memberInfo(MemberFixture.createMemberInfo())
-//                .presets(null)
-//                .build();
-//
-//
-//        assertThrows(
-//                DuplicateNicknameException.class,
-//                () -> memberRepository.save(member)
-//        );
-//    }
+    @Test
+    @DisplayName("회원가입 - 닉네임 중복 시 예외 발생")
+    public void registerWithDuplicateNicknameThrowsException() {
+
+    }
 
     @Test
     @DisplayName("회원가입 - 정상 기입 / POST 정상 작동")
@@ -129,7 +115,7 @@ public class MemberControllerTest {
         assertTrue(accessToken.startsWith("Bearer "));
     }
     
-    //Todo:yml에 접근해서 액세스토큰 생성하기
+
     //TOdo:닉네임 중복 불가처리
     //Todo: 컨트롤러 단위 오류처리
 }
