@@ -5,7 +5,6 @@ import com.back.domain.auth.service.AuthService;
 import com.back.domain.member.member.controller.MemberController;
 import com.back.domain.member.member.entity.Member;
 import com.back.domain.member.member.entity.MemberInfo;
-import com.back.domain.member.member.service.MemberService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -27,9 +26,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @AutoConfigureMockMvc
 public class MemberControllerTest {
     private MemberFixture memberFixture;
-
-    @Autowired
-    private MemberService memberService;
 
     @Autowired
     private MemberController memberController;
@@ -64,12 +60,6 @@ public class MemberControllerTest {
         assertNotNull(member.getMemberInfo());
         assertEquals("qkqek6223@naver.com", member.getMemberInfo().getEmail());
         assertEquals("안녕하세요 반갑습니다", member.getMemberInfo().getBio());
-    }
-
-    @Test
-    @DisplayName("회원가입 - 닉네임 중복 시 예외 발생")
-    public void registerWithDuplicateNicknameThrowsException() {
-
     }
 
     @Test
