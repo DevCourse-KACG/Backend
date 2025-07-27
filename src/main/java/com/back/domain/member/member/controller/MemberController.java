@@ -1,7 +1,7 @@
 package com.back.domain.member.member.controller;
 
 import com.back.domain.member.member.dto.MemberDto;
-import com.back.domain.member.member.dto.MemberResisterResponse;
+import com.back.domain.member.member.dto.MemberRegisterResponse;
 import com.back.domain.member.member.service.MemberService;
 import com.back.global.rsData.RsData;
 import lombok.RequiredArgsConstructor;
@@ -17,8 +17,8 @@ public class MemberController {
     final MemberService memberService;
 
     @PostMapping("/auth/register")
-    public RsData<MemberResisterResponse> register(@RequestBody MemberDto memberDto) {
-        MemberResisterResponse response = memberService.register(memberDto);
+    public RsData<MemberRegisterResponse> register(@RequestBody MemberDto memberDto) {
+        MemberRegisterResponse response = memberService.register(memberDto);
 
         return RsData.of(200, "회원가입 성공", response);
     };

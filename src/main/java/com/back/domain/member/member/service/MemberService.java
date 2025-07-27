@@ -3,23 +3,34 @@ package com.back.domain.member.member.service;
 import com.back.domain.api.service.ApiKeyService;
 import com.back.domain.auth.service.AuthService;
 import com.back.domain.member.member.dto.MemberDto;
-import com.back.domain.member.member.dto.MemberResisterResponse;
+import com.back.domain.member.member.dto.MemberRegisterResponse;
 import com.back.domain.member.member.entity.Member;
+import com.back.domain.member.member.entity.MemberInfo;
+import com.back.domain.member.member.repository.MemberInfoRepository;
 import com.back.domain.member.member.repository.MemberRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
+@Transactional
 public class MemberService {
-    final MemberRepository memberRepository;
-    final ApiKeyService apiKeyService;
-    final AuthService authService;
+    private final MemberRepository memberRepository;
+    private final MemberInfoRepository memberInfoRepository;
+    private final ApiKeyService apiKeyService;
+    private final AuthService authService;
 
-    public MemberResisterResponse register(MemberDto memberDto) {
+    public MemberRegisterResponse register(MemberDto memberDto) {
         if (memberRepository.findByNickname(memberDto.nickname()).isPresent()) {
             throw new IllegalArgumentException("이미 사용 중인 닉네임입니다.");
         }
+
+        if (memberInfoRepository.findByEmail(memberDto.email()).isPresent()) {
+            throw new IllegalArgumentException("이미 사용 중인 이메일입니다.");
+        }
+
+        //Todo : 비밀번호 암호화
 
         Member member = Member.builder()
                 .memberInfo(null)
@@ -29,9 +40,20 @@ public class MemberService {
 
         memberRepository.save(member);
 
+        MemberInfo memberInfo = MemberInfo.builder()
+                .email(memberDto.email())
+                .bio(memberDto.bio())
+                .profileImageUrl("")
+                .member(member)
+                .build();
+
+        memberInfoRepository.save(memberInfo);
+
+        //Todo: 양방향 관계 세팅
+
         String apikey = apiKeyService.generateApiKey(member.getId());
         String accessToken = authService.generateAccessToken(apikey);
 
-        return new MemberResisterResponse(apikey, accessToken);
+        return new MemberRegisterResponse(apikey, accessToken);
     }
 }
