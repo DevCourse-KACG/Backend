@@ -13,7 +13,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
-import support.MemberFixture;
+import com.back.domain.member.member.support.MemberFixture;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -25,6 +25,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @Transactional
 @AutoConfigureMockMvc
 public class ApiV1MemberControllerTest {
+    @Autowired
     private MemberFixture memberFixture;
 
     @Autowired
@@ -138,5 +139,69 @@ public class ApiV1MemberControllerTest {
         String accessToken = authService.generateAccessToken(validApiKey);
 
         assertNotNull(accessToken);
+    }
+
+    @Test
+    @DisplayName("로그인 - 정상 기입")
+    public void loginSuccess() throws Exception {
+        memberFixture.createMember(1);
+
+        String requestBody = """
+        {
+            "email": "test1@example.com",
+            "password": "password123"
+        }
+        """;
+
+        mockMvc.perform(post("/api/v1/members/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(requestBody))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.apikey").isNotEmpty())
+                .andExpect(jsonPath("$.data.accessToken").isNotEmpty());
+    }
+
+    @Test
+    @DisplayName("로그인 - 없는 이메일 기입")
+    public void loginNonexistentEmail() throws Exception {
+        memberFixture.createMember(1);
+
+        String requestBody = """
+        {
+            "email": "wrong@example.com",
+            "password": "password123"
+        }
+        """;
+
+        mockMvc.perform(post("/api/v1/members/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(requestBody))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value("이메일과 비밀번호가 맞지 않습니다."))
+                .andExpect(jsonPath("$.code").value(400))
+                .andExpect(jsonPath("$.data").doesNotExist());
+
+    }
+
+    @Test
+    @DisplayName("로그인 - 맞지 않는 비밀번호 기입")
+    public void loginWrongPassword() throws Exception {
+        memberFixture.createMember(1);
+
+        String requestBody = """
+        {
+            "email": "test1@example.com",
+            "password": "WrongPassword"
+        }
+        """;
+
+        mockMvc.perform(post("/api/v1/members/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(requestBody))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value("이메일과 비밀번호가 맞지 않습니다."))
+                .andExpect(jsonPath("$.code").value(400))
+                .andExpect(jsonPath("$.data").doesNotExist());
+
     }
 }
