@@ -139,4 +139,24 @@ public class ApiV1MemberControllerTest {
 
         assertNotNull(accessToken);
     }
+
+    @Test
+    @DisplayName("로그인 - 정상 기입")
+    public void loginSuccess() throws Exception {
+        memberFixture.createMember("유저1");
+
+        String requestBody = """
+        {
+            "email": "test@example.com",
+            "password": "password123"
+        }
+        """;
+
+        mockMvc.perform(post("/api/v1/members/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(requestBody))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.apiKey").isNotEmpty())
+                .andExpect(jsonPath("$.accessToken").isNotEmpty());
+    }
 }
