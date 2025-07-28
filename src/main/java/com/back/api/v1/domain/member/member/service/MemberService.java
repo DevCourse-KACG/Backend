@@ -27,7 +27,6 @@ public class MemberService {
         validateDuplicate(dto);
         Member member = createAndSaveMember(dto);
         MemberInfo memberInfo = createAndSaveMemberInfo(dto, member);
-        connectMemberAndInfo(member, memberInfo);
 
         String apiKey = apiKeyService.generateApiKey(member.getId());
         String accessToken = authService.generateAccessToken(apiKey);
@@ -65,11 +64,11 @@ public class MemberService {
                 .member(member)
                 .build();
 
-        return memberInfoRepository.save(info);
-    }
+        MemberInfo savedInfo = memberInfoRepository.save(info);
 
-    private void connectMemberAndInfo(Member member, MemberInfo info) {
-        // 양방향 관계 세팅
-    }
+        member.setMemberInfo(savedInfo);
 
+        return savedInfo;
+
+    }
 }

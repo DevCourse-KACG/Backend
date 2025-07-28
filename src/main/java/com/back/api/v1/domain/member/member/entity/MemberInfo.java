@@ -38,4 +38,9 @@ public class MemberInfo {
         this.profileImageUrl = profileImageUrl;
         this.member = member;
     }
+
+    public void setMember(Member member) {
+        this.member = member;
+    }
+
 }

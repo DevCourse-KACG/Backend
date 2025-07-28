@@ -2,7 +2,7 @@ package com.back.domain.member.member;
 
 import com.back.api.v1.domain.api.service.ApiKeyService;
 import com.back.api.v1.domain.auth.service.AuthService;
-import com.back.api.v1.domain.member.member.controller.MemberController;
+import com.back.api.v1.domain.member.member.controller.ApiV1MemberController;
 import com.back.api.v1.domain.member.member.entity.Member;
 import com.back.api.v1.domain.member.member.entity.MemberInfo;
 import org.junit.jupiter.api.DisplayName;
@@ -24,11 +24,11 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @SpringBootTest
 @Transactional
 @AutoConfigureMockMvc
-public class MemberControllerTest {
+public class ApiV1MemberControllerTest {
     private MemberFixture memberFixture;
 
     @Autowired
-    private MemberController memberController;
+    private ApiV1MemberController apiV1MemberController;
 
     @Autowired
     private MockMvc mockMvc;

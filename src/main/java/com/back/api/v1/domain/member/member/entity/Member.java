@@ -52,4 +52,12 @@ public class Member {
     this.nickname = nickname;
     this.password = password;
   }
+
+  public void setMemberInfo(MemberInfo memberInfo) {
+    this.memberInfo = memberInfo;
+    if (memberInfo != null && memberInfo.getMember() != this) {
+      memberInfo.setMember(this);
+    }
+  }
+
 }
