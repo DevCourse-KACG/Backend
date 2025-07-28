@@ -182,4 +182,37 @@ class ApiV1ScheduleControllerTest {
         int afterCnt = scheduleService.countClubSchedules(clubId);
         assertThat(afterCnt).isEqualTo(preCnt - 1);
     }
+
+    @Test
+    @DisplayName("일정 삭제(비활성화) - 체크리스트가 있는 경우")
+    void td2() throws Exception {
+        Long scheduleId = 5L;
+        Schedule schedule = scheduleService.getScheduleById(scheduleId);
+
+        Long clubId = schedule.getClub().getId();
+        int preCnt = scheduleService.countClubSchedules(clubId);
+
+        ResultActions resultActions = mockMvc
+                .perform(delete("/api/v1/schedules/" + scheduleId))
+                .andDo(print());
+
+        resultActions
+                .andExpect(handler().handlerType(ApiV1ScheduleController.class))
+                .andExpect(handler().methodName("deleteSchedule"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value(200))
+                .andExpect(jsonPath("$.message").value("%d번 일정이 삭제되었습니다.".formatted(scheduleId)));
+
+        // 일정이 삭제가 아닌 비활성화 되었는지 확인
+        int afterCnt = scheduleService.countClubSchedules(clubId);
+        assertThat(afterCnt).isEqualTo(preCnt);
+
+        Schedule updatedSchedule = scheduleService.getScheduleById(scheduleId);
+        assertThat(updatedSchedule.isActive()).isFalse();
+
+        // 체크리스트가 비활성화 되었는지 확인
+        if( updatedSchedule.getCheckList() != null) {
+            assertThat(updatedSchedule.getCheckList().isActive()).isFalse();
+        }
+    }
 }
