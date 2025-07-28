@@ -39,9 +39,12 @@ public class ClubMember {
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "club_id", nullable = false)
+    @Setter
     private Club club;
 
     @Description("체크리스트 아이템 할당 정보")
     @OneToMany(mappedBy = "clubMember", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<ItemAssign> itemAssigns;
+
+
 }

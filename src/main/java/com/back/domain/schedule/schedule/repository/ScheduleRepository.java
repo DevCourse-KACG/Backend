@@ -7,4 +7,5 @@ import java.util.Optional;
 
 public interface ScheduleRepository extends JpaRepository<Schedule, Long> {
     Optional<Schedule> findFirstByClubIdOrderByIdDesc(Long clubId);
+    int countByClubId(Long clubId);
 }
