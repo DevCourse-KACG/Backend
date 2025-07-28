@@ -1,7 +1,8 @@
 package com.back.domain.member.member.controller;
 
+import com.back.domain.member.member.dto.MemberAuthResponse;
 import com.back.domain.member.member.dto.MemberDto;
-import com.back.domain.member.member.dto.MemberRegisterResponse;
+import com.back.domain.member.member.dto.MemberLoginDto;
 import com.back.domain.member.member.service.MemberService;
 import com.back.global.rsData.RsData;
 import io.swagger.v3.oas.annotations.Operation;
@@ -20,9 +21,17 @@ public class ApiV1MemberController {
 
     @Operation(summary = "회원가입 API", description = "이메일, 비밀번호 등을 받아 회원가입을 처리합니다.")
     @PostMapping("/auth/register")
-    public RsData<MemberRegisterResponse> register(@Valid @RequestBody MemberDto memberDto) {
-        MemberRegisterResponse response = memberService.register(memberDto);
+    public RsData<MemberAuthResponse> register(@Valid @RequestBody MemberDto memberDto) {
+        MemberAuthResponse response = memberService.register(memberDto);
 
         return RsData.of(200, "회원가입 성공", response);
     };
+
+    @Operation(summary = "로그인 API", description = "이메일과 비밀번호를 받아 로그인을 처리합니다.")
+    @PostMapping("/auth/login")
+    public RsData<MemberAuthResponse> login(@Valid @RequestBody MemberLoginDto memberLoginDto) {
+        MemberAuthResponse response = memberService.login(memberLoginDto);
+
+        return RsData.of(200, "로그인 성공", response);
+    }
 }

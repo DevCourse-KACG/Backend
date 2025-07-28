@@ -1,6 +1,6 @@
 package com.back.domain.member.member.dto;
 
-public record MemberRegisterResponse(
+public record MemberAuthResponse(
         String apikey,
         String accessToken
 ) {}
