@@ -54,8 +54,14 @@ public class ApiV1MemberController {
     @Operation(summary = "로그아웃 API", description = "로그아웃 처리 API입니다.")
     @PreAuthorize("isAuthenticated()")
     @DeleteMapping("/auth/logout")
-    public RsData<MemberAuthResponse> logout() {
+    public RsData<MemberAuthResponse> logout(HttpServletResponse response) {
+        Cookie deleteCookie = new Cookie("accessToken", "");
+        deleteCookie.setHttpOnly(true);
+        deleteCookie.setSecure(true);
+        deleteCookie.setPath("/");
+        deleteCookie.setMaxAge(0);
 
+        response.addCookie(deleteCookie);
 
         return RsData.of(200, "로그아웃 성공");
     }
