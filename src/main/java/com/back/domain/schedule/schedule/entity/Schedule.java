@@ -2,6 +2,7 @@ package com.back.domain.schedule.schedule.entity;
 
 import com.back.domain.checkList.checkList.entity.CheckList;
 import com.back.domain.club.club.entity.Club;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import jdk.jfr.Description;
 import lombok.*;
@@ -45,6 +46,7 @@ public class Schedule {
 
     @Setter
     @OneToOne(mappedBy = "schedule", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    @JsonIgnore
     private CheckList checkList;
 
     // 일정 수정
