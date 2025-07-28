@@ -12,12 +12,26 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/api/v1/schedules")
 @RequiredArgsConstructor
 @Tag(name = "ApiV1ScheduleController", description = "일정 컨트롤러")
 public class ApiV1ScheduleController {
     private final ScheduleService scheduleService;
+
+    @GetMapping("/clubs/{clubId}")
+    @Operation(summary = "모임의 일정 목록 조회")
+    public List<ScheduleDto> getClubSchedules(
+            @PathVariable Long clubId
+    ) {
+        List<Schedule> schedule = scheduleService.getGroupSchedules(clubId);
+        return schedule.stream()
+                .map(ScheduleDto::new)
+                .toList();
+    }
+
 
     @GetMapping("/{scheduleId}")
     @Operation(summary = "일정 조회")

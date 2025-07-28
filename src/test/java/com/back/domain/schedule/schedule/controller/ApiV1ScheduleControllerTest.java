@@ -15,6 +15,8 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
@@ -32,6 +34,36 @@ class ApiV1ScheduleControllerTest {
     private ScheduleService scheduleService;
     @Autowired
     private ParameterObjectNamingStrategyCustomizer parameterObjectNamingStrategyCustomizer;
+
+    @Test
+    @DisplayName("일정 목록 조회")
+    void trl1() throws Exception {
+        Long clubId = 1L;
+
+        ResultActions resultActions = mockMvc
+                .perform(get("/api/v1/schedules/clubs/" + clubId))
+                .andDo(print());
+
+        List<Schedule> schedules = scheduleService.getGroupSchedules(clubId);
+
+        resultActions
+                .andExpect(handler().handlerType(ApiV1ScheduleController.class))
+                .andExpect(handler().methodName("getClubSchedules"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(schedules.size()));
+
+        for (int i = 0; i < schedules.size(); i++) {
+            Schedule schedule = schedules.get(i);
+
+            resultActions
+                    .andExpect(jsonPath("$[%d].id".formatted(i)).value(schedule.getId()))
+                    .andExpect(jsonPath("$[%d].title".formatted(i)).value(schedule.getTitle()))
+                    .andExpect(jsonPath("$[%d].content".formatted(i)).value(schedule.getContent()))
+                    .andExpect(jsonPath("$[%d].startDate".formatted(i)).value(Matchers.startsWith(schedule.getStartDate().toString().substring(0, 16))))
+                    .andExpect(jsonPath("$[%d].endDate".formatted(i)).value(Matchers.startsWith(schedule.getEndDate().toString().substring(0, 16))))
+                    .andExpect(jsonPath("$[%d].spot".formatted(i)).value(schedule.getSpot()));
+        }
+    }
 
     @Test
     @DisplayName("일정 조회")

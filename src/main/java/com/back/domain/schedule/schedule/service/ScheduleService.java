@@ -13,6 +13,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.NoSuchElementException;
 
 @Service
@@ -22,6 +23,19 @@ public class ScheduleService {
     private final ClubRepository clubRepository;
     private final CheckListRepository checkListRepository;
 
+    /**
+     * 특정 모임의 일정 목록 조회
+     * @param clubId
+     * @return
+     */
+    @Transactional
+    public List<Schedule> getGroupSchedules(Long clubId) {
+        clubRepository.findById(clubId)
+                .orElseThrow(() -> new NoSuchElementException("%d번 모임은 존재하지 않습니다.".formatted(clubId)));
+
+        // 모임의 일정 목록 조회
+        return scheduleRepository.findByClubIdOrderByStartDate(clubId);
+    }
 
     /**
      * 일정 조회
