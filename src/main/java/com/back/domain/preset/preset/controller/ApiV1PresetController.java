@@ -38,6 +38,5 @@ public class ApiV1PresetController {
     RsData<PresetDto> presetDto = presetService.getPreset(presetId);
 
     return ResponseEntity.status(presetDto.code()).body(presetDto);
-
   }
 }
