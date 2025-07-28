@@ -1,0 +1,71 @@
+package com.back.domain.schedule.schedule.controller;
+
+import com.back.domain.schedule.schedule.entity.Schedule;
+import com.back.domain.schedule.schedule.service.ScheduleService;
+import org.hamcrest.Matchers;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+import org.springdoc.core.customizers.ParameterObjectNamingStrategyCustomizer;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.http.MediaType;
+import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.ResultActions;
+import org.springframework.transaction.annotation.Transactional;
+
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+
+@ActiveProfiles("test")
+@SpringBootTest
+@Transactional
+@AutoConfigureMockMvc
+class ApiV1ScheduleControllerTest {
+
+    @Autowired
+    private MockMvc mockMvc;
+    @Autowired
+    private ScheduleService scheduleService;
+    @Autowired
+    private ParameterObjectNamingStrategyCustomizer parameterObjectNamingStrategyCustomizer;
+
+    @Test
+    @DisplayName("일정 생성")
+    void tc1() throws Exception {
+        Long clubId = 1L;
+
+        ResultActions resultActions = mockMvc
+                .perform(post("/api/v1/schedules")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                    "clubId" : 1,
+                                    "title" : "제 4회 걷기 일정",
+                                    "content" : "공원에서 함께 걷습니다",
+                                    "spot" : "서울시 서초동",
+                                    "startDate" : "2025-08-02T10:00:00",
+                                    "endDate" : "2025-08-02T15:00:00"
+                                }
+                                """)
+                )
+                .andDo(print());
+
+        Schedule schedule = scheduleService.getLatestClubSchedule(clubId);
+
+        resultActions
+                .andExpect(handler().handlerType(ApiV1ScheduleController.class))
+                .andExpect(handler().methodName("createSchedule"))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.code").value(201))
+                .andExpect(jsonPath("$.message").value("%d번 일정이 생성되었습니다.".formatted(schedule.getId())))
+                .andExpect(jsonPath("$.data.id").value(schedule.getId()))
+                .andExpect(jsonPath("$.data.title").value(schedule.getTitle()))
+                .andExpect(jsonPath("$.data.content").value(schedule.getContent()))
+                .andExpect(jsonPath("$.data.startDate").value(Matchers.startsWith(schedule.getStartDate().toString().substring(0, 16))))
+                .andExpect(jsonPath("$.data.endDate").value(Matchers.startsWith(schedule.getEndDate().toString().substring(0, 16))))
+                .andExpect(jsonPath("$.data.spot").value(schedule.getSpot()));
+    }
+}
