@@ -7,10 +7,12 @@ import com.back.domain.schedule.schedule.dto.ScheduleCreateReqBody;
 import com.back.domain.schedule.schedule.dto.ScheduleUpdateReqBody;
 import com.back.domain.schedule.schedule.entity.Schedule;
 import com.back.domain.schedule.schedule.repository.ScheduleRepository;
+import com.back.global.exception.ServiceException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.NoSuchElementException;
 
 @Service
@@ -58,6 +60,9 @@ public class ScheduleService {
                 .findById(reqBody.clubId())
                 .orElseThrow(() -> new NoSuchElementException("%d번 모임은 존재하지 않습니다.".formatted(reqBody.clubId())));
 
+        // 날짜 유효성 검증
+        checkDate(reqBody.startDate(), reqBody.endDate());
+
         // 일정 생성
         Schedule schedule = Schedule.builder()
                 .title(reqBody.title())
@@ -78,7 +83,17 @@ public class ScheduleService {
      */
     @Transactional
     public void modifySchedule(Schedule schedule, ScheduleUpdateReqBody reqBody) {
+        // 날짜 유효성 검증
+        checkDate(reqBody.startDate(), reqBody.endDate());
+
         // 일정 수정
         schedule.modify(reqBody.title(), reqBody.content(), reqBody.startDate(), reqBody.endDate(), reqBody.spot());
     }
+
+    private static void checkDate(LocalDateTime startDate, LocalDateTime endDate) {
+        if (startDate.isAfter(endDate)) {
+            throw new ServiceException(400, "시작일은 종료일보다 이전이어야 합니다.");
+        }
+    }
+
 }

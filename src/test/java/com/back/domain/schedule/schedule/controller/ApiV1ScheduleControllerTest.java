@@ -127,7 +127,34 @@ class ApiV1ScheduleControllerTest {
                 .andExpect(jsonPath("$.data.content").value(schedule.getContent()))
                 .andExpect(jsonPath("$.data.startDate").value(Matchers.startsWith(schedule.getStartDate().toString())))
                 .andExpect(jsonPath("$.data.endDate").value(Matchers.startsWith(schedule.getEndDate().toString())))
-                .andExpect(jsonPath("$.data.spot").value(schedule.getSpot()))
+                .andExpect(jsonPath("$.data.spot").value(schedule.getSpot()));
+    }
+
+    @Test
+    @DisplayName("일정 수정 - 시작일 종료일 보다 늦은 경우 예외 발생")
+    void tu2() throws Exception {
+        Long scheduleId = 6L;
+
+        ResultActions resultActions = mockMvc
+                .perform(put("/api/v1/schedules/" + scheduleId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                            {
+                                "title" : "속초 여행",
+                                "content" : "1박 2일 속초 여행",
+                                "spot" : "속초",
+                                "startDate" : "2025-07-22T15:00:00",
+                                "endDate" : "2025-07-22T10:00:00"
+                            }
+                            """)
+                )
                 .andDo(print());
+
+        resultActions
+                .andExpect(handler().handlerType(ApiV1ScheduleController.class))
+                .andExpect(handler().methodName("modifySchedule"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value(400))
+                .andExpect(jsonPath("$.message").value("시작일은 종료일보다 이전이어야 합니다."));
     }
 }
