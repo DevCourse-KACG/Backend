@@ -24,7 +24,6 @@ public class MemberService {
     private final MemberInfoRepository memberInfoRepository;
     private final ApiKeyService apiKeyService;
     private final AuthService authService;
-    private final BCryptPasswordEncoder bCryptPasswordEncoder;
 
     public MemberRegisterResponse register(MemberDto dto) {
         validateDuplicate(dto);
@@ -59,7 +58,8 @@ public class MemberService {
     }
 
     private Member createAndSaveMember(MemberDto dto, String tag) {
-        String hashedPassword = bCryptPasswordEncoder.encode(dto.password());
+        BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
+        String hashedPassword = encoder.encode(dto.password());
 
         Member member = Member.builder()
                 .nickname(dto.nickname())
