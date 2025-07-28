@@ -23,13 +23,19 @@ public class ApiV1ScheduleController {
 
     @GetMapping("/clubs/{clubId}")
     @Operation(summary = "모임의 일정 목록 조회")
-    public List<ScheduleDto> getClubSchedules(
+    public RsData<List<ScheduleDto>> getClubSchedules(
             @PathVariable Long clubId
     ) {
         List<Schedule> schedule = scheduleService.getGroupSchedules(clubId);
-        return schedule.stream()
+        List<ScheduleDto> scheduleDtos = schedule.stream()
                 .map(ScheduleDto::new)
                 .toList();
+
+        return RsData.of(
+                200,
+                "%s번 모임의 일정 목록이 조회되었습니다.".formatted(clubId),
+                scheduleDtos
+        );
     }
 
 

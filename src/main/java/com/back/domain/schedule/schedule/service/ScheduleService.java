@@ -62,7 +62,7 @@ public class ScheduleService {
     }
 
     @Transactional(readOnly = true)
-    public int countClubSchedules(Long clubId) {
+    public long countClubSchedules(Long clubId) {
         return scheduleRepository.countByClubId(clubId);
     }
 

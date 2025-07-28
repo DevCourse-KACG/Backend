@@ -50,18 +50,20 @@ class ApiV1ScheduleControllerTest {
                 .andExpect(handler().handlerType(ApiV1ScheduleController.class))
                 .andExpect(handler().methodName("getClubSchedules"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.length()").value(schedules.size()));
+                .andExpect(jsonPath("$.code").value(200))
+                .andExpect(jsonPath("$.message").value("%s번 모임의 일정 목록이 조회되었습니다.".formatted(clubId)))
+                .andExpect(jsonPath("$.data.length()").value(schedules.size()));
 
         for (int i = 0; i < schedules.size(); i++) {
             Schedule schedule = schedules.get(i);
 
             resultActions
-                    .andExpect(jsonPath("$[%d].id".formatted(i)).value(schedule.getId()))
-                    .andExpect(jsonPath("$[%d].title".formatted(i)).value(schedule.getTitle()))
-                    .andExpect(jsonPath("$[%d].content".formatted(i)).value(schedule.getContent()))
-                    .andExpect(jsonPath("$[%d].startDate".formatted(i)).value(Matchers.startsWith(schedule.getStartDate().toString().substring(0, 16))))
-                    .andExpect(jsonPath("$[%d].endDate".formatted(i)).value(Matchers.startsWith(schedule.getEndDate().toString().substring(0, 16))))
-                    .andExpect(jsonPath("$[%d].spot".formatted(i)).value(schedule.getSpot()));
+                    .andExpect(jsonPath("$.data[%d].id".formatted(i)).value(schedule.getId()))
+                    .andExpect(jsonPath("$.data[%d].title".formatted(i)).value(schedule.getTitle()))
+                    .andExpect(jsonPath("$.data[%d].content".formatted(i)).value(schedule.getContent()))
+                    .andExpect(jsonPath("$.data[%d].startDate".formatted(i)).value(Matchers.startsWith(schedule.getStartDate().toString().substring(0, 16))))
+                    .andExpect(jsonPath("$.data[%d].endDate".formatted(i)).value(Matchers.startsWith(schedule.getEndDate().toString().substring(0, 16))))
+                    .andExpect(jsonPath("$.data[%d].spot".formatted(i)).value(schedule.getSpot()));
         }
     }
 
@@ -198,7 +200,7 @@ class ApiV1ScheduleControllerTest {
         Schedule schedule = scheduleService.getScheduleById(scheduleId);
 
         Long clubId = schedule.getClub().getId();
-        int preCnt = scheduleService.countClubSchedules(clubId);
+        long preCnt = scheduleService.countClubSchedules(clubId);
 
         ResultActions resultActions = mockMvc
                 .perform(delete("/api/v1/schedules/" + scheduleId))
@@ -211,7 +213,7 @@ class ApiV1ScheduleControllerTest {
                 .andExpect(jsonPath("$.code").value(200))
                 .andExpect(jsonPath("$.message").value("%d번 일정이 삭제되었습니다.".formatted(scheduleId)));
 
-        int afterCnt = scheduleService.countClubSchedules(clubId);
+        long afterCnt = scheduleService.countClubSchedules(clubId);
         assertThat(afterCnt).isEqualTo(preCnt - 1);
     }
 
@@ -222,7 +224,7 @@ class ApiV1ScheduleControllerTest {
         Schedule schedule = scheduleService.getScheduleById(scheduleId);
 
         Long clubId = schedule.getClub().getId();
-        int preCnt = scheduleService.countClubSchedules(clubId);
+        long preCnt = scheduleService.countClubSchedules(clubId);
 
         ResultActions resultActions = mockMvc
                 .perform(delete("/api/v1/schedules/" + scheduleId))
@@ -236,7 +238,7 @@ class ApiV1ScheduleControllerTest {
                 .andExpect(jsonPath("$.message").value("%d번 일정이 삭제되었습니다.".formatted(scheduleId)));
 
         // 일정이 삭제가 아닌 비활성화 되었는지 확인
-        int afterCnt = scheduleService.countClubSchedules(clubId);
+        long afterCnt = scheduleService.countClubSchedules(clubId);
         assertThat(afterCnt).isEqualTo(preCnt);
 
         Schedule updatedSchedule = scheduleService.getScheduleById(scheduleId);

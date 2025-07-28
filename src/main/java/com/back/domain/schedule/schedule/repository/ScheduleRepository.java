@@ -17,5 +17,5 @@ public interface ScheduleRepository extends JpaRepository<Schedule, Long> {
     Optional<Schedule> findFirstByClubIdOrderByIdDesc(Long clubId);
 
     // 특정 모임의 일정 개수 조회
-    int countByClubId(Long clubId);
+    long countByClubId(Long clubId);
 }
