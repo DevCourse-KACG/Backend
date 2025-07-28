@@ -15,6 +15,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -45,6 +46,77 @@ class ApiV1ScheduleControllerTest {
                 .andDo(print());
 
         List<Schedule> schedules = scheduleService.getClubSchedules(clubId, null, null);
+
+        resultActions
+                .andExpect(handler().handlerType(ApiV1ScheduleController.class))
+                .andExpect(handler().methodName("getClubSchedules"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value(200))
+                .andExpect(jsonPath("$.message").value("%s번 모임의 일정 목록이 조회되었습니다.".formatted(clubId)))
+                .andExpect(jsonPath("$.data.length()").value(schedules.size()));
+
+        for (int i = 0; i < schedules.size(); i++) {
+            Schedule schedule = schedules.get(i);
+
+            resultActions
+                    .andExpect(jsonPath("$.data[%d].id".formatted(i)).value(schedule.getId()))
+                    .andExpect(jsonPath("$.data[%d].title".formatted(i)).value(schedule.getTitle()))
+                    .andExpect(jsonPath("$.data[%d].content".formatted(i)).value(schedule.getContent()))
+                    .andExpect(jsonPath("$.data[%d].startDate".formatted(i)).value(Matchers.startsWith(schedule.getStartDate().toString().substring(0, 16))))
+                    .andExpect(jsonPath("$.data[%d].endDate".formatted(i)).value(Matchers.startsWith(schedule.getEndDate().toString().substring(0, 16))))
+                    .andExpect(jsonPath("$.data[%d].spot".formatted(i)).value(schedule.getSpot()));
+        }
+    }
+
+    @Test
+    @DisplayName("일정 목록 조회 - 날짜 파라미터 있는 경우")
+    void trl2() throws Exception {
+        Long clubId = 1L;
+        String startDateStr = "2025-08-01";
+        String endDateStr = "2025-08-31";
+
+        ResultActions resultActions = mockMvc
+                .perform(get("/api/v1/schedules/clubs/" + clubId)
+                        .param("startDate", startDateStr)
+                        .param("endDate", endDateStr))
+                .andDo(print());
+
+        List<Schedule> schedules = scheduleService.getClubSchedules(clubId, LocalDate.parse(startDateStr), LocalDate.parse(endDateStr));
+
+        resultActions
+                .andExpect(handler().handlerType(ApiV1ScheduleController.class))
+                .andExpect(handler().methodName("getClubSchedules"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value(200))
+                .andExpect(jsonPath("$.message").value("%s번 모임의 일정 목록이 조회되었습니다.".formatted(clubId)))
+                .andExpect(jsonPath("$.data.length()").value(schedules.size()));
+
+        for (int i = 0; i < schedules.size(); i++) {
+            Schedule schedule = schedules.get(i);
+
+            resultActions
+                    .andExpect(jsonPath("$.data[%d].id".formatted(i)).value(schedule.getId()))
+                    .andExpect(jsonPath("$.data[%d].title".formatted(i)).value(schedule.getTitle()))
+                    .andExpect(jsonPath("$.data[%d].content".formatted(i)).value(schedule.getContent()))
+                    .andExpect(jsonPath("$.data[%d].startDate".formatted(i)).value(Matchers.startsWith(schedule.getStartDate().toString().substring(0, 16))))
+                    .andExpect(jsonPath("$.data[%d].endDate".formatted(i)).value(Matchers.startsWith(schedule.getEndDate().toString().substring(0, 16))))
+                    .andExpect(jsonPath("$.data[%d].spot".formatted(i)).value(schedule.getSpot()));
+        }
+    }
+
+    @Test
+    @DisplayName("일정 목록 조회 - 시작일 파라미터만 있는 경우")
+    void trl3() throws Exception {
+        Long clubId = 1L;
+        String startDateStr = "2025-07-15";
+        String endDateStr = "2025-07-31";
+
+        ResultActions resultActions = mockMvc
+                .perform(get("/api/v1/schedules/clubs/" + clubId)
+                        .param("startDate", startDateStr))
+                .andDo(print());
+
+        List<Schedule> schedules = scheduleService.getClubSchedules(clubId, LocalDate.parse(startDateStr), LocalDate.parse(endDateStr));
 
         resultActions
                 .andExpect(handler().handlerType(ApiV1ScheduleController.class))

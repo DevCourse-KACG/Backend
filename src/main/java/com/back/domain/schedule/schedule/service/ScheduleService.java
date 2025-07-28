@@ -34,8 +34,18 @@ public class ScheduleService {
         LocalDateTime endDateTime;
 
         if (startDate != null && endDate != null) {
+            // 시작일과 종료일이 모두 있는 경우, 해당 범위로 설정
             startDateTime = startDate.atStartOfDay();
             endDateTime = endDate.atTime(23, 59, 59);
+
+            validateDate(startDateTime, endDateTime);
+        } else if (startDate != null && endDate == null) {
+            // 시작일만 있는 경우, 해당 달의 1일부터 마지막 날까지 범위 설정
+            YearMonth month = YearMonth.from(startDate);
+
+            startDateTime = startDate.atStartOfDay();
+            endDateTime = month.atEndOfMonth().atTime(23, 59, 59);
+
             validateDate(startDateTime, endDateTime);
         } else {
             // 날짜 파라미터 없는 경우, 현재 달을 기준으로 설정
