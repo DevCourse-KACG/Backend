@@ -133,4 +133,10 @@ public class MemberService {
             .build()
                 .parseSignedClaims(accessToken).getPayload();
     }
+
+    public Member findByEmail(String email) {
+        Optional<MemberInfo> memberInfo = memberInfoRepository.findByEmail(email);
+
+        return memberInfo.get().getMember();
+    }
 }

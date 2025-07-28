@@ -1,6 +1,7 @@
 package com.back.global.security;
 
 import com.back.domain.member.member.entity.Member;
+import com.back.domain.member.member.entity.MemberInfo;
 import com.back.domain.member.member.service.MemberService;
 import com.back.global.exception.ServiceException;
 import com.back.global.rq.Rq;
@@ -11,10 +12,15 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -50,7 +56,7 @@ public class CustomAuthenticationFilter extends OncePerRequestFilter {
         }
 
         // 인증, 인가가 필요없는 API 요청이라면 패스
-        if (List.of("/api/members/login", "/api/members/logout", "/api/members/join").contains(request.getRequestURI())) {
+        if (List.of("/api/members/login", "/api/members/join").contains(request.getRequestURI())) {
             filterChain.doFilter(request, response);
             return;
         }
@@ -89,35 +95,28 @@ public class CustomAuthenticationFilter extends OncePerRequestFilter {
             Map<String, Object> payload = memberService.payload(accessToken);
 
             if (payload != null) {
-                Object idObj = payload.get("id");
                 Object emailObj = payload.get("email");
-                Object nameObj = payload.get("name");
 
-                Long id = null;
                 String email = null;
-                String name = null;
-
-                if (idObj instanceof Number) {
-                    id = ((Number) idObj).longValue();
-                }
 
                 if (emailObj instanceof String) {
                     email = (String) emailObj;
                 }
 
-                if (nameObj instanceof String) {
-                    name = (String) nameObj;
-                }
+                if (email != null) {
+                    Member DbMember = memberService.findByEmail(email);
 
-//                if (id != null && email != null && name != null) {
-//                    member = Member.builder()
-//                            .id(id)
-//                            .email(email)
-//                            .name(name)
-//                            .password("N/A") // 비밀번호는 필요없음
-//                            .build();
-//                    isAccessTokenValid = true;
-//                }
+                    if (DbMember != null) {
+                        member = Member.builder()
+                                .memberInfo(DbMember.getMemberInfo())
+                                .nickname(DbMember.getNickname())
+                                .memberType(DbMember.getMemberType())
+                                .tag(DbMember.getTag())
+                                .password("N/A") // 비밀번호는 필요없음
+                                .build();
+                        isAccessTokenValid = true;
+                    }
+                }
             }
         }
 
@@ -128,25 +127,27 @@ public class CustomAuthenticationFilter extends OncePerRequestFilter {
         }
 
 
-        // Access Token이 유효한 경우, 인증된 사용자로 설정
-//        UserDetails user = new SecurityUser(
-//                member.getId(),
-//                member.getEmail(),
-//                member.getName(),
-//                member.getPassword(),
-//                member.getAuthorities()
-//        );
-//
-//        Authentication authentication = new UsernamePasswordAuthenticationToken(
-//                user,
-//                user.getPassword(),
-//                user.getAuthorities()
-//        );
-//
-//        // 이 시점 이후부터는 시큐리티가 이 요청을 인증된 사용자의 요청이다.
-//        SecurityContextHolder
-//                .getContext()
-//                .setAuthentication(authentication);
+         //Access Token이 유효한 경우, 인증된 사용자로 설정
+        MemberInfo memberInfo = member.getMemberInfo();
+
+        UserDetails user = new SecurityUser(
+                member.getId(),
+                memberInfo.getEmail(),
+                member.getNickname(),
+                member.getPassword(),
+                Collections.emptyList()
+        );
+
+        Authentication authentication = new UsernamePasswordAuthenticationToken(
+                user,
+                user.getPassword(),
+                user.getAuthorities()
+        );
+
+        // 이 시점 이후부터는 시큐리티가 이 요청을 인증된 사용자의 요청이다.
+        SecurityContextHolder
+                .getContext()
+                .setAuthentication(authentication);
 
         filterChain.doFilter(request, response);
     }
