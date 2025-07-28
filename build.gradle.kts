@@ -35,7 +35,8 @@ dependencies {
     runtimeOnly("com.h2database:h2")
     runtimeOnly("com.mysql:mysql-connector-j")
     // aws s3
-    implementation("io.awspring.cloud:spring-cloud-aws-starter:3.1.1")
+    implementation("io.awspring.cloud:spring-cloud-aws-starter:3.4.0")
+    implementation("io.awspring.cloud:spring-cloud-aws-starter-s3:3.4.0")
     // security
     implementation("org.springframework.boot:spring-boot-starter-security")
     testImplementation("org.springframework.security:spring-security-test")
