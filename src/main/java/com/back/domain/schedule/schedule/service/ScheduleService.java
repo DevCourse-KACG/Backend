@@ -20,6 +20,18 @@ public class ScheduleService {
     private final CheckListRepository checkListRepository;
 
     /**
+     * 일정 조회
+     * @param scheduleId
+     * @return schedule
+     */
+    @Transactional(readOnly = true)
+    public Schedule getScheduleById(Long scheduleId) {
+        return scheduleRepository
+                .findById(scheduleId)
+                .orElseThrow(() -> new NoSuchElementException("%d번 일정은 존재하지 않습니다.".formatted(scheduleId)));
+    }
+    
+    /**
      * 특정 모임의 최신 일정 조회
      * @param clubId
      * @return schedule
