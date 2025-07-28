@@ -39,6 +39,7 @@ public class Schedule {
     private String spot; //TODO : 나중에 지도 연동하면 좌표로 변경
 
     @Description("활성화 여부")
+    @Builder.Default
     private boolean isActive = true;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)

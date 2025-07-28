@@ -26,15 +26,15 @@ public class ScheduleService {
     /**
      * 특정 모임의 일정 목록 조회
      * @param clubId
-     * @return
+     * @return schedules
      */
-    @Transactional
+    @Transactional(readOnly = true)
     public List<Schedule> getGroupSchedules(Long clubId) {
         clubRepository.findById(clubId)
                 .orElseThrow(() -> new NoSuchElementException("%d번 모임은 존재하지 않습니다.".formatted(clubId)));
 
-        // 모임의 일정 목록 조회
-        return scheduleRepository.findByClubIdOrderByStartDate(clubId);
+        // 모임의 일정 목록 조회 (활성화된 일정만)
+        return scheduleRepository.findByClubIdAndIsActiveTrueOrderByStartDate(clubId);
     }
 
     /**

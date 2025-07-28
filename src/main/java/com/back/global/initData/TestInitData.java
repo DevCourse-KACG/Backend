@@ -154,8 +154,6 @@ public class TestInitData {
                     .club(club1)
                     .build();
             scheduleRepository.save(schedule);
-
-            System.out.println("모임 %d 일정 : ".formatted(schedule.getId()) + schedule.getStartDate() + " ~ " + schedule.getEndDate());
         }
 
         // 모임 2의 일정 초기 데이터
@@ -179,6 +177,7 @@ public class TestInitData {
                 .spot("강릉")
                 .club(club2)
                 .build();
+        schedule3.deactivate();
         scheduleRepository.save(schedule3);
 
         CheckList checkList = CheckList.builder()
