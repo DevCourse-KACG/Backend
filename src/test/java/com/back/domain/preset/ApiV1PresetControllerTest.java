@@ -3,8 +3,11 @@ package com.back.domain.preset;
 import com.back.domain.member.member.entity.Member;
 import com.back.domain.member.member.entity.MemberInfo;
 import com.back.domain.member.member.repository.MemberRepository;
+import com.back.domain.preset.preset.entity.Preset;
 import com.back.global.enums.CheckListItemCategory;
 import com.back.standard.util.Ut;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -14,11 +17,13 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Arrays;
 import java.util.Map;
 
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -63,7 +68,7 @@ public class ApiV1PresetControllerTest {
     jwtToken = Ut.jwt.toString(secretKey, expirationSeconds, claims);
   }
 
-  void presetCreate() throws Exception {
+  Long presetCreate() throws Exception {
     String requestBody = String.format("""
     {
       "presetItems": [
@@ -74,12 +79,17 @@ public class ApiV1PresetControllerTest {
     }
     """, CheckListItemCategory.PREPARATION.name(), CheckListItemCategory.ETC.name());
 
-    mockMvc.perform(
+    MvcResult result = mockMvc.perform(
         post("/api/v1/presets")
             .header("Authorization", "Bearer " + jwtToken)
             .contentType("application/json")
             .content(requestBody)
-    );
+    ).andReturn();
+    String responseContent = result.getResponse().getContentAsString();
+    ObjectMapper objectMapper = new ObjectMapper();
+    JsonNode jsonNode = objectMapper.readTree(responseContent);
+    Long presetId = jsonNode.get("data").get("id").asLong();
+    return presetId;
   }
 
   @Test
@@ -244,4 +254,126 @@ public class ApiV1PresetControllerTest {
         .andDo(print());
   }
 
+  @Test
+  @DisplayName("프리셋 세부 정보 조회")
+  void t7() throws Exception {
+    // 먼저 프리셋을 생성합니다.
+    long presetId = presetCreate();
+
+    // 생성된 프리셋의 ID를 사용하여 세부 정보를 조회합니다.
+    mockMvc.perform(
+        get("/api/v1/presets/" + presetId) // ID는 예시로 1을 사용합니다. 실제 테스트에서는 동적으로 가져와야 합니다.
+            .header("Authorization", "Bearer " + jwtToken)
+            .contentType("application/json")
+    )
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.code").value(200))
+        .andExpect(jsonPath("$.message").value("프리셋 조회 성공"))
+        .andExpect(jsonPath("$.data.name").value("My Custom Preset"))
+        .andExpect(jsonPath("$.data.presetItems[0].content").value("아이템 1"))
+        .andExpect(jsonPath("$.data.presetItems[0].category").value(CheckListItemCategory.PREPARATION.name()))
+        .andExpect(jsonPath("$.data.presetItems[1].content").value("아이템 2"))
+        .andExpect(jsonPath("$.data.presetItems[1].category").value(CheckListItemCategory.ETC.name()))
+        .andDo(print());
+  }
+
+  @Test
+  @DisplayName("프리셋 세부 정보 조회 실패 - 프리셋이 존재하지 않음")
+  void t8() throws Exception {
+    // 먼저 프리셋을 생성합니다.
+    presetCreate();
+
+    // 존재하지 않는 프리셋 ID로 조회 시도
+    mockMvc.perform(
+        get("/api/v1/presets/9999") // 존재하지 않는 ID
+            .header("Authorization", "Bearer " + jwtToken)
+            .contentType("application/json")
+    )
+        .andExpect(status().isNotFound())
+        .andExpect(jsonPath("$.code").value(404))
+        .andExpect(jsonPath("$.message").value("프리셋을 찾을 수 없습니다"))
+        .andDo(print());
+  }
+
+  @Test
+  @DisplayName("프리셋 세부 정보 조회 실패 - 권한 없는 프리셋")
+  void t9() throws Exception {
+    // 먼저 프리셋을 생성합니다.
+    long presetId = presetCreate();
+
+    // 다른 멤버로 JWT 토큰을 생성
+    Member anotherMember = Member.builder()
+        .nickname("다른 유저")
+        .password("password")
+        .build();
+    memberRepository.save(anotherMember);
+
+    String anotherJwtToken = Ut.jwt.toString(secretKey, expirationSeconds, Map.of("id", anotherMember.getId(), "nickname", anotherMember.getNickname()));
+
+    // 생성된 프리셋의 ID를 사용하여 세부 정보를 조회합니다.
+    mockMvc.perform(
+        get("/api/v1/presets/" + presetId) // ID는 예시로 1을 사용합니다. 실제 테스트에서는 동적으로 가져와야 합니다.
+            .header("Authorization", "Bearer " + anotherJwtToken)
+            .contentType("application/json")
+    )
+        .andExpect(status().isForbidden())
+        .andExpect(jsonPath("$.code").value(403))
+        .andExpect(jsonPath("$.message").value("권한 없는 프리셋"))
+        .andDo(print());
+  }
+
+  @Test
+  @DisplayName("프리셋 세부 정보 조회 실패 - JWT 토큰 없음")
+  void t10() throws Exception {
+    // 먼저 프리셋을 생성합니다.
+    presetCreate();
+    // JWT 토큰 없이 프리셋 세부 정보 조회 시도
+    mockMvc.perform(
+            get("/api/v1/presets/1") // ID는 예시로 1을 사용합니다. 실제 테스트에서는 동적으로 가져와야 합니다.
+                .contentType("application/json")
+        )
+        .andExpect(status().isNotFound())
+        .andExpect(jsonPath("$.code").value(404))
+        .andExpect(jsonPath("$.message").value("AccessToken을 찾을 수 없습니다"))
+        .andDo(print());
+  }
+
+  @Test
+  @DisplayName("프리셋 세부 정보 조회 실패 - JWT 토큰 만료")
+  void t11() throws Exception {
+    // 먼저 프리셋을 생성합니다.
+    presetCreate();
+
+    // 만료된 JWT 토큰 생성
+    String expiredJwtToken = Ut.jwt.toString(secretKey, -1, Map.of("id", member.getId(), "nickname", member.getNickname()));
+
+    // 생성된 프리셋의 ID를 사용하여 세부 정보를 조회합니다.
+    mockMvc.perform(
+        get("/api/v1/presets/1") // ID는 예시로 1을 사용합니다. 실제 테스트에서는 동적으로 가져와야 합니다.
+            .header("Authorization", "Bearer " + expiredJwtToken)
+            .contentType("application/json")
+    )
+        .andExpect(status().is(499))
+        .andExpect(jsonPath("$.code").value(499))
+        .andExpect(jsonPath("$.message").value("AccessToken 만료"))
+        .andDo(print());
+  }
+
+  @Test
+  @DisplayName("프리셋 세부 정보 조회 실패 - 잘못된 요청 형식")
+  void t12() throws Exception {
+    // 먼저 프리셋을 생성합니다.
+    presetCreate();
+
+    // 잘못된 요청 형식으로 조회 시도
+    mockMvc.perform(
+        get("/api/v1/presets/invalid-id") // 잘못된 ID 형식
+            .header("Authorization", "Bearer " + jwtToken)
+            .contentType("application/json")
+    )
+        .andExpect(status().isBadRequest())
+        .andExpect(jsonPath("$.code").value(400))
+        .andExpect(jsonPath("$.message").value("잘못된 요청 형식입니다."))
+        .andDo(print());
+  }
 }
