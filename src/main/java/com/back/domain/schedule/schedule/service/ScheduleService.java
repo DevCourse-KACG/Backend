@@ -106,6 +106,7 @@ public class ScheduleService {
      * 일정 삭제
      * @param schedule
      */
+    @Transactional
     public void deleteSchedule(Schedule schedule) {
         if (schedule.canDelete()) {
             // 일정 삭제 - 체크리스트 없을 시

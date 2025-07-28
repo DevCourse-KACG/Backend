@@ -1,6 +1,7 @@
 package com.back.global.initData;
 
 import com.back.domain.checkList.checkList.entity.CheckList;
+import com.back.domain.checkList.checkList.repository.CheckListRepository;
 import com.back.domain.club.club.entity.Club;
 import com.back.domain.club.club.repository.ClubRepository;
 import com.back.domain.club.clubMember.entity.ClubMember;
@@ -39,6 +40,7 @@ public class TestInitData {
     private final ClubRepository clubRepository;
     private final ClubMemberRepository clubMemberRepository;
     private final ScheduleRepository scheduleRepository;
+    private final CheckListRepository checkListRepository;
 
     @Autowired
     @Lazy
@@ -184,5 +186,6 @@ public class TestInitData {
                 .isActive(true)
                 .build();
         checkList.setSchedule(schedule2);
+        checkListRepository.save(checkList);
     }
 }
