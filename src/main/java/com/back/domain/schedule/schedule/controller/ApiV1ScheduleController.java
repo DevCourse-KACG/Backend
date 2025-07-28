@@ -15,7 +15,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("/schedules")
+@RequestMapping("/api/v1/schedules")
 @RequiredArgsConstructor
 @Tag(name = "ApiV1ScheduleController", description = "일정 컨트롤러")
 public class ApiV1ScheduleController {
