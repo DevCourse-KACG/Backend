@@ -6,9 +6,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("/api/v1/groups")
+@RequestMapping("/api/v1/clubs")
 @RequiredArgsConstructor
-@Tag(name = "GroupController", description = "그룹 관련 API")
-public class ApiV1GroupController {
+@Tag(name = "ClubController", description = "클럽 관련 API")
+public class ApiV1ClubController {
 
 }

@@ -34,7 +34,7 @@ class ApiV1ClubControllerTest {
         // when
         ResultActions resultActions = mvc
                 .perform(
-                        post("/api/v1/groups")
+                        post("/api/v1/clubs")
                                 .content("""
                                         {
                                             "name": "테스트 그룹",
@@ -47,7 +47,7 @@ class ApiV1ClubControllerTest {
                                             "endDate" : "2023-10-31",
                                             "isPublic": true,
                                             "leaderId": 1,
-                                            "groupMembers" : []
+                                            "clubMembers" : []
                                         }
                                         """.stripIndent())
                 )
@@ -55,7 +55,7 @@ class ApiV1ClubControllerTest {
 
         // then
         resultActions
-                .andExpect(handler().handlerType(ApiV1GroupController.class))
+                .andExpect(handler().handlerType(ApiV1ClubController.class))
                 .andExpect(handler().methodName("createGroup"))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.code").value(201))
@@ -64,7 +64,7 @@ class ApiV1ClubControllerTest {
                 .andExpect(jsonPath("$.data.leader_id").value(1));
 
         // 추가 검증: 그룹이 실제로 생성되었는지 확인
-        Club club = clubService.findById(1L);
+        Club club = clubService.getLastCreatedClub();
 
         assertThat(club.getName()).isEqualTo("테스트 그룹");
         assertThat(club.getBio()).isEqualTo("테스트 그룹 설명");
