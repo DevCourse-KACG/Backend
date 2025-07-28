@@ -1,5 +1,6 @@
 package com.back.domain.schedule.schedule.entity;
 
+import com.back.domain.checkList.checkList.entity.CheckList;
 import com.back.domain.club.club.entity.Club;
 import jakarta.persistence.*;
 import jdk.jfr.Description;
@@ -36,8 +37,15 @@ public class Schedule {
     @Description("일정 장소")
     private String spot; //TODO : 나중에 지도 연동하면 좌표로 변경
 
+    @Description("활성화 여부")
+    private boolean isActive = true;
+
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     private Club club; // 그룹 일정
+
+    @Setter
+    @OneToOne(mappedBy = "schedule", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    private CheckList checkList;
 
     // 일정 수정
     public void modify(String title, String content, LocalDateTime startDate, LocalDateTime endDate, String spot) {
@@ -46,5 +54,15 @@ public class Schedule {
         this.startDate = startDate;
         this.endDate = endDate;
         this.spot = spot;
+    }
+
+    // 일정 비활성화
+    public void deactivate() {
+        this.isActive = false;
+    }
+
+    // 일정 db 삭제 가능 여부
+    public boolean canDelete() {
+        return checkList == null || !checkList.isActive();
     }
 }
