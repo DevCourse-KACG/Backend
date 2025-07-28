@@ -14,6 +14,8 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.UUID;
+
 @Service
 @RequiredArgsConstructor
 @Transactional
@@ -22,10 +24,12 @@ public class MemberService {
     private final MemberInfoRepository memberInfoRepository;
     private final ApiKeyService apiKeyService;
     private final AuthService authService;
+    private final BCryptPasswordEncoder bCryptPasswordEncoder;
 
     public MemberRegisterResponse register(MemberDto dto) {
         validateDuplicate(dto);
-        Member member = createAndSaveMember(dto);
+        String tag = createTag(dto);
+        Member member = createAndSaveMember(dto, tag);
         String apiKey = apiKeyService.generateApiKey();
         MemberInfo memberInfo = createAndSaveMemberInfo(dto, member, apiKey);
 
@@ -36,17 +40,32 @@ public class MemberService {
 
 
     private void validateDuplicate(MemberDto dto) {
-        if (memberInfoRepository.findByEmail(dto.email()).isPresent()) {
+        String email = dto.email().toLowerCase();
+        if (memberInfoRepository.findByEmail(email).isPresent()) {
             throw new ServiceException(400, "이미 사용 중인 이메일입니다.");
         }
     }
 
-    private Member createAndSaveMember(MemberDto dto) {
-        String hashedPassword = new BCryptPasswordEncoder().encode(dto.password());
+    private String createTag(MemberDto dto) {
+        if (memberRepository.findByNickname(dto.nickname()).isPresent()) {
+            String tag;
+            do {
+                tag = UUID.randomUUID().toString().substring(0, 6);
+            } while (memberRepository.existsByNicknameAndTag(dto.nickname(), tag));
+            return tag;
+        }
+        return null;
+
+    }
+
+    private Member createAndSaveMember(MemberDto dto, String tag) {
+        String hashedPassword = bCryptPasswordEncoder.encode(dto.password());
 
         Member member = Member.builder()
                 .nickname(dto.nickname())
                 .password(hashedPassword)
+                .tag(tag)
+                .memberType("회원")
                 .build();
 
         return memberRepository.save(member);

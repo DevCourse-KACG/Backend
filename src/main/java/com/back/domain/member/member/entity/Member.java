@@ -31,6 +31,12 @@ public class Member {
   @Description("비밀번호")
   private String password;
 
+  @Description("회원, 비회원 여부")
+  private String memberType;
+
+  @Description("중복 닉네임 구분용")
+  private String tag;
+
   @OneToOne(cascade = CascadeType.ALL, fetch = FetchType.LAZY, mappedBy = "member")
   private MemberInfo memberInfo; // 상세 정보 (회원 전용)
 
@@ -47,10 +53,12 @@ public class Member {
   private List<ClubMember> clubMembers; // 소속 그룹 목록
 
   @Builder
-  public Member(MemberInfo memberInfo, String nickname, String password) {
+  public Member(MemberInfo memberInfo, String nickname, String password,  String memberType, String tag) {
     this.memberInfo = memberInfo;
     this.nickname = nickname;
     this.password = password;
+    this.memberType = memberType;
+    this.tag = tag;
   }
 
   public void setMemberInfo(MemberInfo memberInfo) {
