@@ -61,7 +61,7 @@ public class ScheduleService {
                 .orElseThrow(() -> new NoSuchElementException("%d번 모임은 존재하지 않습니다.".formatted(reqBody.clubId())));
 
         // 날짜 유효성 검증
-        checkDate(reqBody.startDate(), reqBody.endDate());
+        validateDate(reqBody.startDate(), reqBody.endDate());
 
         // 일정 생성
         Schedule schedule = Schedule.builder()
@@ -84,16 +84,17 @@ public class ScheduleService {
     @Transactional
     public void modifySchedule(Schedule schedule, ScheduleUpdateReqBody reqBody) {
         // 날짜 유효성 검증
-        checkDate(reqBody.startDate(), reqBody.endDate());
+        validateDate(reqBody.startDate(), reqBody.endDate());
 
         // 일정 수정
         schedule.modify(reqBody.title(), reqBody.content(), reqBody.startDate(), reqBody.endDate(), reqBody.spot());
     }
 
-    private static void checkDate(LocalDateTime startDate, LocalDateTime endDate) {
+    private static void validateDate(LocalDateTime startDate, LocalDateTime endDate) {
         if (startDate.isAfter(endDate)) {
             throw new ServiceException(400, "시작일은 종료일보다 이전이어야 합니다.");
         }
     }
+
 
 }
