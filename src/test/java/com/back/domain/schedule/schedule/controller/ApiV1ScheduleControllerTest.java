@@ -15,6 +15,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.transaction.annotation.Transactional;
 
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -31,6 +32,31 @@ class ApiV1ScheduleControllerTest {
     private ScheduleService scheduleService;
     @Autowired
     private ParameterObjectNamingStrategyCustomizer parameterObjectNamingStrategyCustomizer;
+
+    @Test
+    @DisplayName("일정 조회")
+    void tr1() throws Exception {
+        Long scheduleId = 1L;
+
+        ResultActions resultActions = mockMvc
+                .perform(get("/api/v1/schedules/" + scheduleId))
+                .andDo(print());
+
+        Schedule schedule = scheduleService.getScheduleById(scheduleId);
+
+        resultActions
+                .andExpect(handler().handlerType(ApiV1ScheduleController.class))
+                .andExpect(handler().methodName("getSchedule"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value(200))
+                .andExpect(jsonPath("$.message").value("%s번 일정이 조회되었습니다.".formatted(scheduleId)))
+                .andExpect(jsonPath("$.data.id").value(schedule.getId()))
+                .andExpect(jsonPath("$.data.title").value(schedule.getTitle()))
+                .andExpect(jsonPath("$.data.content").value(schedule.getContent()))
+                .andExpect(jsonPath("$.data.startDate").value(Matchers.startsWith(schedule.getStartDate().toString().substring(0, 16))))
+                .andExpect(jsonPath("$.data.endDate").value(Matchers.startsWith(schedule.getEndDate().toString().substring(0, 16))))
+                .andExpect(jsonPath("$.data.spot").value(schedule.getSpot()));
+    }
 
     @Test
     @DisplayName("일정 생성")

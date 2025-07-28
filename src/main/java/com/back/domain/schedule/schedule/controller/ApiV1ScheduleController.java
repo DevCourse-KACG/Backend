@@ -9,10 +9,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/v1/schedules")
@@ -20,6 +17,19 @@ import org.springframework.web.bind.annotation.RestController;
 @Tag(name = "ApiV1ScheduleController", description = "일정 컨트롤러")
 public class ApiV1ScheduleController {
     private final ScheduleService scheduleService;
+
+    @GetMapping("/{scheduleId}")
+    @Operation(summary = "일정 조회")
+    public RsData<ScheduleDto> getSchedule(
+            @PathVariable Long scheduleId
+    ) {
+        Schedule schedule = scheduleService.getScheduleById(scheduleId);
+        return RsData.of(
+                200,
+                "%s번 일정이 조회되었습니다.".formatted(scheduleId),
+                new ScheduleDto(schedule)
+        );
+    }
 
     @PostMapping
     @Operation(summary = "일정 생성")
