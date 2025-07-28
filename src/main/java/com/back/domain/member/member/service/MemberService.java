@@ -104,15 +104,15 @@ public class MemberService {
         return new MemberAuthResponse(apiKey, accessToken);
     }
 
-    public Member validateUserLogin(Optional<MemberInfo> memberInfo) {
+    private Member validateUserLogin(Optional<MemberInfo> memberInfo) {
         if (memberInfo.isEmpty()) {
-            throw new ServiceException(400, "존재하지 않는 이메일입니다.");
+            throw new ServiceException(400, "이메일과 비밀번호가 맞지 않습니다.");
         }
 
         return memberInfo.get().getMember();
     }
 
-    public void validateRightPassword(String password, Member member) {
+    private void validateRightPassword(String password, Member member) {
         PasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
 
         if (!passwordEncoder.matches(password, member.getPassword())) {

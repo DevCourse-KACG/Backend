@@ -177,7 +177,7 @@ public class ApiV1MemberControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(requestBody))
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.message").value("존재하지 않는 이메일입니다."))
+                .andExpect(jsonPath("$.message").value("이메일과 비밀번호가 맞지 않습니다."))
                 .andExpect(jsonPath("$.code").value(400))
                 .andExpect(jsonPath("$.data").doesNotExist());
 
