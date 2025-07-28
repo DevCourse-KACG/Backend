@@ -2,14 +2,12 @@ package com.back.global.initData;
 
 import com.back.domain.club.club.entity.Club;
 import com.back.domain.club.club.repository.ClubRepository;
-import com.back.domain.club.clubMember.entity.ClubMember;
 import com.back.domain.club.clubMember.repository.ClubMemberRepository;
 import com.back.domain.member.member.entity.Member;
 import com.back.domain.member.member.repository.MemberInfoRepository;
 import com.back.domain.member.member.repository.MemberRepository;
 import com.back.domain.schedule.schedule.entity.Schedule;
 import com.back.domain.schedule.schedule.repository.ScheduleRepository;
-import com.back.global.enums.ClubMemberRole;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.ApplicationRunner;
@@ -88,50 +86,50 @@ public class TestInitData {
         */
 
         // 장기 공개 모임 - 모집 중
-        Club club1 = Club.builder()
-                .name("산책 모임")
-                .category("산책")
-                .mainSpot("서울")
-                .maximumCapacity(25)
-                .recruitingStatus(true)
-                .eventType("장기")
-                .startDate(LocalDateTime.parse("2025-07-05T10:00:00"))
-                .endDate(LocalDateTime.parse("2025-08-30T15:00:00"))
-                .images("img2")
-                .isPublic(true)
-                .leaderId(member.getId())
-                .stats(true).build();
-        clubRepository.save(club1);
-
-        ClubMember clubMember1 = ClubMember.builder()
-                .member(member)
-                .role(ClubMemberRole.HOST)
-                .club(club1)
-                .build();
-        clubMemberRepository.save(clubMember1);
-
-        // 장기 비공개 모임 - 모집 마감
-        Club club2 = Club.builder()
-                .name("친구 모임")
-                .category("친목")
-                .mainSpot("강원도")
-                .maximumCapacity(4)
-                .recruitingStatus(false)
-                .eventType("장기")
-                .startDate(LocalDateTime.parse("2025-05-01T00:00:00"))
-                .endDate(LocalDateTime.parse("2026-12-31T23:59:59"))
-                .images("img1")
-                .isPublic(false)
-                .leaderId(member.getId())
-                .stats(true).build();
-        clubRepository.save(club2);
-
-        ClubMember clubMember2 = ClubMember.builder()
-                .member(member)
-                .role(ClubMemberRole.HOST)
-                .club(club2)
-                .build();
-        clubMemberRepository.save(clubMember2);
+//        Club club1 = Club.builder()
+//                .name("산책 모임")
+//                .category("산책")
+//                .mainSpot("서울")
+//                .maximumCapacity(25)
+//                .recruitingStatus(true)
+//                .eventType("장기")
+//                .startDate(LocalDateTime.parse("2025-07-05T10:00:00"))
+//                .endDate(LocalDateTime.parse("2025-08-30T15:00:00"))
+//                .images("img2")
+//                .isPublic(true)
+//                .leaderId(member.getId())
+//                .stats(true).build();
+//        clubRepository.save(club1);
+//
+//        ClubMember clubMember1 = ClubMember.builder()
+//                .member(member)
+//                .role(ClubMemberRole.HOST)
+//                .club(club1)
+//                .build();
+//        clubMemberRepository.save(clubMember1);
+//
+//        // 장기 비공개 모임 - 모집 마감
+//        Club club2 = Club.builder()
+//                .name("친구 모임")
+//                .category("친목")
+//                .mainSpot("강원도")
+//                .maximumCapacity(4)
+//                .recruitingStatus(false)
+//                .eventType("장기")
+//                .startDate(LocalDateTime.parse("2025-05-01T00:00:00"))
+//                .endDate(LocalDateTime.parse("2026-12-31T23:59:59"))
+//                .images("img1")
+//                .isPublic(false)
+//                .leaderId(member.getId())
+//                .stats(true).build();
+//        clubRepository.save(club2);
+//
+//        ClubMember clubMember2 = ClubMember.builder()
+//                .member(member)
+//                .role(ClubMemberRole.HOST)
+//                .club(club2)
+//                .build();
+//        clubMemberRepository.save(clubMember2);
     }
 
     /**

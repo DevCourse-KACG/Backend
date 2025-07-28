@@ -16,7 +16,7 @@ import java.io.IOException;
 public class S3Service {
     private final S3Client s3Client;
 
-    @Value("${cloud.aws.s3.bucket}")
+    @Value("${spring.cloud.aws.s3.bucket}")
     private String bucket;
 
     /**
@@ -41,6 +41,4 @@ public class S3Service {
         // 3. 업로드된 파일의 URL 주소 반환
         return s3Client.utilities().getUrl(builder -> builder.bucket(bucket).key(fileName)).toString();
     }
-
-
 }

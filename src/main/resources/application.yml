@@ -4,7 +4,7 @@ spring:
   profiles:
     active: dev
   config:
-    import: application-secret.yml
+    import: classpath:application-secret.yml
   jpa:
     hibernate:
       ddl-auto: create     # DB 초기화 전략 (none, create, create-drop, update, validate)
