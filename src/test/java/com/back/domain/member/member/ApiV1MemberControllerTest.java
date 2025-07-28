@@ -13,7 +13,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
-import support.MemberFixture;
+import com.back.domain.member.member.support.MemberFixture;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -25,6 +25,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @Transactional
 @AutoConfigureMockMvc
 public class ApiV1MemberControllerTest {
+    @Autowired
     private MemberFixture memberFixture;
 
     @Autowired
@@ -143,11 +144,11 @@ public class ApiV1MemberControllerTest {
     @Test
     @DisplayName("로그인 - 정상 기입")
     public void loginSuccess() throws Exception {
-        memberFixture.createMember("유저1");
+        memberFixture.createMember(1);
 
         String requestBody = """
         {
-            "email": "test@example.com",
+            "email": "test1@example.com",
             "password": "password123"
         }
         """;
@@ -156,7 +157,7 @@ public class ApiV1MemberControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(requestBody))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.apiKey").isNotEmpty())
-                .andExpect(jsonPath("$.accessToken").isNotEmpty());
+                .andExpect(jsonPath("$.data.apikey").isNotEmpty())
+                .andExpect(jsonPath("$.data.accessToken").isNotEmpty());
     }
 }
