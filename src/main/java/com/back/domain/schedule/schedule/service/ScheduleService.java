@@ -4,6 +4,7 @@ import com.back.domain.checkList.checkList.repository.CheckListRepository;
 import com.back.domain.club.club.entity.Club;
 import com.back.domain.club.club.repository.ClubRepository;
 import com.back.domain.schedule.schedule.dto.ScheduleCreateReqBody;
+import com.back.domain.schedule.schedule.dto.ScheduleUpdateReqBody;
 import com.back.domain.schedule.schedule.entity.Schedule;
 import com.back.domain.schedule.schedule.repository.ScheduleRepository;
 import lombok.RequiredArgsConstructor;
@@ -68,5 +69,16 @@ public class ScheduleService {
                 .build();
 
         return scheduleRepository.save(schedule);
+    }
+
+    /**
+     * 일정 수정
+     * @param schedule
+     * @param reqBody
+     */
+    @Transactional
+    public void modifySchedule(Schedule schedule, ScheduleUpdateReqBody reqBody) {
+        // 일정 수정
+        schedule.modify(reqBody.title(), reqBody.content(), reqBody.startDate(), reqBody.endDate(), reqBody.spot());
     }
 }

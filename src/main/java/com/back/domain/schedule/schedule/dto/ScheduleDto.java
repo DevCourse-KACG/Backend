@@ -10,7 +10,8 @@ public record ScheduleDto (
         String content,
         LocalDateTime startDate,
         LocalDateTime endDate,
-        String spot
+        String spot,
+        Long groupId
 ) {
     public ScheduleDto(Schedule schedule) {
         this(
@@ -19,7 +20,8 @@ public record ScheduleDto (
                 schedule.getContent(),
                 schedule.getStartDate(),
                 schedule.getEndDate(),
-                schedule.getSpot()
+                schedule.getSpot(),
+                schedule.getId()
         );
     }
 }
