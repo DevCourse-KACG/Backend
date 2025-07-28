@@ -4,6 +4,7 @@ import com.back.domain.checkList.checkList.entity.CheckList;
 import com.back.domain.checkList.checkList.repository.CheckListRepository;
 import com.back.domain.club.club.entity.Club;
 import com.back.domain.club.club.repository.ClubRepository;
+import com.back.domain.club.clubMember.entity.ClubMember;
 import com.back.domain.club.clubMember.repository.ClubMemberRepository;
 import com.back.domain.member.member.entity.Member;
 import com.back.domain.member.member.entity.MemberInfo;
