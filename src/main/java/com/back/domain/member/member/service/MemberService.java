@@ -10,7 +10,10 @@ import com.back.domain.member.member.entity.Member;
 import com.back.domain.member.member.entity.MemberInfo;
 import com.back.domain.member.member.repository.MemberInfoRepository;
 import com.back.domain.member.member.repository.MemberRepository;
+import com.back.global.config.jwt.JwtProperties;
 import com.back.global.exception.ServiceException;
+import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.security.Keys;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -18,6 +21,8 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import javax.crypto.SecretKey;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -29,6 +34,7 @@ public class MemberService {
     private final MemberInfoRepository memberInfoRepository;
     private final ApiKeyService apiKeyService;
     private final AuthService authService;
+    private final JwtProperties jwtProperties;
 
     public MemberAuthResponse register(MemberDto dto) {
         validateDuplicate(dto);
@@ -118,5 +124,13 @@ public class MemberService {
         if (!passwordEncoder.matches(password, member.getPassword())) {
             throw new ServiceException(400, "이메일과 비밀번호가 맞지 않습니다.");
         }
+    }
+
+    public Map<String, Object> payload(String accessToken) {
+        SecretKey secretKey = Keys.hmacShaKeyFor(jwtProperties.getJwt().getSecretKey().getBytes());
+        return Jwts.parser()
+                .verifyWith(secretKey)
+            .build()
+                .parseSignedClaims(accessToken).getPayload();
     }
 }
