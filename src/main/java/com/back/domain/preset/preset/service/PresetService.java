@@ -89,7 +89,7 @@ public class PresetService {
     Preset preset = otnPreset.get();
 
     // 프리셋의 소유자와 JWT에서 추출한 멤버 ID가 일치하지 않는 경우 RsData 반환
-    if (preset.getOwner().getId() != memberId) return RsData.of(403, "권한 없는 프리셋");
+    if (!preset.getOwner().getId().equals(memberId)) return RsData.of(403, "권한 없는 프리셋");
 
     // 프리셋이 존재하는 경우 프리셋 DTO로 변환
     PresetDto presetDto = new PresetDto(preset);
