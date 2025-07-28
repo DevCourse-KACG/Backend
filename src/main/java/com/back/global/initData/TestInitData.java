@@ -44,8 +44,8 @@ public class TestInitData {
             self.work2();
             self.work3();
 
-            self.initDataForSchedule();
-            self.scheduleInitData();
+            //self.initDataForSchedule();
+            //self.scheduleInitData();
         };
     }
 
