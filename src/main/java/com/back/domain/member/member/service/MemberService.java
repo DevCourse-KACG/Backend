@@ -2,6 +2,7 @@ package com.back.domain.member.member.service;
 
 import com.back.domain.api.service.ApiKeyService;
 import com.back.domain.auth.service.AuthService;
+import com.back.domain.member.member.MemberType;
 import com.back.domain.member.member.dto.MemberDto;
 import com.back.domain.member.member.dto.MemberRegisterResponse;
 import com.back.domain.member.member.entity.Member;
@@ -65,7 +66,7 @@ public class MemberService {
                 .nickname(dto.nickname())
                 .password(hashedPassword)
                 .tag(tag)
-                .memberType("회원")
+                .memberType(MemberType.MEMBER)
                 .build();
 
         return memberRepository.save(member);

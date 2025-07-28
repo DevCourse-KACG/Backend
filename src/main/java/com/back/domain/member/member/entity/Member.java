@@ -3,6 +3,7 @@ package com.back.domain.member.member.entity;
 
 import com.back.domain.club.clubMember.entity.ClubMember;
 import com.back.domain.member.friend.entity.Friend;
+import com.back.domain.member.member.MemberType;
 import com.back.domain.preset.preset.entity.Preset;
 import jakarta.persistence.*;
 import jdk.jfr.Description;
@@ -32,7 +33,8 @@ public class Member {
   private String password;
 
   @Description("회원, 비회원 여부")
-  private String memberType;
+  @Enumerated(EnumType.STRING)
+  private MemberType memberType;
 
   @Description("중복 닉네임 구분용")
   private String tag;
@@ -53,7 +55,7 @@ public class Member {
   private List<ClubMember> clubMembers; // 소속 그룹 목록
 
   @Builder
-  public Member(MemberInfo memberInfo, String nickname, String password,  String memberType, String tag) {
+  public Member(MemberInfo memberInfo, String nickname, String password, MemberType memberType, String tag) {
     this.memberInfo = memberInfo;
     this.nickname = nickname;
     this.password = password;

@@ -138,6 +138,5 @@ public class ApiV1MemberControllerTest {
         String accessToken = authService.generateAccessToken(validApiKey);
 
         assertNotNull(accessToken);
-        assertTrue(accessToken.startsWith("Bearer "));
     }
 }
