@@ -9,7 +9,9 @@ import com.back.domain.member.member.repository.MemberInfoRepository;
 import com.back.domain.member.member.repository.MemberRepository;
 import com.back.domain.schedule.schedule.entity.Schedule;
 import com.back.domain.schedule.schedule.repository.ScheduleRepository;
+import com.back.global.enums.ClubCategory;
 import com.back.global.enums.ClubMemberRole;
+import com.back.global.enums.EventType;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.ApplicationRunner;
@@ -19,6 +21,7 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 
@@ -90,17 +93,16 @@ public class TestInitData {
         // 장기 공개 모임 - 모집 중
         Club club1 = Club.builder()
                 .name("산책 모임")
-                .category("산책")
+                .category(ClubCategory.SPORTS)
                 .mainSpot("서울")
                 .maximumCapacity(25)
                 .recruitingStatus(true)
-                .eventType("장기")
-                .startDate(LocalDateTime.parse("2025-07-05T10:00:00"))
-                .endDate(LocalDateTime.parse("2025-08-30T15:00:00"))
-                .images("img2")
+                .eventType(EventType.LONG_TERM)
+                .startDate(LocalDate.parse("2025-07-05T10:00:00"))
+                .endDate(LocalDate.parse("2025-08-30T15:00:00"))
                 .isPublic(true)
                 .leaderId(member.getId())
-                .stats(true).build();
+                .state(true).build();
         clubRepository.save(club1);
 
         ClubMember clubMember1 = ClubMember.builder()
@@ -113,17 +115,16 @@ public class TestInitData {
         // 장기 비공개 모임 - 모집 마감
         Club club2 = Club.builder()
                 .name("친구 모임")
-                .category("친목")
+                .category(ClubCategory.TRAVEL)
                 .mainSpot("강원도")
                 .maximumCapacity(4)
                 .recruitingStatus(false)
-                .eventType("장기")
-                .startDate(LocalDateTime.parse("2025-05-01T00:00:00"))
-                .endDate(LocalDateTime.parse("2026-12-31T23:59:59"))
-                .images("img1")
+                .eventType(EventType.LONG_TERM)
+                .startDate(LocalDate.parse("2025-05-01T00:00:00"))
+                .endDate(LocalDate.parse("2026-12-31T23:59:59"))
                 .isPublic(false)
                 .leaderId(member.getId())
-                .stats(true).build();
+                .state(true).build();
         clubRepository.save(club2);
 
         ClubMember clubMember2 = ClubMember.builder()
