@@ -21,13 +21,13 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/v1/presets")
 @RequiredArgsConstructor
-@Tag(name="PresetController", description="프리셋 API V1 컨트롤러")
+@Tag(name="ApiV1PresetController", description="프리셋 API V1 컨트롤러")
 public class ApiV1PresetController {
   private final PresetService presetService;
 
   @PostMapping
-  @Operation(summary = "프리셋 생성")
   @Transactional
+  @Operation(summary = "프리셋 생성")
   public ResponseEntity<RsData<PresetDto>> write(@Valid @RequestBody PresetWriteReqDto presetWriteReqDto) {
     RsData<PresetDto> presetDto = presetService.write(presetWriteReqDto);
 

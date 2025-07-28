@@ -8,16 +8,14 @@ public record PresetItemDto(
     Long id,
     String content,
     CheckListItemCategory category,
-    int sequence,
-    Preset preset
+    int sequence
 ) {
   public PresetItemDto(PresetItem presetItem) {
     this(
         presetItem.getId(),
         presetItem.getContent(),
         presetItem.getCategory(),
-        presetItem.getSequence(),
-        presetItem.getPreset()
+        presetItem.getSequence()
     );
   }
 }
