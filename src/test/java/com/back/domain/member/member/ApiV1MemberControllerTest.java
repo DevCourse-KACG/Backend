@@ -160,4 +160,26 @@ public class ApiV1MemberControllerTest {
                 .andExpect(jsonPath("$.data.apikey").isNotEmpty())
                 .andExpect(jsonPath("$.data.accessToken").isNotEmpty());
     }
+
+    @Test
+    @DisplayName("로그인 - 없는 이메일 기입")
+    public void loginNonexistentEmail() throws Exception {
+        memberFixture.createMember(1);
+
+        String requestBody = """
+        {
+            "email": "wrong@example.com",
+            "password": "password123"
+        }
+        """;
+
+        mockMvc.perform(post("/api/v1/members/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(requestBody))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value("존재하지 않는 이메일입니다."))
+                .andExpect(jsonPath("$.code").value(400))
+                .andExpect(jsonPath("$.data").doesNotExist());
+
+    }
 }

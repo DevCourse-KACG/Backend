@@ -106,7 +106,7 @@ public class MemberService {
 
     public Member validateUserLogin(Optional<MemberInfo> memberInfo) {
         if (memberInfo.isEmpty()) {
-            throw new ServiceException(400, "해당 이메일의 가입 정보가 없습니다.");
+            throw new ServiceException(400, "존재하지 않는 이메일입니다.");
         }
 
         return memberInfo.get().getMember();
