@@ -135,8 +135,19 @@ public class GlobalExceptionHandler {
     // MethodArgumentTypeMismatchException: 요청 파라미터의 타입이 일치하지 않을 때 발생하는 예외
     @ExceptionHandler(MethodArgumentTypeMismatchException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
-    public RsData<Void> handleMethodArgumentTypeMismatch(MethodArgumentTypeMismatchException e) {
-      return RsData.of(400, "잘못된 요청 타입입니다.");
+    public ResponseEntity<RsData<Void>> handleMethodArgumentTypeMismatch(MethodArgumentTypeMismatchException ex) {
+      String message = String.format("파라미터 '%s'의 타입이 올바르지 않습니다. 요구되는 타입: %s",
+        ex.getName(),
+        ex.getRequiredType() != null ? ex.getRequiredType().getSimpleName() : "알 수 없음");
+
+      return new ResponseEntity<>(
+          RsData.of(
+              400,
+              message
+          ),
+          BAD_REQUEST
+      );
+    );
     }
 
 }
