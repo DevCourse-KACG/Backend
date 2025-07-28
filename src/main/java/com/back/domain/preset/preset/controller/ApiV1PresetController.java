@@ -9,12 +9,10 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import lombok.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
@@ -30,6 +28,14 @@ public class ApiV1PresetController {
   @Operation(summary = "프리셋 생성")
   public ResponseEntity<RsData<PresetDto>> write(@Valid @RequestBody PresetWriteReqDto presetWriteReqDto) {
     RsData<PresetDto> presetDto = presetService.write(presetWriteReqDto);
+
+    return ResponseEntity.status(presetDto.code()).body(presetDto);
+  }
+
+  @GetMapping("/{presetId}")
+  @Operation(summary = "프리셋 조회")
+  public ResponseEntity<RsData<PresetDto>> getPreset(@PathVariable Long presetId) {
+    RsData<PresetDto> presetDto = presetService.getPreset(presetId);
 
     return ResponseEntity.status(presetDto.code()).body(presetDto);
   }

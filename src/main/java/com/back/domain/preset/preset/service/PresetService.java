@@ -70,6 +70,33 @@ public class PresetService {
     return RsData.of(201, "프리셋 생성 성공", presetDto);
   }
 
+  public RsData<PresetDto> getPreset(Long presetId) {
+    RsData<Map<String, Object>> jwtRsData = getJwtData();
+
+    // JWT 데이터가 유효하지 않은 경우 RsData 반환
+    if (jwtRsData.code() != 200) {
+      return RsData.of(jwtRsData.code(), jwtRsData.message());
+    }
+    // JWT에서 멤버 ID 추출
+    Map<String, Object> jwtData = jwtRsData.data();
+    long memberId = ((Number) jwtData.get("id")).longValue();
+
+    // 프리셋 ID로 프리셋 조회
+    Optional<Preset> otnPreset = presetRepository.findById(presetId);
+
+    // 프리셋이 존재하지 않는 경우 RsData 반환
+    if (otnPreset.isEmpty()) return RsData.of(404, "프리셋을 찾을 수 없습니다");
+    Preset preset = otnPreset.get();
+
+    // 프리셋의 소유자와 JWT에서 추출한 멤버 ID가 일치하지 않는 경우 RsData 반환
+    if (!preset.getOwner().getId().equals(memberId)) return RsData.of(403, "권한 없는 프리셋");
+
+    // 프리셋이 존재하는 경우 프리셋 DTO로 변환
+    PresetDto presetDto = new PresetDto(preset);
+
+    return RsData.of(200, "프리셋 조회 성공", presetDto);
+  }
+
   RsData<Map<String, Object>> getJwtData() {
     // JWT 토큰을 헤더에서 가져오기
     String jwtToken = rq.getHeader("Authorization", null);
