@@ -14,4 +14,13 @@ public enum ClubMemberRole {
     public String getDescription() {
         return description;
     }
+
+    public static ClubMemberRole fromString(String role) {
+        for (ClubMemberRole clubMemberRole : ClubMemberRole.values()) {
+            if (clubMemberRole.name().equalsIgnoreCase(role)) {
+                return clubMemberRole;
+            }
+        }
+        throw new IllegalArgumentException("Unknown role: " + role);
+    }
 }

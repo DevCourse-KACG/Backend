@@ -8,7 +8,7 @@ import jakarta.persistence.*;
 import jdk.jfr.Description;
 import lombok.*;
 
-import java.time.LocalDateTime;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -58,11 +58,11 @@ public class Club {
 
   @Description("시작 날짜")
   @Column(columnDefinition = "TIMESTAMP")
-  private LocalDateTime startDate;
+  private LocalDate startDate;
 
   @Description("종료 날짜")
   @Column(columnDefinition = "TIMESTAMP")
-  private LocalDateTime endDate;
+  private LocalDate endDate;
 
   @Description("클럽 이미지 URL")
   @Column(length = 256)

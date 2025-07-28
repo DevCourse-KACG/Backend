@@ -47,12 +47,12 @@ public class ClubService {
         Club club = Club.builder()
                 .name(reqBody.name())
                 .bio(reqBody.bio())
-                .category(ClubCategory.valueOf(reqBody.category().toUpperCase()))
+                .category(ClubCategory.fromString(reqBody.category().toUpperCase()))
                 .mainSpot(reqBody.mainSpot())
                 .maximumCapacity(reqBody.maximumCapacity())
-                .eventType(EventType.valueOf(reqBody.eventType().toUpperCase()))
-                .startDate(LocalDate.parse(reqBody.startDate()).atStartOfDay())
-                .endDate(LocalDate.parse(reqBody.endDate()).atStartOfDay())
+                .eventType(EventType.fromString(reqBody.eventType().toUpperCase()))
+                .startDate(LocalDate.parse(reqBody.startDate()))
+                .endDate(LocalDate.parse(reqBody.endDate()))
                 .isPublic(reqBody.isPublic())
                 .leaderId(reqBody.leaderId())
                 .build();
@@ -63,12 +63,12 @@ public class ClubService {
 //            Member member = memberService.findById(memberInfo.id())
 //                    .orElseThrow(() -> new NoSuchElementException("ID " + memberInfo.id() + "에 해당하는 멤버를 찾을 수 없습니다."));
 
-            Member member = new Member(); // 임시로 Member 객체 생성, 실제로는 memberService.findById(memberInfo.id())를 사용해야 함
+            Member member = new Member(); // TODO : 임시로 Member 객체 생성, 실제로는 memberService.findById(memberInfo.id())를 사용해야 함
 
             // ClubMember 엔티티 생성
             ClubMember clubMember = ClubMember.builder()
                     .member(member)
-                    .role(ClubMemberRole.valueOf(memberInfo.role().toUpperCase())) // 문자열을 Enum으로 변환
+                    .role(ClubMemberRole.fromString(memberInfo.role().toUpperCase())) // 문자열을 Enum으로 변환
                     .state(ClubMemberState.INVITED) // 초기 상태는 INVITED로 설정
                     .build();
 

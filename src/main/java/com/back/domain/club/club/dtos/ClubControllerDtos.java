@@ -40,7 +40,7 @@ public class ClubControllerDtos {
     ) {}
 
     public static record CreateClubRequestMemberInfo(
-            @NotBlank
+            @NotNull
             Long id,
             @NotBlank
             String role

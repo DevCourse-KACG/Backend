@@ -78,8 +78,8 @@ class ApiV1ClubControllerTest {
         assertThat(club.getMainSpot()).isEqualTo("서울");
         assertThat(club.getMaximumCapacity()).isEqualTo(10);
         assertThat(club.getEventType()).isEqualTo(EventType.SHORT_TERM);
-        assertThat(club.getStartDate().toLocalDate()).isEqualTo(LocalDate.of(2023, 10, 1));
-        assertThat(club.getEndDate().toLocalDate()).isEqualTo(LocalDate.of(2023, 10, 31));
+        assertThat(club.getStartDate()).isEqualTo(LocalDate.of(2023, 10, 1));
+        assertThat(club.getEndDate()).isEqualTo(LocalDate.of(2023, 10, 31));
         assertThat(club.isPublic()).isTrue();
         assertThat(club.getLeaderId()).isEqualTo(1L);
         assertThat(club.isState()).isTrue(); // 활성화 상태가 true인지 확인

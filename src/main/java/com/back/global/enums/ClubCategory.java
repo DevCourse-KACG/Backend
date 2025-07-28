@@ -19,4 +19,13 @@ public enum ClubCategory {
     public String getDescription() {
         return description;
     }
+
+    public static ClubCategory fromString(String category) {
+        for (ClubCategory clubCategory : ClubCategory.values()) {
+            if (clubCategory.name().equalsIgnoreCase(category)) {
+                return clubCategory;
+            }
+        }
+        throw new IllegalArgumentException("Unknown category: " + category);
+    }
 }
