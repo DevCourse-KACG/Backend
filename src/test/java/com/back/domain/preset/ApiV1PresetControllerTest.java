@@ -160,6 +160,7 @@ public class ApiV1PresetControllerTest {
             .contentType("application/json")
             .content(requestBody)
     )
+        .andExpect(status().is(499))
         .andExpect(jsonPath("$.code").value(499))
         .andExpect(jsonPath("$.message").value("AccessToken 만료"))
         .andDo(print());
