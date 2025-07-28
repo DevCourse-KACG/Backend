@@ -38,7 +38,7 @@ class ApiV1ScheduleControllerTest {
         Long clubId = 1L;
 
         ResultActions resultActions = mockMvc
-                .perform(post("/schedules")
+                .perform(post("/api/v1/schedules")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {
