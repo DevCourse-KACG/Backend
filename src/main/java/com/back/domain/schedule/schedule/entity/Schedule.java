@@ -39,5 +39,12 @@ public class Schedule {
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     private Club club; // 그룹 일정
 
-
+    // 일정 수정
+    public void modify(String title, String content, LocalDateTime startDate, LocalDateTime endDate, String spot) {
+        this.title = title;
+        this.content = content;
+        this.startDate = startDate;
+        this.endDate = endDate;
+        this.spot = spot;
+    }
 }

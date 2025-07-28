@@ -2,6 +2,7 @@ package com.back.domain.schedule.schedule.controller;
 
 import com.back.domain.schedule.schedule.dto.ScheduleCreateReqBody;
 import com.back.domain.schedule.schedule.dto.ScheduleDto;
+import com.back.domain.schedule.schedule.dto.ScheduleUpdateReqBody;
 import com.back.domain.schedule.schedule.entity.Schedule;
 import com.back.domain.schedule.schedule.service.ScheduleService;
 import com.back.global.rsData.RsData;
@@ -41,6 +42,22 @@ public class ApiV1ScheduleController {
         return RsData.of(
                 201,
                 "%s번 일정이 생성되었습니다.".formatted(schedule.getId()),
+                new ScheduleDto(schedule)
+        );
+    }
+
+    @PutMapping("{scheduleId}")
+    @Operation(summary = "일정 수정")
+    public RsData<ScheduleDto> modifySchedule(
+            @PathVariable Long scheduleId,
+            @Valid @RequestBody ScheduleUpdateReqBody reqBody
+    ) {
+        Schedule schedule = scheduleService.getScheduleById(scheduleId);
+        scheduleService.modifySchedule(schedule, reqBody);
+
+        return RsData.of(
+                200,
+                "%s번 일정이 수정되었습니다.".formatted(schedule.getId()),
                 new ScheduleDto(schedule)
         );
     }
