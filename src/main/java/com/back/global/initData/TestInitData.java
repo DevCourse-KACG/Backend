@@ -5,6 +5,7 @@ import com.back.domain.club.club.repository.ClubRepository;
 import com.back.domain.club.clubMember.entity.ClubMember;
 import com.back.domain.club.clubMember.repository.ClubMemberRepository;
 import com.back.domain.member.member.entity.Member;
+import com.back.domain.member.member.entity.MemberInfo;
 import com.back.domain.member.member.repository.MemberInfoRepository;
 import com.back.domain.member.member.repository.MemberRepository;
 import com.back.domain.schedule.schedule.entity.Schedule;
@@ -80,15 +81,13 @@ public class TestInitData {
                 .build();
         memberRepository.save(member);
 
-        /*
         MemberInfo memberInfo = MemberInfo.builder()
                 .email("member1@email.com")
                 .bio("bio1")
                 .member(member)
                 .build();
         memberInfoRepository.save(memberInfo);
-        member.setMemberInfo(memberInfo); // 양방향 설정 필요
-        */
+        member.setMemberInfo(memberInfo);
 
         // 장기 공개 모임 - 모집 중
         Club club1 = Club.builder()
