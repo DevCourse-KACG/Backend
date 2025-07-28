@@ -147,7 +147,5 @@ public class GlobalExceptionHandler {
           ),
           BAD_REQUEST
       );
-    );
     }
-
 }
