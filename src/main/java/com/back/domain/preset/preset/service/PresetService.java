@@ -30,28 +30,14 @@ public class PresetService {
   private String secretKey;
 
   public RsData<PresetDto> write(PresetWriteReqDto presetWriteReqDto) {
+    RsData<Map<String, Object>> jwtRsData = getJwtData();
 
-    // JWT 토큰을 헤더에서 가져오기
-    String jwtToken = rq.getHeader("Authorization", null);
-
-    // JWT 토큰이 null인 경우 RsData 반환
-    if (jwtToken == null) return RsData.of(404, "AccessToken을 찾을 수 없습니다");
-    // JWT 토큰이 "Bearer "로 시작하지 않는 경우 RsData 반환
-    if (!jwtToken.startsWith("Bearer ")) return RsData.of(404, "AccessToken이 잘못되었습니다");
-
-    // JWT 토큰에서 "Bearer " 접두사를 제거
-    String cleanToken = jwtToken.substring(7);
-
-    // JWT 토큰이 유효하지 않은 경우 처리
-    boolean jwtIsValid = Ut.jwt.isValid(secretKey, cleanToken);
-
-    // JWT가 유효하지 않은 경우 RsData 반환
-    if (!jwtIsValid) return RsData.of(499, "AccessToken 만료");
-
-    // JWT 토큰에서 페이로드 추출
-    Map<String, Object> jwtData = Ut.jwt.payload(secretKey, cleanToken);
-    System.out.println("JWT Data: " + jwtData.get("id"));
+    // JWT 데이터가 유효하지 않은 경우 RsData 반환
+    if (jwtRsData.code() != 200) {
+      return RsData.of(jwtRsData.code(), jwtRsData.message());
+    }
     // JWT에서 멤버 ID 추출
+    Map<String, Object> jwtData = jwtRsData.data();
     long memberId = ((Number) jwtData.get("id")).longValue();
 
     // 멤버 ID로 Member 엔티티 조회
@@ -82,5 +68,29 @@ public class PresetService {
     PresetDto presetDto = new PresetDto(preset);
 
     return RsData.of(201, "프리셋 생성 성공", presetDto);
+  }
+
+  RsData<Map<String, Object>> getJwtData() {
+    // JWT 토큰을 헤더에서 가져오기
+    String jwtToken = rq.getHeader("Authorization", null);
+
+    // JWT 토큰이 null인 경우 RsData 반환
+    if (jwtToken == null) return RsData.of(404, "AccessToken을 찾을 수 없습니다");
+    // JWT 토큰이 "Bearer "로 시작하지 않는 경우 RsData 반환
+    if (!jwtToken.startsWith("Bearer ")) return RsData.of(404, "AccessToken이 잘못되었습니다");
+
+    // JWT 토큰에서 "Bearer " 접두사를 제거
+    String cleanToken = jwtToken.substring(7);
+
+    // JWT 토큰이 유효하지 않은 경우 처리
+    boolean jwtIsValid = Ut.jwt.isValid(secretKey, cleanToken);
+
+    // JWT가 유효하지 않은 경우 RsData 반환
+    if (!jwtIsValid) return RsData.of(499, "AccessToken 만료");
+
+    // JWT 토큰에서 페이로드 추출
+    Map<String, Object> jwtData = Ut.jwt.payload(secretKey, cleanToken);
+    return RsData.of(200, "토큰 검증 성공", jwtData);
+
   }
 }
