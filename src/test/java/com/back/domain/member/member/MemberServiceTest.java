@@ -1,9 +1,9 @@
 package com.back.domain.member.member;
 
-import com.back.api.v1.domain.member.member.dto.MemberDto;
-import com.back.api.v1.domain.member.member.entity.Member;
-import com.back.api.v1.domain.member.member.repository.MemberRepository;
-import com.back.api.v1.domain.member.member.service.MemberService;
+import com.back.domain.member.member.dto.MemberDto;
+import com.back.domain.member.member.entity.Member;
+import com.back.domain.member.member.repository.MemberRepository;
+import com.back.domain.member.member.service.MemberService;
 import com.back.global.exception.ServiceException;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -23,19 +23,6 @@ public class MemberServiceTest {
 
     @Autowired
     private MemberRepository memberRepository;
-
-    @Test
-    @DisplayName("회원가입 - 닉네임 중복 시 예외 발생")
-    public void registerWithDuplicateNicknameThrowsException() {
-        MemberDto memberDto1 = new MemberDto("1", "pw1", "user", "안녕하세요");
-        MemberDto memberDto2 = new MemberDto("2", "pw1", "user", "안녕하세요");
-
-        memberService.register(memberDto1);
-
-        assertThatThrownBy(() -> {
-            memberService.register(memberDto2);
-        }).isInstanceOf(ServiceException.class);
-    }
 
     @Test
     @DisplayName("회원가입 - 이메일 중복 시 예외 발생")

@@ -1,7 +1,7 @@
 package support;
 
-import com.back.api.v1.domain.member.member.entity.Member;
-import com.back.api.v1.domain.member.member.entity.MemberInfo;
+import com.back.domain.member.member.entity.Member;
+import com.back.domain.member.member.entity.MemberInfo;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -26,7 +26,7 @@ public class MemberFixture {
 
     public static List<Member> createMultipleMember(int count) {
         List<Member> memberInfoList = new ArrayList<>();
-        for (int i = 0; i <= count; i++) {
+        for (int i = 0; i < count; i++) {
             memberInfoList.add(createMember("테스트유저" + i));
         }
 
