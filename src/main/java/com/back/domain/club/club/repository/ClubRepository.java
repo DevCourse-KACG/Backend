@@ -10,6 +10,6 @@ public interface ClubRepository extends JpaRepository<Club, Long> {
      * 마지막으로 생성된 클럽을 반환합니다.
      * @return 마지막으로 생성된 클럽
      */
-    Optional<Club> findFirstByOrderByCreatedAtDesc();
+    Optional<Club> findFirstByOrderByIdDesc();
 
 }
