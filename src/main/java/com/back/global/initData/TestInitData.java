@@ -97,8 +97,8 @@ public class TestInitData {
                 .maximumCapacity(25)
                 .recruitingStatus(true)
                 .eventType(EventType.LONG_TERM)
-                .startDate(LocalDate.parse("2025-07-05T10:00:00"))
-                .endDate(LocalDate.parse("2025-08-30T15:00:00"))
+                .startDate(LocalDate.parse("2025-07-05"))
+                .endDate(LocalDate.parse("2025-08-30"))
                 .isPublic(true)
                 .leaderId(member.getId())
                 .state(true).build();
@@ -119,8 +119,8 @@ public class TestInitData {
                 .maximumCapacity(4)
                 .recruitingStatus(false)
                 .eventType(EventType.LONG_TERM)
-                .startDate(LocalDate.parse("2025-05-01T00:00:00"))
-                .endDate(LocalDate.parse("2026-12-31T23:59:59"))
+                .startDate(LocalDate.parse("2025-05-01"))
+                .endDate(LocalDate.parse("2026-12-31"))
                 .isPublic(false)
                 .leaderId(member.getId())
                 .state(true).build();
