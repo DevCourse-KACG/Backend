@@ -11,7 +11,8 @@ public record ScheduleDto (
         LocalDateTime startDate,
         LocalDateTime endDate,
         String spot,
-        Long clubId
+        Long clubId,
+        Long checkListId
 ) {
     public ScheduleDto(Schedule schedule) {
         this(
@@ -21,7 +22,8 @@ public record ScheduleDto (
                 schedule.getStartDate(),
                 schedule.getEndDate(),
                 schedule.getSpot(),
-                schedule.getClub().getId()
+                schedule.getClub().getId(),
+                schedule.getCheckList() != null ? schedule.getCheckList().getId() : null
         );
     }
 }

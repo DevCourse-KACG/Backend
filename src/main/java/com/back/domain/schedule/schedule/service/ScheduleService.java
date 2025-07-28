@@ -22,6 +22,7 @@ public class ScheduleService {
     private final ClubRepository clubRepository;
     private final CheckListRepository checkListRepository;
 
+
     /**
      * 일정 조회
      * @param scheduleId
@@ -44,6 +45,11 @@ public class ScheduleService {
         return scheduleRepository
                 .findFirstByClubIdOrderByIdDesc(clubId)
                 .orElseThrow(() -> new NoSuchElementException("%d번 모임의 일정은 존재하지 않습니다.".formatted(clubId)));
+    }
+
+    @Transactional(readOnly = true)
+    public int countClubSchedules(Long clubId) {
+        return scheduleRepository.countByClubId(clubId);
     }
 
     /**
@@ -96,5 +102,20 @@ public class ScheduleService {
         }
     }
 
+    /**
+     * 일정 삭제
+     * @param schedule
+     */
+    public void deleteSchedule(Schedule schedule) {
+        if (schedule.canDelete()) {
+            // 일정 삭제 - 체크리스트 없을 시
+            scheduleRepository.delete(schedule);
+        } else {
+            // 일정 비활성화 - 체크리스트 있을 시
+            schedule.deactivate();
 
+            // 체크리스트 비활성화
+            schedule.getCheckList().deactivate();
+        }
+    }
 }
