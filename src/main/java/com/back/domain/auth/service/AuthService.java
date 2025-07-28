@@ -22,9 +22,9 @@ public class AuthService {
         Date now = new Date();
         Date expired = new Date(now.getTime() + expirationSeconds * 1000);
 
-        return "Bearer " + Jwts.builder()
+        return Jwts.builder()
                 .setSubject("api-auth")
-                .claim("api-auth", validApiKey)
+                .claim("apiKey", validApiKey)
                 .setIssuedAt(now)
                 .setExpiration(expired)
                 .signWith(secretKey)

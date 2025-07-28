@@ -39,6 +39,7 @@ public class MemberInfo {
         this.bio = bio;
         this.profileImageUrl = profileImageUrl;
         this.member = member;
+        this.apiKey = apiKey;
     }
 
     public void setMember(Member member) {
