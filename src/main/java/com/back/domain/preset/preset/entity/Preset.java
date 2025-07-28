@@ -26,4 +26,16 @@ public class Preset {
 
     @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true, mappedBy = "preset")
     private List<PresetItem> presetItems;
+
+    @Builder
+    public Preset(String name, Member owner, List<PresetItem> presetItems) {
+        this.name = name;
+        this.owner = owner;
+        if (presetItems != null) {
+            this.presetItems = presetItems;
+            // 양방향 연관관계 설정
+            presetItems.forEach(item -> item.setPreset(this));
+        }
+    }
+
 }

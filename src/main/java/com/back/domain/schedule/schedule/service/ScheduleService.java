@@ -22,6 +22,7 @@ public class ScheduleService {
     private final ClubRepository clubRepository;
     private final CheckListRepository checkListRepository;
 
+
     /**
      * 일정 조회
      * @param scheduleId
@@ -46,6 +47,11 @@ public class ScheduleService {
                 .orElseThrow(() -> new NoSuchElementException("%d번 모임의 일정은 존재하지 않습니다.".formatted(clubId)));
     }
 
+    @Transactional(readOnly = true)
+    public int countClubSchedules(Long clubId) {
+        return scheduleRepository.countByClubId(clubId);
+    }
+
     /**
      * 일정 생성
      * @param reqBody (ScheduleCreateReqBody)
@@ -61,7 +67,7 @@ public class ScheduleService {
                 .orElseThrow(() -> new NoSuchElementException("%d번 모임은 존재하지 않습니다.".formatted(reqBody.clubId())));
 
         // 날짜 유효성 검증
-        checkDate(reqBody.startDate(), reqBody.endDate());
+        validateDate(reqBody.startDate(), reqBody.endDate());
 
         // 일정 생성
         Schedule schedule = Schedule.builder()
@@ -84,16 +90,33 @@ public class ScheduleService {
     @Transactional
     public void modifySchedule(Schedule schedule, ScheduleUpdateReqBody reqBody) {
         // 날짜 유효성 검증
-        checkDate(reqBody.startDate(), reqBody.endDate());
+        validateDate(reqBody.startDate(), reqBody.endDate());
 
         // 일정 수정
         schedule.modify(reqBody.title(), reqBody.content(), reqBody.startDate(), reqBody.endDate(), reqBody.spot());
     }
 
-    private static void checkDate(LocalDateTime startDate, LocalDateTime endDate) {
+    private static void validateDate(LocalDateTime startDate, LocalDateTime endDate) {
         if (startDate.isAfter(endDate)) {
             throw new ServiceException(400, "시작일은 종료일보다 이전이어야 합니다.");
         }
     }
 
+    /**
+     * 일정 삭제
+     * @param schedule
+     */
+    @Transactional
+    public void deleteSchedule(Schedule schedule) {
+        if (schedule.canDelete()) {
+            // 일정 삭제 - 체크리스트 없을 시
+            scheduleRepository.delete(schedule);
+        } else {
+            // 일정 비활성화 - 체크리스트 있을 시
+            schedule.deactivate();
+
+            // 체크리스트 비활성화
+            schedule.getCheckList().deactivate();
+        }
+    }
 }

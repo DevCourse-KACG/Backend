@@ -3,13 +3,16 @@ package com.back.global.globalExceptionHandler;
 import com.back.global.exception.ServiceException;
 import com.back.global.rsData.RsData;
 import jakarta.validation.ConstraintViolationException;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.MissingRequestHeaderException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
 import java.util.Comparator;
 import java.util.NoSuchElementException;
@@ -128,5 +131,21 @@ public class GlobalExceptionHandler {
                 ),
                 BAD_REQUEST
         );
+    }
+    // MethodArgumentTypeMismatchException: 요청 파라미터의 타입이 일치하지 않을 때 발생하는 예외
+    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ResponseEntity<RsData<Void>> handleMethodArgumentTypeMismatch(MethodArgumentTypeMismatchException ex) {
+      String message = String.format("파라미터 '%s'의 타입이 올바르지 않습니다. 요구되는 타입: %s",
+        ex.getName(),
+        ex.getRequiredType() != null ? ex.getRequiredType().getSimpleName() : "알 수 없음");
+
+      return new ResponseEntity<>(
+          RsData.of(
+              400,
+              message
+          ),
+          BAD_REQUEST
+      );
     }
 }

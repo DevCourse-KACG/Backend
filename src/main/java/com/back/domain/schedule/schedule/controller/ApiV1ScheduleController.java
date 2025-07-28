@@ -61,4 +61,18 @@ public class ApiV1ScheduleController {
                 new ScheduleDto(schedule)
         );
     }
+
+    @DeleteMapping("{scheduleId}")
+    @Operation(summary = "일정 삭제")
+    public RsData<Void> deleteSchedule(
+            @PathVariable Long scheduleId
+    ) {
+        Schedule schedule = scheduleService.getScheduleById(scheduleId);
+        scheduleService.deleteSchedule(schedule);
+
+        return RsData.of(
+                200,
+                "%s번 일정이 삭제되었습니다.".formatted(scheduleId)
+        );
+    }
 }
