@@ -10,8 +10,10 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
 import java.util.List;
 
 @RestController
@@ -24,9 +26,11 @@ public class ApiV1ScheduleController {
     @GetMapping("/clubs/{clubId}")
     @Operation(summary = "모임의 일정 목록 조회")
     public RsData<List<ScheduleDto>> getClubSchedules(
-            @PathVariable Long clubId
+            @PathVariable Long clubId,
+            @RequestParam(value = "startDate", required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate startDate,
+            @RequestParam(value = "endDate", required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate endDate
     ) {
-        List<Schedule> schedule = scheduleService.getGroupSchedules(clubId);
+        List<Schedule> schedule = scheduleService.getClubSchedules(clubId, startDate, endDate);
         List<ScheduleDto> scheduleDtos = schedule.stream()
                 .map(ScheduleDto::new)
                 .toList();

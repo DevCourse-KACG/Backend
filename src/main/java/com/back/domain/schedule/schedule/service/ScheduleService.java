@@ -1,6 +1,5 @@
 package com.back.domain.schedule.schedule.service;
 
-import com.back.domain.checkList.checkList.repository.CheckListRepository;
 import com.back.domain.club.club.entity.Club;
 import com.back.domain.club.club.repository.ClubRepository;
 import com.back.domain.schedule.schedule.dto.ScheduleCreateReqBody;
@@ -12,7 +11,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.YearMonth;
 import java.util.List;
 import java.util.NoSuchElementException;
 
@@ -21,7 +22,6 @@ import java.util.NoSuchElementException;
 public class ScheduleService {
     private final ScheduleRepository scheduleRepository;
     private final ClubRepository clubRepository;
-    private final CheckListRepository checkListRepository;
 
     /**
      * 특정 모임의 일정 목록 조회
@@ -29,12 +29,26 @@ public class ScheduleService {
      * @return schedules
      */
     @Transactional(readOnly = true)
-    public List<Schedule> getGroupSchedules(Long clubId) {
+    public List<Schedule> getClubSchedules(Long clubId, LocalDate startDate, LocalDate endDate) {
+        LocalDateTime startDateTime;
+        LocalDateTime endDateTime;
+
+        if (startDate != null && endDate != null) {
+            startDateTime = startDate.atStartOfDay();
+            endDateTime = endDate.atTime(23, 59, 59);
+            validateDate(startDateTime, endDateTime);
+        } else {
+            // 날짜 파라미터 없는 경우, 현재 달을 기준으로 설정
+            YearMonth currentMonth = YearMonth.now();
+            startDateTime = currentMonth.atDay(1).atStartOfDay();
+            endDateTime = currentMonth.atEndOfMonth().atTime(23, 59, 59);
+        }
+
         clubRepository.findById(clubId)
                 .orElseThrow(() -> new NoSuchElementException("%d번 모임은 존재하지 않습니다.".formatted(clubId)));
 
-        // 모임의 일정 목록 조회 (활성화된 일정만)
-        return scheduleRepository.findByClubIdAndIsActiveTrueOrderByStartDate(clubId);
+        // 활성화된 일정 중, 범위 내에 있는 목록을 시작 날짜 기준으로 오름차순 정렬하여 조회
+        return scheduleRepository.findSchedulesByClubAndDateRange(clubId, startDateTime, endDateTime);
     }
 
     /**
@@ -110,12 +124,6 @@ public class ScheduleService {
         schedule.modify(reqBody.title(), reqBody.content(), reqBody.startDate(), reqBody.endDate(), reqBody.spot());
     }
 
-    private static void validateDate(LocalDateTime startDate, LocalDateTime endDate) {
-        if (startDate.isAfter(endDate)) {
-            throw new ServiceException(400, "시작일은 종료일보다 이전이어야 합니다.");
-        }
-    }
-
     /**
      * 일정 삭제
      * @param schedule
@@ -131,6 +139,12 @@ public class ScheduleService {
 
             // 체크리스트 비활성화
             schedule.getCheckList().deactivate();
+        }
+    }
+
+    private static void validateDate(LocalDateTime startDate, LocalDateTime endDate) {
+        if (startDate.isAfter(endDate)) {
+            throw new ServiceException(400, "시작일은 종료일보다 이전이어야 합니다.");
         }
     }
 }

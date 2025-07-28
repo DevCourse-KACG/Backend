@@ -36,7 +36,7 @@ class ApiV1ScheduleControllerTest {
     private ParameterObjectNamingStrategyCustomizer parameterObjectNamingStrategyCustomizer;
 
     @Test
-    @DisplayName("일정 목록 조회")
+    @DisplayName("일정 목록 조회 - 날짜 파라미터 없는 경우 현재 달 기준")
     void trl1() throws Exception {
         Long clubId = 1L;
 
@@ -44,7 +44,7 @@ class ApiV1ScheduleControllerTest {
                 .perform(get("/api/v1/schedules/clubs/" + clubId))
                 .andDo(print());
 
-        List<Schedule> schedules = scheduleService.getGroupSchedules(clubId);
+        List<Schedule> schedules = scheduleService.getClubSchedules(clubId, null, null);
 
         resultActions
                 .andExpect(handler().handlerType(ApiV1ScheduleController.class))
