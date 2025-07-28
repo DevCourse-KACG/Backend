@@ -1,7 +1,7 @@
 package support;
 
-import com.back.domain.member.member.entity.Member;
-import com.back.domain.member.member.entity.MemberInfo;
+import com.back.api.v1.domain.member.member.entity.Member;
+import com.back.api.v1.domain.member.member.entity.MemberInfo;
 
 import java.util.ArrayList;
 import java.util.List;

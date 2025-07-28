@@ -1,10 +1,10 @@
 package com.back.domain.member.member;
 
-import com.back.domain.api.service.ApiKeyService;
-import com.back.domain.auth.service.AuthService;
-import com.back.domain.member.member.controller.MemberController;
-import com.back.domain.member.member.entity.Member;
-import com.back.domain.member.member.entity.MemberInfo;
+import com.back.api.v1.domain.api.service.ApiKeyService;
+import com.back.api.v1.domain.auth.service.AuthService;
+import com.back.api.v1.domain.member.member.controller.MemberController;
+import com.back.api.v1.domain.member.member.entity.Member;
+import com.back.api.v1.domain.member.member.entity.MemberInfo;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -81,6 +81,82 @@ public class MemberControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value(200))
                 .andExpect(jsonPath("$.message").value("회원가입 성공"));
+    }
+
+    @Test
+    @DisplayName("회원가입 - 이메일 중복 기입 / POST 실패")
+    public void memberPostTestException1() throws  Exception {
+        String requestBody = """
+                {
+                    "email": "qkek6223@naver.com",
+                    "password": "password123",
+                    "nickname": "안수지",
+                    "bio": "안녕하세요"
+                }
+                """;
+
+        mockMvc.perform(post("/api/v1/members/auth/register")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(requestBody))
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value(200))
+                .andExpect(jsonPath("$.message").value("회원가입 성공"));
+
+        String requestBody2 = """
+                {
+                    "email": "qkek6223@naver.com",
+                    "password": "password123",
+                    "nickname": "안수지1",
+                    "bio": "안녕하세요"
+                }
+                """;
+
+        mockMvc.perform(post("/api/v1/members/auth/register")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(requestBody2))
+                .andDo(print())
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value(400))
+                .andExpect(jsonPath("$.message").value("이미 사용 중인 이메일입니다."));
+    }
+
+    @Test
+    @DisplayName("회원가입 - 닉네임 중복 기입 / POST 실패")
+    public void memberPostTestException2() throws  Exception {
+        String requestBody = """
+                {
+                    "email": "qkek6223@naver.com",
+                    "password": "password123",
+                    "nickname": "안수지",
+                    "bio": "안녕하세요"
+                }
+                """;
+
+        mockMvc.perform(post("/api/v1/members/auth/register")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(requestBody))
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value(200))
+                .andExpect(jsonPath("$.message").value("회원가입 성공"));
+
+        String requestBody2 = """
+                {
+                    "email": "qkek622378@naver.com",
+                    "password": "password123",
+                    "nickname": "안수지",
+                    "bio": "안녕하세요"
+                }
+                """;
+
+        mockMvc.perform(post("/api/v1/members/auth/register")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(requestBody2))
+                .andDo(print())
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value(400))
+                .andExpect(jsonPath("$.message").value("이미 사용 중인 닉네임입니다."));
     }
 
     @Test

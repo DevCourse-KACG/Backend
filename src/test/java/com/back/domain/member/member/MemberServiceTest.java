@@ -1,9 +1,9 @@
 package com.back.domain.member.member;
 
-import com.back.domain.member.member.dto.MemberDto;
-import com.back.domain.member.member.entity.Member;
-import com.back.domain.member.member.repository.MemberRepository;
-import com.back.domain.member.member.service.MemberService;
+import com.back.api.v1.domain.member.member.dto.MemberDto;
+import com.back.api.v1.domain.member.member.entity.Member;
+import com.back.api.v1.domain.member.member.repository.MemberRepository;
+import com.back.api.v1.domain.member.member.service.MemberService;
 import com.back.global.exception.ServiceException;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
