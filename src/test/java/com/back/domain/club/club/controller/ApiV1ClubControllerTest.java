@@ -1,7 +1,7 @@
-package com.back.domain.group.group.controller;
+package com.back.domain.club.club.controller;
 
-import com.back.domain.group.group.entity.Group;
-import com.back.domain.group.group.service.GroupService;
+import com.back.domain.club.club.entity.Club;
+import com.back.domain.club.club.service.ClubService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,11 +21,11 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @SpringBootTest
 @AutoConfigureMockMvc
 @Transactional
-class ApiV1GroupControllerTest {
+class ApiV1ClubControllerTest {
     @Autowired
     private MockMvc mvc;
     @Autowired
-    private GroupService groupService;
+    private ClubService clubService;
 
     @Test
     @DisplayName("빈 그룹 생성 - 이미지 없는 경우")
@@ -64,20 +64,20 @@ class ApiV1GroupControllerTest {
                 .andExpect(jsonPath("$.data.leader_id").value(1));
 
         // 추가 검증: 그룹이 실제로 생성되었는지 확인
-        Group group = groupService.findById(1L);
+        Club club = clubService.findById(1L);
 
-        assertThat(group.getName()).isEqualTo("테스트 그룹");
-        assertThat(group.getBio()).isEqualTo("테스트 그룹 설명");
-        assertThat(group.getCategory()).isEqualTo("여행");
-        assertThat(group.getMainSpot()).isEqualTo("서울");
-        assertThat(group.getMaximumCapacity()).isEqualTo(10);
-        assertThat(group.getEventType()).isEqualTo("단기");
-        assertThat(group.getStartDate()).isEqualTo("2023-10-01");
-        assertThat(group.getEndDate()).isEqualTo("2023-10-31");
-        assertThat(group.isPublic()).isTrue();
-        assertThat(group.getLeaderId()).isEqualTo(1L);
-        assertThat(group.isStats()).isTrue(); // 활성화 상태가 true인지 확인
-        assertThat(group.getGroupMembers().isEmpty()).isTrue(); // 구성원이 비어있는지 확인
+        assertThat(club.getName()).isEqualTo("테스트 그룹");
+        assertThat(club.getBio()).isEqualTo("테스트 그룹 설명");
+        assertThat(club.getCategory()).isEqualTo("여행");
+        assertThat(club.getMainSpot()).isEqualTo("서울");
+        assertThat(club.getMaximumCapacity()).isEqualTo(10);
+        assertThat(club.getEventType()).isEqualTo("단기");
+        assertThat(club.getStartDate()).isEqualTo("2023-10-01");
+        assertThat(club.getEndDate()).isEqualTo("2023-10-31");
+        assertThat(club.isPublic()).isTrue();
+        assertThat(club.getLeaderId()).isEqualTo(1L);
+        assertThat(club.isStats()).isTrue(); // 활성화 상태가 true인지 확인
+        assertThat(club.getClubMembers().isEmpty()).isTrue(); // 구성원이 비어있는지 확인
     }
 
 }

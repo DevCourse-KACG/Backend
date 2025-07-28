@@ -1,6 +1,6 @@
 package com.back.global.enums;
 
-public enum GroupCategory {
+public enum ClubCategory {
     STUDY("스터디"),
     HOBBY("취미"),
     SPORTS("운동"),
@@ -12,7 +12,7 @@ public enum GroupCategory {
 
     private final String description;
 
-    GroupCategory(String description) {
+    ClubCategory(String description) {
         this.description = description;
     }
 

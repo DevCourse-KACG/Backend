@@ -1,4 +1,4 @@
-package com.back.domain.group.group.controller;
+package com.back.domain.club.club.controller;
 
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
