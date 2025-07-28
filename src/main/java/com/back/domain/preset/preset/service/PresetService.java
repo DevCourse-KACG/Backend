@@ -36,6 +36,8 @@ public class PresetService {
 
     // JWT 토큰이 null인 경우 RsData 반환
     if (jwtToken == null) return RsData.of(404, "AccessToken을 찾을 수 없습니다");
+    // JWT 토큰이 "Bearer "로 시작하지 않는 경우 RsData 반환
+    if (!jwtToken.startsWith("Bearer ")) return RsData.of(404, "AccessToken이 잘못되었습니다");
 
     // JWT 토큰에서 "Bearer " 접두사를 제거
     String cleanToken = jwtToken.substring(7);
