@@ -25,9 +25,23 @@ public class CheckList {
 
     @Description("연동된 일정")
     @OneToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "schedule_id", nullable = false)
     private Schedule schedule;
 
     @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL, mappedBy = "checkList")
     @Description("체크리스트 아이템들")
     private List<CheckListItem> checkListItems;
+
+    public void deactivate() {
+        this.isActive = false;
+    }
+
+    public void setSchedule(Schedule schedule) {
+        this.schedule = schedule;
+
+        // 양방향 관계 설정
+        if (schedule.getCheckList() != this) {
+            schedule.setCheckList(this);
+        }
+    }
 }
