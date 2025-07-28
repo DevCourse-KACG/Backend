@@ -5,6 +5,7 @@ import com.back.domain.club.club.entity.Club;
 import com.back.domain.club.club.repository.ClubRepository;
 import com.back.domain.club.clubMember.entity.ClubMember;
 import com.back.domain.member.member.entity.Member;
+import com.back.global.aws.S3Service;
 import com.back.global.enums.ClubCategory;
 import com.back.global.enums.ClubMemberRole;
 import com.back.global.enums.ClubMemberState;
@@ -12,7 +13,9 @@ import com.back.global.enums.EventType;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.time.LocalDate;
 import java.util.Arrays;
 
@@ -21,6 +24,7 @@ import java.util.Arrays;
 public class ClubService {
     private final ClubRepository clubRepository;
     //private final MemberService memberService;
+    private final S3Service s3Service;
 
     /**
      * 마지막으로 생성된 클럽을 반환합니다.
@@ -42,9 +46,15 @@ public class ClubService {
     }
 
     @Transactional
-    public Club createClub(ClubControllerDtos.CreateClubRequest reqBody) {
-        // 클럽 생성
-        Club club = Club.builder()
+    public Club createClub(
+            ClubControllerDtos.CreateClubRequest reqBody,
+            MultipartFile image
+    ) throws IOException {
+
+
+        // 1. 이미지 없이 클럽 생성
+        Club club = clubRepository.saveAndFlush(
+                Club.builder()
                 .name(reqBody.name())
                 .bio(reqBody.bio())
                 .category(ClubCategory.fromString(reqBody.category().toUpperCase()))
@@ -55,13 +65,20 @@ public class ClubService {
                 .endDate(LocalDate.parse(reqBody.endDate()))
                 .isPublic(reqBody.isPublic())
                 .leaderId(reqBody.leaderId())
-                .build();
+                .build()
+        );
+        // 2. 이미지가 제공된 경우 S3에 업로드
+        if (image != null && !image.isEmpty()){
+            String imageUrl = s3Service.upload(image, "club/" + club.getId() + "/profile");
+            club.updateImageUrl(imageUrl); // 클럽에 이미지 URL 설정
+        }
+
 
         // 클럽 멤버 설정
         Arrays.stream(reqBody.clubMembers()).forEach(memberInfo -> {
             // 멤버 ID로 Member 엔티티 조회
-//            Member member = memberService.findById(memberInfo.id())
-//                    .orElseThrow(() -> new NoSuchElementException("ID " + memberInfo.id() + "에 해당하는 멤버를 찾을 수 없습니다."));
+//          Member member = memberService.findById(memberInfo.id())
+//              .orElseThrow(() -> new NoSuchElementException("ID " + memberInfo.id() + "에 해당하는 멤버를 찾을 수 없습니다."));
 
             Member member = new Member(); // TODO : 임시로 Member 객체 생성, 실제로는 memberService.findById(memberInfo.id())를 사용해야 함
 
@@ -76,6 +93,6 @@ public class ClubService {
             club.addClubMember(clubMember);
         });
 
-        return createClub(club);
+        return club;
     }
 }

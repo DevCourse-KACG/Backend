@@ -4,7 +4,6 @@ import com.back.domain.checkList.checkList.entity.CheckList;
 import com.back.domain.checkList.checkList.repository.CheckListRepository;
 import com.back.domain.club.club.entity.Club;
 import com.back.domain.club.club.repository.ClubRepository;
-import com.back.domain.club.clubMember.entity.ClubMember;
 import com.back.domain.club.clubMember.repository.ClubMemberRepository;
 import com.back.domain.member.member.entity.Member;
 import com.back.domain.member.member.entity.MemberInfo;
@@ -53,8 +52,8 @@ public class TestInitData {
             self.work2();
             self.work3();
 
-            self.initDataForSchedule();
-            self.scheduleInitData();
+            //self.initDataForSchedule();
+            //self.scheduleInitData();
         };
     }
 
@@ -92,7 +91,7 @@ public class TestInitData {
         memberInfoRepository.save(memberInfo);
         member.setMemberInfo(memberInfo);
 
-        // 장기 공개 모임 - 모집 중
+
         Club club1 = Club.builder()
                 .name("산책 모임")
                 .category(ClubCategory.SPORTS)
