@@ -25,9 +25,25 @@ public class MemberInfo {
 
     private String profileImageUrl; // 프로필 이미지 URL
 
+    private String apiKey; // 리프레시 토큰 값
+
 
     @OneToOne
     @JoinColumn(name = "member_id", unique = true) // member_id 컬럼이 생성되어 Member와 연결됨
     private Member member;
+
+
+    @Builder
+    public MemberInfo(String email, String bio, String profileImageUrl, Member member, String apiKey) {
+        this.email = email;
+        this.bio = bio;
+        this.profileImageUrl = profileImageUrl;
+        this.member = member;
+        this.apiKey = apiKey;
+    }
+
+    public void setMember(Member member) {
+        this.member = member;
+    }
 
 }

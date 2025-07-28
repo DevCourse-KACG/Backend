@@ -34,4 +34,4 @@ custom:
   jwt:
     secretKey: ijaoebj970n7unoijfkjy8978y9glkjslkej4coi8oijaoirj908oj9
   accessToken:
-    expirationSeconds: "#{60*20}"
+    expirationSeconds: 1200

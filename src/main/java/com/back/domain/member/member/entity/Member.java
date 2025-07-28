@@ -3,6 +3,7 @@ package com.back.domain.member.member.entity;
 
 import com.back.domain.club.clubMember.entity.ClubMember;
 import com.back.domain.member.friend.entity.Friend;
+import com.back.domain.member.member.MemberType;
 import com.back.domain.preset.preset.entity.Preset;
 import jakarta.persistence.*;
 import jdk.jfr.Description;
@@ -31,6 +32,13 @@ public class Member {
   @Description("비밀번호")
   private String password;
 
+  @Description("회원, 비회원 여부")
+  @Enumerated(EnumType.STRING)
+  private MemberType memberType;
+
+  @Description("중복 닉네임 구분용")
+  private String tag;
+
   @OneToOne(cascade = CascadeType.ALL, fetch = FetchType.LAZY, mappedBy = "member")
   private MemberInfo memberInfo; // 상세 정보 (회원 전용)
 
@@ -45,5 +53,21 @@ public class Member {
 
   @OneToMany(mappedBy = "member", cascade = CascadeType.ALL, orphanRemoval = true)
   private List<ClubMember> clubMembers; // 소속 그룹 목록
+
+  @Builder
+  public Member(MemberInfo memberInfo, String nickname, String password, MemberType memberType, String tag) {
+    this.memberInfo = memberInfo;
+    this.nickname = nickname;
+    this.password = password;
+    this.memberType = memberType;
+    this.tag = tag;
+  }
+
+  public void setMemberInfo(MemberInfo memberInfo) {
+    this.memberInfo = memberInfo;
+    if (memberInfo != null && memberInfo.getMember() != this) {
+      memberInfo.setMember(this);
+    }
+  }
 
 }
