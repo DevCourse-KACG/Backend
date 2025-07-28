@@ -54,13 +54,12 @@ public class ApiV1PresetControllerTest {
 
     memberRepository.save(member);
 
-    // JWT 토큰 생성 (여기서는 간단히 문자열로 대체, 실제로는 JWT 라이브러리를 사용하여 생성)
+    // JWT 토큰 생성을 위한 Map
     Map<String, Object> claims = Map.of(
         "id", member.getId(),
         "nickname", member.getNickname());
 
-
-
+    // JWT 토큰 생성
     jwtToken = Ut.jwt.toString(secretKey, expirationSeconds, claims);
   }
 
