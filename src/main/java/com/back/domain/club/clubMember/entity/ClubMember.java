@@ -46,5 +46,8 @@ public class ClubMember {
     @OneToMany(mappedBy = "clubMember", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<ItemAssign> itemAssigns;
 
-
+    public void addItemAssign(ItemAssign itemAssign) {
+        this.itemAssigns.add(itemAssign);
+        itemAssign.setClubMember(this);
+    }
 }
