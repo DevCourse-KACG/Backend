@@ -114,9 +114,14 @@ public class Club {
   public void addClubMember(ClubMember clubMember) {
         this.clubMembers.add(clubMember);
         clubMember.setClub(this); // 양방향 연관관계 설정
-    }
+  }
 
-
-
+  /**
+   * 클럽의 이미지 URL을 업데이트합니다.
+   * @param imageUrl
+   */
+  public void updateImageUrl(String imageUrl) {
+      this.imageUrl = imageUrl;
+  }
 
 }

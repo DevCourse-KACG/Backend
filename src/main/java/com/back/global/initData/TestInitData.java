@@ -53,8 +53,8 @@ public class TestInitData {
             self.work2();
             self.work3();
 
-            self.initDataForSchedule();
-            self.scheduleInitData();
+            //self.initDataForSchedule();
+            //self.scheduleInitData();
         };
     }
 
@@ -92,7 +92,7 @@ public class TestInitData {
         memberInfoRepository.save(memberInfo);
         member.setMemberInfo(memberInfo);
 
-        // 장기 공개 모임 - 모집 중
+
         Club club1 = Club.builder()
                 .name("산책 모임")
                 .category(ClubCategory.SPORTS)
@@ -155,8 +155,6 @@ public class TestInitData {
                     .club(club1)
                     .build();
             scheduleRepository.save(schedule);
-
-            System.out.println("모임 %d 일정 : ".formatted(schedule.getId()) + schedule.getStartDate() + " ~ " + schedule.getEndDate());
         }
 
         // 모임 2의 일정 초기 데이터
@@ -180,6 +178,7 @@ public class TestInitData {
                 .spot("강릉")
                 .club(club2)
                 .build();
+        schedule3.deactivate();
         scheduleRepository.save(schedule3);
 
         CheckList checkList = CheckList.builder()

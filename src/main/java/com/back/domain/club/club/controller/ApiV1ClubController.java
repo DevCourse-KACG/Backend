@@ -8,10 +8,11 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.http.MediaType;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.io.IOException;
 
 @RestController
 @RequestMapping("/api/v1/clubs")
@@ -20,10 +21,13 @@ import org.springframework.web.bind.annotation.RestController;
 public class ApiV1ClubController {
     private final ClubService clubService;
 
-    @PostMapping
+    @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @Operation(summary = "클럽 생성")
-    public RsData<ClubControllerDtos.CreateClubResponse> createClub(@Valid @RequestBody ClubControllerDtos.CreateClubRequest reqBody) {
-        Club club = clubService.createClub(reqBody);
+    public RsData<ClubControllerDtos.CreateClubResponse> createClub(
+            @Valid @RequestPart("data") ClubControllerDtos.CreateClubRequest reqBody,
+            @RequestPart(value = "image", required = false) MultipartFile image
+    ) throws IOException {
+        Club club = clubService.createClub(reqBody, image);
 
         return new RsData<>(201, "클럽이 생성됐습니다.",
                 new ClubControllerDtos.CreateClubResponse(
@@ -32,6 +36,4 @@ public class ApiV1ClubController {
                 )
         );
     }
-
-
 }

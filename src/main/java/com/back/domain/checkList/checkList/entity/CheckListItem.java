@@ -39,6 +39,7 @@ public class CheckListItem {
     private CheckList checkList;
 
     @Description("체크 아이템 완료 여부")
+    @Builder.Default
     private boolean isChecked = false; // 기본값 false, false인 경우 세부 상황까지 체크하여 최종 결정
 
     @Description("할당된 인원")

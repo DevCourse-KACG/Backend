@@ -10,7 +10,11 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.web.bind.annotation.*;
+
+import java.time.LocalDate;
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/v1/schedules")
@@ -18,6 +22,26 @@ import org.springframework.web.bind.annotation.*;
 @Tag(name = "ApiV1ScheduleController", description = "일정 컨트롤러")
 public class ApiV1ScheduleController {
     private final ScheduleService scheduleService;
+
+    @GetMapping("/clubs/{clubId}")
+    @Operation(summary = "모임의 일정 목록 조회")
+    public RsData<List<ScheduleDto>> getClubSchedules(
+            @PathVariable Long clubId,
+            @RequestParam(value = "startDate", required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate startDate,
+            @RequestParam(value = "endDate", required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate endDate
+    ) {
+        List<Schedule> schedule = scheduleService.getClubSchedules(clubId, startDate, endDate);
+        List<ScheduleDto> scheduleDtos = schedule.stream()
+                .map(ScheduleDto::new)
+                .toList();
+
+        return RsData.of(
+                200,
+                "%s번 모임의 일정 목록이 조회되었습니다.".formatted(clubId),
+                scheduleDtos
+        );
+    }
+
 
     @GetMapping("/{scheduleId}")
     @Operation(summary = "일정 조회")

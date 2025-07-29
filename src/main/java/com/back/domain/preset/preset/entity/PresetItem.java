@@ -28,7 +28,9 @@ public class PresetItem {
     @Description("프리셋 아이템의 정렬 순서")
     private int sequence; // 정렬 순서
 
+    @Setter
     @Description("아이템이 속한 프리셋")
     @ManyToOne(fetch = jakarta.persistence.FetchType.LAZY, optional = false)
     private Preset preset; // 프리셋
+
 }

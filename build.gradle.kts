@@ -34,6 +34,8 @@ dependencies {
     // db
     runtimeOnly("com.h2database:h2")
     runtimeOnly("com.mysql:mysql-connector-j")
+    // aws s3
+    implementation("io.awspring.cloud:spring-cloud-aws-starter-s3:3.4.0")
     // security
     implementation("org.springframework.boot:spring-boot-starter-security")
     testImplementation("org.springframework.security:spring-security-test")
@@ -48,6 +50,7 @@ dependencies {
     runtimeOnly("io.jsonwebtoken:jjwt-jackson:0.12.6")
     // swagger
     implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.7.0")
+
 }
 
 tasks.withType<Test> {
