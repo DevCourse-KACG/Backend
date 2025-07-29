@@ -5,6 +5,7 @@ import jakarta.persistence.*;
 import jdk.jfr.Description;
 import lombok.*;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Entity
@@ -36,6 +37,15 @@ public class Preset {
             // 양방향 연관관계 설정
             presetItems.forEach(item -> item.setPreset(this));
         }
+    }
+
+    public void updateName(String name) {
+        this.name = name;
+    }
+
+    public void updatePresetItems(List<PresetItem> presetItems) {
+        this.presetItems.clear();
+        this.presetItems = presetItems;
     }
 
 }
