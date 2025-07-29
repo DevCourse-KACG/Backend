@@ -231,6 +231,7 @@ public class ApiV1MemberControllerTest {
                         .content(loginRequestBody))
                 .andExpect(status().isOk())
                 .andExpect(cookie().exists("accessToken"))
+                .andDo(print())
                 .andReturn()
                 .getResponse()
                 .getCookie("accessToken");

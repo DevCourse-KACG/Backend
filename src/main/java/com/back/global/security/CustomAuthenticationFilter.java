@@ -90,6 +90,9 @@ public class CustomAuthenticationFilter extends OncePerRequestFilter {
         Member member = null;
         boolean isAccessTokenValid = false;
 
+        accessToken = rq.getCookieValue("accessToken", "");
+        logger.debug("Access Token from cookie: " + accessToken);
+
         // accessToken이 존재하는 경우, 해당 토큰의 유효성을 검사
         if (isAccessTokenExists){
             Map<String, Object> payload = memberService.payload(accessToken);

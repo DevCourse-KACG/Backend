@@ -128,11 +128,25 @@ public class MemberService {
 
     public Map<String, Object> payload(String accessToken) {
         SecretKey secretKey = Keys.hmacShaKeyFor(jwtProperties.getJwt().getSecretKey().getBytes());
+        System.out.println(secretKey);
         return Jwts.parser()
                 .verifyWith(secretKey)
             .build()
                 .parseSignedClaims(accessToken).getPayload();
     }
+
+//    public Map<String, Object> payload(String accessToken) {
+//        try {
+//            return Jwts.parser()
+//                    .setSigningKey(jwtProperties.getJwt().getSecretKey().getBytes())
+//                    .parseClaimsJws(accessToken)
+//                    .getBody();
+//        } catch (Exception e) {
+//            // 토큰이 유효하지 않을 경우 null 반환하거나 예외 처리
+//            return null;
+//        }
+//    }
+
 
     public Member findByEmail(String email) {
         Optional<MemberInfo> memberInfo = memberInfoRepository.findByEmail(email);
