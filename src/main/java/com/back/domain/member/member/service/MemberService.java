@@ -3,10 +3,11 @@ package com.back.domain.member.member.service;
 import com.back.domain.api.service.ApiKeyService;
 import com.back.domain.auth.service.AuthService;
 import com.back.domain.member.member.MemberType;
-import com.back.domain.member.member.dto.MemberAuthResponse;
-import com.back.domain.member.member.dto.MemberDto;
-import com.back.domain.member.member.dto.MemberLoginDto;
-import com.back.domain.member.member.dto.MemberWithdrawMembershipResponse;
+import com.back.domain.member.member.dto.dto.MemberLoginDto;
+import com.back.domain.member.member.dto.dto.MemberRegisterDto;
+import com.back.domain.member.member.dto.response.MemberAuthResponse;
+import com.back.domain.member.member.dto.response.MemberDetailInfoResponse;
+import com.back.domain.member.member.dto.response.MemberWithdrawMembershipResponse;
 import com.back.domain.member.member.entity.Member;
 import com.back.domain.member.member.entity.MemberInfo;
 import com.back.domain.member.member.repository.MemberInfoRepository;
@@ -33,7 +34,7 @@ public class MemberService {
     private final AuthService authService;
 
     //회원가입 메인 메소드
-    public MemberAuthResponse register(MemberDto dto) {
+    public MemberAuthResponse register(MemberRegisterDto dto) {
         validateDuplicate(dto);
         String tag = createTag(dto);
         Member member = createAndSaveMember(dto, tag);
@@ -67,7 +68,25 @@ public class MemberService {
         return new MemberWithdrawMembershipResponse(member.getNickname(), member.getTag());
     }
 
-    private void validateDuplicate(MemberDto dto) {
+    //유저 정보 반환 메소드
+    public MemberDetailInfoResponse getUserInfo(Long id) {
+        Optional<Member> member = findById(id);
+        if (member.isEmpty()) {
+            throw new ServiceException(400, "해당 id의 유저가 없습니다.");
+        }
+        MemberInfo memberInfo = member.get().getMemberInfo();
+
+        String nickname = member.get().getNickname();
+        String tag = member.get().getTag();
+        String email = memberInfo.getEmail();
+        String bio = memberInfo.getBio();
+        String profileImage = memberInfo.getProfileImageUrl();
+
+
+        return new MemberDetailInfoResponse(nickname, tag, email, bio, profileImage);
+    }
+
+    private void validateDuplicate(MemberRegisterDto dto) {
         //이메일 중복 확인
         String email = dto.email().toLowerCase();
         if (memberInfoRepository.findByEmail(email).isPresent()) {
@@ -75,7 +94,7 @@ public class MemberService {
         }
     }
 
-    private String createTag(MemberDto dto) {
+    private String createTag(MemberRegisterDto dto) {
         //태그 생성
         if (memberRepository.findByNickname(dto.nickname()).isPresent()) {
             String tag;
@@ -88,7 +107,7 @@ public class MemberService {
 
     }
 
-    private Member createAndSaveMember(MemberDto dto, String tag) {
+    private Member createAndSaveMember(MemberRegisterDto dto, String tag) {
         //멤버 db 저장
         BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
         String hashedPassword = encoder.encode(dto.password());
@@ -103,7 +122,7 @@ public class MemberService {
         return memberRepository.save(member);
     }
 
-    private MemberInfo createAndSaveMemberInfo(MemberDto dto, Member member, String apiKey) {
+    private MemberInfo createAndSaveMemberInfo(MemberRegisterDto dto, Member member, String apiKey) {
         //멤버 인포 저장
         MemberInfo info = MemberInfo.builder()
                 .email(dto.email())

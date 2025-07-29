@@ -1,6 +1,6 @@
 package com.back.domain.member.member;
 
-import com.back.domain.member.member.dto.MemberDto;
+import com.back.domain.member.member.dto.dto.MemberRegisterDto;
 import com.back.domain.member.member.entity.Member;
 import com.back.domain.member.member.repository.MemberRepository;
 import com.back.domain.member.member.service.MemberService;
@@ -27,13 +27,13 @@ public class MemberServiceTest {
     @Test
     @DisplayName("회원가입 - 이메일 중복 시 예외 발생")
     public void registerWithDuplicateEmailThrowsException() {
-        MemberDto memberDto1 = new MemberDto("1", "pw1", "user1", "안녕하세요");
-        MemberDto memberDto2 = new MemberDto("1", "pw1", "user2", "안녕하세요");
+        MemberRegisterDto memberRegisterDto1 = new MemberRegisterDto("1", "pw1", "user1", "안녕하세요");
+        MemberRegisterDto memberRegisterDto2 = new MemberRegisterDto("1", "pw1", "user2", "안녕하세요");
 
-        memberService.register(memberDto1);
+        memberService.register(memberRegisterDto1);
 
         assertThatThrownBy(() -> {
-            memberService.register(memberDto2);
+            memberService.register(memberRegisterDto2);
         }).isInstanceOf(ServiceException.class);
     }
 
@@ -44,7 +44,7 @@ public class MemberServiceTest {
 
         String rawPassword = "pw1";
 
-        memberService.register(new MemberDto("1", rawPassword, "user1", "<>"));
+        memberService.register(new MemberRegisterDto("1", rawPassword, "user1", "<>"));
         Member savedMember = memberRepository.findByNickname("user1").get();
 
         String savedHashedPassword = savedMember.getPassword();

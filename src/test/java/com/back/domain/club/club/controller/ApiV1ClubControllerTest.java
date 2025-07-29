@@ -2,7 +2,7 @@ package com.back.domain.club.club.controller;
 
 import com.back.domain.club.club.entity.Club;
 import com.back.domain.club.club.service.ClubService;
-import com.back.domain.member.member.dto.MemberDto;
+import com.back.domain.member.member.dto.dto.MemberRegisterDto;
 import com.back.domain.member.member.entity.Member;
 import com.back.domain.member.member.service.MemberService;
 import com.back.global.aws.S3Service;
@@ -475,7 +475,7 @@ class ApiV1ClubControllerTest {
     void getClubInfo() throws Exception {
         // given
         // 리더 생성
-        MemberDto dto = new MemberDto(
+        MemberRegisterDto dto = new MemberRegisterDto(
                 "testLeader@gmail.com",
                 "12345678",
                 "testLeader",
