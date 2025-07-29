@@ -312,6 +312,39 @@ public class ApiV1MemberControllerTest {
                 .andExpect(jsonPath("$.data.bio").value(memberInfo.getBio()));
     }
 
+    @Test
+    @DisplayName("비밀번호 유효성 검사 - 정상")
+    public void checkPasswordValidity_success() throws Exception {
+        Member member = memberFixture.createMember(1);
+        MemberInfo memberInfo = member.getMemberInfo();
+        String rawPassword = "password123"; //평문 비밀번호
+
+        String requestBody = String.format("""
+        {
+            "password": "%s"
+        }
+        """, rawPassword);
+
+        SecurityUser securityUser = new SecurityUser(
+                member.getId(),
+                member.getNickname(),
+                member.getTag(),
+                member.getPassword(),
+                Collections.emptyList()
+        );
+
+        mockMvc.perform(post("/api/v1/members/auth/verify-password")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(requestBody)
+                    .cookie(loginAndGetAccessTokenCookie(memberInfo.getEmail(), rawPassword))
+                    .with(user(securityUser)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value(200))
+                .andExpect(jsonPath("$.message").value("비밀번호 유효성 반환 성공"))
+                .andExpect(jsonPath("$.data.verified").value(true))    ;
+
+    }
+
     private Cookie loginAndGetAccessTokenCookie(String email, String password) throws Exception {
         String loginRequestBody = String.format("""
         {
