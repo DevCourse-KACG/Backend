@@ -101,6 +101,7 @@ public class ApiV1ScheduleController {
     }
 
     @GetMapping("/me")
+    @Operation(summary = "나의 일정 목록 조회")
     public RsData<List<ScheduleDto>> getMySchedules(
             //@AuthenticationPrincipal SecurityUser user,
             @RequestParam(value = "startDate", required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate startDate,

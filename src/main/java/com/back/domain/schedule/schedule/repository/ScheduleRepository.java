@@ -35,6 +35,7 @@ public interface ScheduleRepository extends JpaRepository<Schedule, Long> {
             WHERE cm.member.id = :memberId
             AND s.isActive = true
             AND s.startDate BETWEEN :startDateTime AND :endDateTime
+            ORDER BY s.startDate
         """)
     List<Schedule> findMonthlySchedulesByMemberId(
             @Param("memberId") Long memberId,
