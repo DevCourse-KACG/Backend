@@ -601,4 +601,240 @@ public class ApiV1PresetControllerTest {
         .andDo(print());
   }
 
+  @Test
+  @DisplayName("프리셋 수정")
+  void t24() throws Exception {
+    // 먼저 프리셋을 생성합니다.
+    long presetId = presetCreate();
+
+    String requestBody = String.format("""
+    {
+      "presetItems": [
+        { "content": "수정된 아이템 1", "category": "%s", "sequence":1 },
+        { "content": "수정된 아이템 2", "category": "%s", "sequence":2 }
+      ],
+      "name": "수정된 프리셋 이름"
+    }
+    """, CheckListItemCategory.PREPARATION.name(), CheckListItemCategory.ETC.name());
+
+    mockMvc.perform(
+        put("/api/v1/presets/" + presetId)
+            .header("Authorization", "Bearer " + jwtToken)
+            .contentType("application/json")
+            .content(requestBody)
+    )
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.code").value(200))
+        .andExpect(jsonPath("$.message").value("프리셋 수정 성공"))
+        .andExpect(jsonPath("$.data.name").value("수정된 프리셋 이름"))
+        .andExpect(jsonPath("$.data.presetItems[0].content").value("수정된 아이템 1"))
+        .andExpect(jsonPath("$.data.presetItems[0].category").value(CheckListItemCategory.PREPARATION.name()))
+        .andExpect(jsonPath("$.data.presetItems[1].content").value("수정된 아이템 2"))
+        .andExpect(jsonPath("$.data.presetItems[1].category").value(CheckListItemCategory.ETC.name()))
+        .andDo(print());
+  }
+
+  @Test
+  @DisplayName("프리셋 수정 실패 - 프리셋이 존재하지 않음")
+  void t25() throws Exception {
+    String requestBody = String.format("""
+    {
+      "presetItems": [
+        { "content": "수정된 아이템 1", "category": "%s", "sequence":1 },
+        { "content": "수정된 아이템 2", "category": "%s", "sequence":2 }
+      ],
+      "name": "수정된 프리셋 이름"
+    }
+    """, CheckListItemCategory.PREPARATION.name(), CheckListItemCategory.ETC.name());
+
+    mockMvc.perform(
+        put("/api/v1/presets/9999") // 존재하지 않는 ID
+            .header("Authorization", "Bearer " + jwtToken)
+            .contentType("application/json")
+            .content(requestBody)
+    )
+        .andExpect(status().isNotFound())
+        .andExpect(jsonPath("$.code").value(404))
+        .andExpect(jsonPath("$.message").value("프리셋을 찾을 수 없습니다"))
+        .andDo(print());
+  }
+
+  @Test
+  @DisplayName("프리셋 수정 실패 - 권한 없는 프리셋")
+  void t26() throws Exception {
+    // 먼저 프리셋을 생성합니다.
+    long presetId = presetCreate();
+
+    // 다른 멤버로 JWT 토큰을 생성
+    Member anotherMember = Member.builder()
+        .nickname("다른 유저")
+        .password("password")
+        .build();
+    memberRepository.save(anotherMember);
+
+    String anotherJwtToken = Ut.jwt.toString(secretKey, expirationSeconds, Map.of("id", anotherMember.getId(), "nickname", anotherMember.getNickname()));
+
+    String requestBody = String.format("""
+    {
+      "presetItems": [
+        { "content": "수정된 아이템 1", "category": "%s", "sequence":1 },
+        { "content": "수정된 아이템 2", "category": "%s", "sequence":2 }
+      ],
+      "name": "수정된 프리셋 이름"
+    }
+    """, CheckListItemCategory.PREPARATION.name(), CheckListItemCategory.ETC.name());
+
+    mockMvc.perform(
+        put("/api/v1/presets/" + presetId)
+            .header("Authorization", "Bearer " + anotherJwtToken)
+            .contentType("application/json")
+            .content(requestBody)
+    )
+        .andExpect(status().isForbidden())
+        .andExpect(jsonPath("$.code").value(403))
+        .andExpect(jsonPath("$.message").value("권한 없는 프리셋"))
+        .andDo(print());
+  }
+
+  @Test
+  @DisplayName("프리셋 수정 실패 - JWT 토큰 없음")
+  void t27() throws Exception {
+    // 먼저 프리셋을 생성합니다.
+    presetCreate();
+
+    String requestBody = String.format("""
+    {
+      "presetItems": [
+        { "content": "수정된 아이템 1", "category": "%s", "sequence":1 },
+        { "content": "수정된 아이템 2", "category": "%s", "sequence":2 }
+      ],
+      "name": "수정된 프리셋 이름"
+    }
+    """, CheckListItemCategory.PREPARATION.name(), CheckListItemCategory.ETC.name());
+
+    mockMvc.perform(
+        put("/api/v1/presets/1") // ID는 예시로 1을 사용합니다. 실제 테스트에서는 동적으로 가져와야 합니다.
+            .contentType("application/json")
+            .content(requestBody)
+    )
+        .andExpect(status().isNotFound())
+        .andExpect(jsonPath("$.code").value(404))
+        .andExpect(jsonPath("$.message").value("AccessToken을 찾을 수 없습니다"))
+        .andDo(print());
+  }
+
+  @Test
+  @DisplayName("프리셋 수정 실패 - JWT 토큰 만료")
+  void t28() throws Exception {
+    // 먼저 프리셋을 생성합니다.
+    long presetId = presetCreate();
+
+    // 만료된 JWT 토큰 생성
+    String expiredJwtToken = Ut.jwt.toString(secretKey, -1, Map.of("id", member.getId(), "nickname", member.getNickname()));
+
+    String requestBody = String.format("""
+    {
+      "presetItems": [
+        { "content": "수정된 아이템 1", "category": "%s", "sequence":1 },
+        { "content": "수정된 아이템 2", "category": "%s", "sequence":2 }
+      ],
+      "name": "수정된 프리셋 이름"
+    }
+    """, CheckListItemCategory.PREPARATION.name(), CheckListItemCategory.ETC.name());
+
+    mockMvc.perform(
+        put("/api/v1/presets/" + presetId)
+            .header("Authorization", "Bearer " + expiredJwtToken)
+            .contentType("application/json")
+            .content(requestBody)
+    )
+        .andExpect(status().is(499))
+        .andExpect(jsonPath("$.code").value(499))
+        .andExpect(jsonPath("$.message").value("AccessToken 만료"))
+        .andDo(print());
+  }
+
+  @Test
+  @DisplayName("프리셋 수정 실패 - 잘못된 요청 형식")
+  void t29() throws Exception {
+    // 먼저 프리셋을 생성합니다.
+    presetCreate();
+
+    String requestBody = String.format("""
+    {
+      "presetItems": [
+        { "content": "수정된 아이템 1", "category": "%s", "sequence":1 },
+        { "content": "수정된 아이템 2", "category": "%s", "sequence":2 }
+      ],
+      "name": ""
+    }
+    """, CheckListItemCategory.PREPARATION.name(), CheckListItemCategory.ETC.name());
+
+    mockMvc.perform(
+        put("/api/v1/presets/1") // ID는 예시로 1을 사용합니다. 실제 테스트에서는 동적으로 가져와야 합니다.
+            .header("Authorization", "Bearer " + jwtToken)
+            .contentType("application/json")
+            .content(requestBody)
+    )
+        .andExpect(status().isBadRequest())
+        .andExpect(jsonPath("$.code").value(400))
+        .andExpect(jsonPath("$.message").value("name-NotBlank-프리셋 이름은 필수입니다"))
+        .andDo(print());
+  }
+
+  @Test
+  @DisplayName("프리셋 수정 실패 - 잘못된 카테고리")
+  void t30() throws Exception {
+    // 먼저 프리셋을 생성합니다.
+    presetCreate();
+
+    String requestBody = String.format("""
+    {
+      "presetItems": [
+        { "content": "수정된 아이템 1", "category": "INVALID_CATEGORY", "sequence":1 },
+        { "content": "수정된 아이템 2", "category": "%s", "sequence":2 }
+      ],
+      "name": "수정된 프리셋 이름"
+    }
+    """, CheckListItemCategory.ETC.name());
+
+    mockMvc.perform(
+        put("/api/v1/presets/1") // ID는 예시로 1을 사용합니다. 실제 테스트에서는 동적으로 가져와야 합니다.
+            .header("Authorization", "Bearer " + jwtToken)
+            .contentType("application/json")
+            .content(requestBody)
+    )
+        .andExpect(status().isBadRequest())
+        .andExpect(jsonPath("$.code").value(400))
+        .andExpect(jsonPath("$.message").value("요청 본문이 올바르지 않습니다."))
+        .andDo(print());
+  }
+
+  @Test
+  @DisplayName("프리셋 수정 성공 - 프리셋 아이템이 비어있을 경우")
+  void t31() throws Exception {
+    // 먼저 프리셋을 생성합니다.
+    long presetId = presetCreate();
+
+    String requestBody = """
+    {
+      "presetItems": [],
+      "name": "빈 아이템 프리셋"
+    }
+    """;
+
+    mockMvc.perform(
+        put("/api/v1/presets/" + presetId)
+            .header("Authorization", "Bearer " + jwtToken)
+            .contentType("application/json")
+            .content(requestBody)
+    )
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.code").value(200))
+        .andExpect(jsonPath("$.message").value("프리셋 수정 성공"))
+        .andExpect(jsonPath("$.data.name").value("빈 아이템 프리셋"))
+        .andExpect(jsonPath("$.data.presetItems.length()").value(0)) // 빈 아이템 리스트 확인
+        .andDo(print());
+  }
+
 }
