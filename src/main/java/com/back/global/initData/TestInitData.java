@@ -80,16 +80,16 @@ public class TestInitData {
         Member member1 = createMember("홍길동", "password1", "hgd222@test.com", "안녕하세요. 홍길동입니다.");
         members.put(member1.getNickname(), member1);
 
-        Member member2 = createMember("김철수", "password2", "chs4s@test.com", "안녕하세요. 홍길동입니다.");
+        Member member2 = createMember("김철수", "password2", "chs4s@test.com", "안녕하세요. 김철수입니다.");
         members.put(member2.getNickname(), member2);
 
-        Member member3 = createMember("이영희", "password3", "lyh3@test.com", "안녕하세요. 홍길동입니다.");
+        Member member3 = createMember("이영희", "password3", "lyh3@test.com", "안녕하세요. 이영희입니다.");
         members.put(member3.getNickname(), member3);
 
-        Member member4 = createMember("최지우", "password4", "cjw5@test.com", "안녕하세요. 홍길동입니다.");
+        Member member4 = createMember("최지우", "password4", "cjw5@test.com", "안녕하세요. 최지우입니다.");
         members.put(member4.getNickname(), member4);
 
-        Member member5 = createMember("박민수", "password5", "pms4@test.com", "안녕하세요. 홍길동입니다.");
+        Member member5 = createMember("박민수", "password5", "pms4@test.com", "안녕하세요. 박민수입니다.");
         members.put(member5.getNickname(), member5);
 
         // 비회원
@@ -432,7 +432,7 @@ public class TestInitData {
                 continue;
             }
 
-            // 랜덤 할당 개수 (1~2명)
+            // 랜덤 할당
             int assignCount = 1 + (int) (Math.random());
 
             // 중복되지 않도록 할당
