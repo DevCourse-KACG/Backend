@@ -1,4 +1,4 @@
-package com.back.domain.member.member.dto;
+package com.back.domain.member.member.dto.response;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 

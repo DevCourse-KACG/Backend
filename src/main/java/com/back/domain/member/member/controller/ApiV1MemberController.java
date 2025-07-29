@@ -1,11 +1,15 @@
 package com.back.domain.member.member.controller;
 
-import com.back.domain.member.member.dto.*;
+import com.back.domain.api.dto.TokenRefreshRequest;
+import com.back.domain.member.member.dto.request.MemberLoginDto;
+import com.back.domain.member.member.dto.request.MemberRegisterDto;
+import com.back.domain.member.member.dto.response.MemberAuthResponse;
+import com.back.domain.member.member.dto.response.MemberDetailInfoResponse;
+import com.back.domain.member.member.dto.response.MemberWithdrawMembershipResponse;
 import com.back.domain.member.member.entity.Member;
 import com.back.domain.member.member.service.MemberService;
 import com.back.global.rsData.RsData;
 import com.back.global.security.SecurityUser;
-import com.back.domain.api.dto.TokenRefreshRequest;
 import io.swagger.v3.oas.annotations.Operation;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
@@ -23,8 +27,8 @@ public class ApiV1MemberController {
 
     @Operation(summary = "회원가입 API", description = "이메일, 비밀번호 등을 받아 회원가입을 처리합니다.")
     @PostMapping("/auth/register")
-    public RsData<MemberAuthResponse> register(@Valid @RequestBody MemberDto memberDto, HttpServletResponse response) {
-        MemberAuthResponse memberAuthResponse = memberService.register(memberDto);
+    public RsData<MemberAuthResponse> register(@Valid @RequestBody MemberRegisterDto memberRegisterDto, HttpServletResponse response) {
+        MemberAuthResponse memberAuthResponse = memberService.register(memberRegisterDto);
 
         Cookie accessTokenCookie = createAccessTokenCookie(memberAuthResponse.accessToken());
 
@@ -56,7 +60,7 @@ public class ApiV1MemberController {
         return RsData.of(200, "로그아웃 성공");
     }
 
-    @Operation(summary = "회원탈퇴 API", description = "회원탈퇴 처리 API입니다.")
+    @Operation(summary = "회원탈퇴 API", description = "회원탈퇴 처리 API 입니다.")
     @PreAuthorize("isAuthenticated()")
     @DeleteMapping("/me")
     public RsData<MemberWithdrawMembershipResponse> withdrawMembership(HttpServletResponse response,
@@ -71,7 +75,7 @@ public class ApiV1MemberController {
                 responseDto);
     }
 
-    @Operation(summary = "access token 재발급 API", description = "리프레시 토큰으로 access token을 재발급하는 API입니다.")
+    @Operation(summary = "access token 재발급 API", description = "리프레시 토큰으로 access token을 재발급하는 API 입니다.")
     @PostMapping("/auth/refresh")
     public RsData<MemberAuthResponse> apiTokenReissue(@RequestBody TokenRefreshRequest requestBody,
                                                       HttpServletResponse response) {
@@ -95,6 +99,21 @@ public class ApiV1MemberController {
         return RsData.of(200, "Access Token 재발급 성공",
                 new MemberAuthResponse(ApiKey, newAccessToken));
     }
+
+    @Operation(summary = "내 정보 반환 API", description = "현재 로그인한 유저 정보를 반환하는 API 입니다.")
+    @PreAuthorize("isAuthenticated()")
+    @GetMapping("/me")
+    public RsData<MemberDetailInfoResponse> getMyInfo(HttpServletResponse response,
+                                                      @AuthenticationPrincipal SecurityUser user) {
+
+        MemberDetailInfoResponse memberDetailInfoResponse =
+                memberService.getUserInfo(user.getId());
+
+        return RsData.of(200,
+                "유저 정보 반환 성공",
+                memberDetailInfoResponse);
+    }
+
 
     private Cookie createAccessTokenCookie(String accessToken) {
         Cookie cookie = new Cookie("accessToken", accessToken);
