@@ -20,13 +20,11 @@ public class Preset {
     private Long id;
 
     @Description("프리셋 이름")
-    @Setter
     private String name;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     private Member owner;
 
-    @Setter
     @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true, mappedBy = "preset")
     private List<PresetItem> presetItems;
 
@@ -39,6 +37,15 @@ public class Preset {
             // 양방향 연관관계 설정
             presetItems.forEach(item -> item.setPreset(this));
         }
+    }
+
+    public void updateName(String name) {
+        this.name = name;
+    }
+
+    public void updatePresetItems(List<PresetItem> presetItems) {
+        this.presetItems.clear();
+        this.presetItems = presetItems;
     }
 
 }

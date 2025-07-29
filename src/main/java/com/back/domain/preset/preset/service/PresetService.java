@@ -181,8 +181,8 @@ public class PresetService {
     ).collect(Collectors.toList());
 
     // 프리셋 수정
-    preset.setName(presetWriteReqDto.name());
-    preset.setPresetItems(presetItems);
+    preset.updateName(presetWriteReqDto.name());
+    preset.updatePresetItems(presetItems);
 
     // 프리셋 저장
     Preset modifyPreset = presetRepository.save(preset);
