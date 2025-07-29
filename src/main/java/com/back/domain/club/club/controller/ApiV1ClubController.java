@@ -67,4 +67,11 @@ public class ApiV1ClubController {
         ClubControllerDtos.ClubInfoResponse info = clubService.getClubInfo(clubId);
         return new RsData<>(200, "클럽 정보가 조회됐습니다.", info);
     }
+
+    @GetMapping("/public")
+    @Operation(summary = "공개 클럽 목록 조회")
+    public RsData<ClubControllerDtos.SimpleClubInfoResponse[]> getPublicClubs() {
+        ClubControllerDtos.SimpleClubInfoResponse[] response = clubService.getPublicClubs();
+        return new RsData<>(200, "공개 클럽 목록이 조회됐습니다.", response);
+    }
 }

@@ -580,6 +580,8 @@ class ApiV1ClubControllerTest {
 
         // then
         resultActions
+                .andExpect(handler().handlerType(ApiV1ClubController.class))
+                .andExpect(handler().methodName("getPublicClubs"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value(200))
                 .andExpect(jsonPath("$.message").value("공개 클럽 목록이 조회됐습니다."))

@@ -185,4 +185,23 @@ public class ClubService {
                 leader.getNickname()
         );
     }
+
+    public ClubControllerDtos.SimpleClubInfoResponse[] getPublicClubs() {
+        return clubRepository.findAllByPublicTrue().stream()
+                .map(club -> new ClubControllerDtos.SimpleClubInfoResponse(
+                        club.getId(),
+                        club.getName(),
+                        club.getCategory().toString(),
+                        club.getImageUrl(),
+                        club.getMainSpot(),
+                        club.getEventType().toString(),
+                        club.getStartDate().toString(),
+                        club.getEndDate().toString(),
+                        club.getLeaderId(),
+                        memberService.findById(club.getLeaderId())
+                                .map(Member::getNickname)
+                                .orElse("Unknown Leader")
+                ))
+                .toArray(ClubControllerDtos.SimpleClubInfoResponse[]::new);
+    }
 }
