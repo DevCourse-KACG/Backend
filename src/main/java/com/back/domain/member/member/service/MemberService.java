@@ -3,9 +3,7 @@ package com.back.domain.member.member.service;
 import com.back.domain.api.service.ApiKeyService;
 import com.back.domain.auth.service.AuthService;
 import com.back.domain.member.member.MemberType;
-import com.back.domain.member.member.dto.MemberAuthResponse;
-import com.back.domain.member.member.dto.MemberDto;
-import com.back.domain.member.member.dto.MemberLoginDto;
+import com.back.domain.member.member.dto.*;
 import com.back.domain.member.member.entity.Member;
 import com.back.domain.member.member.entity.MemberInfo;
 import com.back.domain.member.member.repository.MemberInfoRepository;
@@ -126,13 +124,36 @@ public class MemberService {
     }
 
 
-    public Member findByEmail(String email) {
+    public Member MemberFindByEmail(String email) {
         Optional<MemberInfo> memberInfo = memberInfoRepository.findByEmail(email);
 
         if (memberInfo.isEmpty()) {
-            throw new ServiceException(400, "해당 이메일로 등록된 회원을 찾을 수 없습니다.");
+            throw new ServiceException(400, "사용자를 찾을 수 없습니다.");
         }
 
         return memberInfo.get().getMember();
+    }
+
+    public MemberWithdrawMembershipResponse withdrawMembership(String nickname, String tag) {
+        Member member = findByNicknameAndTag(nickname, tag);
+        MemberInfo memberInfo = member.getMemberInfo();
+
+        deleteMember(member);
+
+        return new MemberWithdrawMembershipResponse(member.getNickname(), memberInfo.getEmail(), member.getTag());
+    }
+
+    private void deleteMember(Member member) {
+        memberRepository.delete(member);
+    }
+
+    public Member findByNicknameAndTag(String nickname, String tag) {
+        Optional<Member> optionalMember = memberRepository.findByNicknameAndTag(nickname, tag);
+
+        if (optionalMember.isEmpty()) {
+            throw new ServiceException(400, "해당 닉네임의 사용자를 찾을 수 없습니다.");
+        }
+
+        return optionalMember.get();
     }
 }

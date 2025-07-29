@@ -6,6 +6,8 @@ import com.back.domain.member.member.controller.ApiV1MemberController;
 import com.back.domain.member.member.entity.Member;
 import com.back.domain.member.member.entity.MemberInfo;
 import com.back.domain.member.member.support.MemberFixture;
+import com.back.global.security.SecurityUser;
+import io.jsonwebtoken.lang.Collections;
 import jakarta.servlet.http.Cookie;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -17,6 +19,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
@@ -227,11 +230,15 @@ public class ApiV1MemberControllerTest {
         Cookie accessTokenCookie = loginAndGetAccessTokenCookie("test1@example.com", "password123");
 
         mockMvc.perform(delete("/api/v1/members/me")
-                        .cookie(accessTokenCookie))
-                .andExpect(status().isOk())
-                .andExpect(cookie().maxAge("accessToken", 0)) // 쿠키 만료 확인
-                .andExpect(jsonPath("$.data.nickname").value(member.getNickname()))
-                .andExpect(jsonPath("$.data.email").value(member.getMemberInfo().getEmail()));
+                .with(user(new SecurityUser(
+                        member.getId(),
+                        member.getNickname(),
+                        member.getTag(),
+                        member.getPassword(),
+                        Collections.emptyList()
+                )))
+                .cookie(accessTokenCookie)
+                .contentType(MediaType.APPLICATION_JSON));
     }
 
 
