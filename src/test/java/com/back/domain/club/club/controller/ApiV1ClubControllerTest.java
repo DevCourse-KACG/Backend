@@ -397,7 +397,7 @@ class ApiV1ClubControllerTest {
         resultActions
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.code").value(404))
-                .andExpect(jsonPath("$.message").value("클럽을 찾을 수 없습니다."));
+                .andExpect(jsonPath("$.message").value("해당 ID의 클럽을 찾을 수 없습니다."));
     }
 
     @Test
@@ -433,8 +433,8 @@ class ApiV1ClubControllerTest {
         resultActions
                 .andExpect(handler().handlerType(ApiV1ClubController.class))
                 .andExpect(handler().methodName("deleteClub"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.code").value(200))
+                .andExpect(status().isNoContent())
+                .andExpect(jsonPath("$.code").value(204))
                 .andExpect(jsonPath("$.message").value("클럽이 삭제됐습니다."));
 
         // 추가 검증: 클럽이 실제로는 삭제되지 않고 활성화 상태가 false로 변경됐는지 확인
@@ -463,7 +463,7 @@ class ApiV1ClubControllerTest {
         resultActions
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.code").value(404))
-                .andExpect(jsonPath("$.message").value("클럽을 찾을 수 없습니다."));
+                .andExpect(jsonPath("$.message").value("해당 ID의 클럽을 찾을 수 없습니다."));
     }
 
 }
