@@ -10,12 +10,7 @@ import com.back.domain.member.member.entity.Member;
 import com.back.domain.member.member.entity.MemberInfo;
 import com.back.domain.member.member.repository.MemberInfoRepository;
 import com.back.domain.member.member.repository.MemberRepository;
-import com.back.global.config.jwt.JwtProperties;
 import com.back.global.exception.ServiceException;
-import io.jsonwebtoken.Claims;
-import io.jsonwebtoken.JwtParser;
-import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.security.Keys;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -23,7 +18,6 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import javax.crypto.SecretKey;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
@@ -36,16 +30,14 @@ public class MemberService {
     private final MemberInfoRepository memberInfoRepository;
     private final ApiKeyService apiKeyService;
     private final AuthService authService;
-    private final JwtProperties jwtProperties;
 
     public MemberAuthResponse register(MemberDto dto) {
         validateDuplicate(dto);
         String tag = createTag(dto);
         Member member = createAndSaveMember(dto, tag);
         String apiKey = apiKeyService.generateApiKey();
-        MemberInfo memberInfo = createAndSaveMemberInfo(dto, member, apiKey);
 
-        String accessToken = authService.generateAccessToken(apiKey);
+        String accessToken = authService.generateAccessToken(member);
 
         return new MemberAuthResponse(apiKey, accessToken);
     }
@@ -107,7 +99,7 @@ public class MemberService {
         validateRightPassword(memberLoginDto.password(), member);
 
         String apiKey = member.getMemberInfo().getApiKey();
-        String accessToken = authService.generateAccessToken(apiKey);
+        String accessToken = authService.generateAccessToken(member);
 
         return new MemberAuthResponse(apiKey, accessToken);
     }
@@ -129,26 +121,8 @@ public class MemberService {
     }
 
     public Map<String, Object> payload(String accessToken) {
-        SecretKey secretKey = Keys.hmacShaKeyFor(jwtProperties.getJwt().getSecretKey().getBytes());
-        System.out.println(secretKey);
-        JwtParser parser = Jwts.parser().setSigningKey(secretKey).build();
-        Claims claims = parser.parseClaimsJws(accessToken).getBody();
-
-        return claims;
-//        return Jwts.parser()
-//                .verifyWith(secretKey)
-//                .build()
-//                .parseSignedClaims(accessToken);
+        return authService.payload(accessToken);
     }
-
-//    public Map<String, Object> payload(String accessToken) {
-//        SecretKey secretKey = Keys.hmacShaKeyFor(jwtProperties.getJwt().getSecretKey().getBytes());
-//        System.out.println(secretKey);
-//        return Jwts.parser()
-//                .verifyWith(secretKey)
-//                .build()
-//                .parseSignedClaims(accessToken).getPayload();
-//    }
 
 
     public Member findByEmail(String email) {

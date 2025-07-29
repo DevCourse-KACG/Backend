@@ -135,9 +135,9 @@ public class ApiV1MemberControllerTest {
     @Test
     @DisplayName("AccessToken 발급 - 정상")
     public void generateAccessToken_success() throws Exception {
-        String validApiKey = "api_123456abcdef";
+        Member member = memberFixture.createMember(1);
 
-        String accessToken = authService.generateAccessToken(validApiKey);
+        String accessToken = authService.generateAccessToken(member);
 
         assertNotNull(accessToken);
     }
