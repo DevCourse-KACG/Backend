@@ -3,7 +3,6 @@ package com.back.domain.preset.preset.service;
 import com.back.domain.member.member.entity.Member;
 import com.back.domain.member.member.repository.MemberRepository;
 import com.back.domain.preset.preset.dto.PresetDto;
-import com.back.domain.preset.preset.dto.PresetItemDto;
 import com.back.domain.preset.preset.dto.PresetWriteReqDto;
 import com.back.domain.preset.preset.entity.Preset;
 import com.back.domain.preset.preset.entity.PresetItem;
@@ -11,12 +10,10 @@ import com.back.domain.preset.preset.repository.PresetRepository;
 import com.back.global.rq.Rq;
 import com.back.global.rsData.RsData;
 import com.back.standard.util.Ut;
-import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -153,7 +150,7 @@ public class PresetService {
     return RsData.of(200, "프리셋 삭제 성공");
   }
 
-  public RsData<PresetDto> updatePreset(Long presetId, @Valid PresetWriteReqDto presetWriteReqDto) {
+  public RsData<PresetDto> updatePreset(Long presetId, PresetWriteReqDto presetWriteReqDto) {
     RsData<Map<String, Object>> jwtRsData = getJwtData();
 
     // JWT 데이터가 유효하지 않은 경우 RsData 반환
