@@ -1,7 +1,11 @@
 package com.back.global.initData;
 
 import com.back.domain.checkList.checkList.entity.CheckList;
+import com.back.domain.checkList.checkList.entity.CheckListItem;
+import com.back.domain.checkList.checkList.repository.CheckListItemRepository;
 import com.back.domain.checkList.checkList.repository.CheckListRepository;
+import com.back.domain.checkList.itemAssign.entity.ItemAssign;
+import com.back.domain.checkList.itemAssign.repository.ItemAssignRepository;
 import com.back.domain.club.club.entity.Club;
 import com.back.domain.club.club.repository.ClubRepository;
 import com.back.domain.club.clubMember.entity.ClubMember;
@@ -26,6 +30,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.*;
 
 
 /**
@@ -41,58 +46,70 @@ public class TestInitData {
     private final ClubMemberRepository clubMemberRepository;
     private final ScheduleRepository scheduleRepository;
     private final CheckListRepository checkListRepository;
+    private final CheckListItemRepository checkListItemRepository;
+    private final ItemAssignRepository itemAssignRepository;
 
     @Autowired
     @Lazy
     private TestInitData self;
 
+    private Map<String, Member> members;
+    private Map<String, Club> clubs;
+
     @Bean
     ApplicationRunner testInitDataApplicationRunner() {
         return args -> {
-            self.work1();
-            self.work2();
-            self.work3();
-
-            //self.initDataForSchedule();
-            //self.scheduleInitData();
+            self.initMemberTestData();
+            self.initGroupTestData();
+            self.initGroupMemberTestData();
+            self.initScheduleTestData();
+            self.initCheckListTestData();
+            self.initCheckListItemTestData();
+            self.initItemAssignTestData();
         };
     }
 
+    /**
+     * 회원, 회원 정보 초기 데이터 설정
+     */
     @Transactional
-    public void work1() {
-        // 여기에 데이터 삽입 로직 작성
-    }
+    public void initMemberTestData() {
+        members = new HashMap<>();
 
-    @Transactional
-    public void work2() {
-    }
+        // 회원
+        Member member1 = createMember("홍길동", "password1", "hgd222@test.com", "안녕하세요. 홍길동입니다.");
+        members.put(member1.getNickname(), member1);
 
-    @Transactional
-    public void work3() {
+        Member member2 = createMember("김철수", "password2", "chs4s@test.com", "안녕하세요. 홍길동입니다.");
+        members.put(member2.getNickname(), member2);
+
+        Member member3 = createMember("이영희", "password3", "lyh3@test.com", "안녕하세요. 홍길동입니다.");
+        members.put(member3.getNickname(), member3);
+
+        Member member4 = createMember("최지우", "password4", "cjw5@test.com", "안녕하세요. 홍길동입니다.");
+        members.put(member4.getNickname(), member4);
+
+        Member member5 = createMember("박민수", "password5", "pms4@test.com", "안녕하세요. 홍길동입니다.");
+        members.put(member5.getNickname(), member5);
+
+        // 비회원
+        Member guest1 = createMember("이덕혜", "password11", null, null);
+        members.put(guest1.getNickname(), guest1);
+
+        Member guest2 = createMember("레베카", "password12", null, null);
+        members.put(guest2.getNickname(), guest2);
     }
 
     /**
-     * 스케줄 관련 초기 데이터 설정
-     * - 회원, 모임 초기 데이터 생길 시 삭제 예정
+     * 모임 초기 데이터 설정
      */
     @Transactional
-    public void initDataForSchedule() {
-        // 회원
-        Member member = Member.builder()
-                .nickname("member1")
-                .password("password1")
-                .build();
-        memberRepository.save(member);
+    public void initGroupTestData() {
+        Member leader1 = members.get("홍길동");
+        Member leader2 = members.get("최지우");
+        clubs = new HashMap<>();
 
-        MemberInfo memberInfo = MemberInfo.builder()
-                .email("member1@email.com")
-                .bio("bio1")
-                .member(member)
-                .build();
-        memberInfoRepository.save(memberInfo);
-        member.setMemberInfo(memberInfo);
-
-
+        // 장기 공개 모임 - 모집 중
         Club club1 = Club.builder()
                 .name("산책 모임")
                 .category(ClubCategory.SPORTS)
@@ -103,12 +120,13 @@ public class TestInitData {
                 .startDate(LocalDate.parse("2025-07-05"))
                 .endDate(LocalDate.parse("2025-08-30"))
                 .isPublic(true)
-                .leaderId(member.getId())
+                .leaderId(leader1.getId())
                 .state(true).build();
         clubRepository.save(club1);
+        clubs.put(club1.getName(), club1);
 
         ClubMember clubMember1 = ClubMember.builder()
-                .member(member)
+                .member(leader1)
                 .role(ClubMemberRole.HOST)
                 .club(club1)
                 .build();
@@ -125,25 +143,154 @@ public class TestInitData {
                 .startDate(LocalDate.parse("2025-05-01"))
                 .endDate(LocalDate.parse("2026-12-31"))
                 .isPublic(false)
-                .leaderId(member.getId())
+                .leaderId(leader1.getId())
                 .state(true).build();
         clubRepository.save(club2);
+        clubs.put(club2.getName(), club2);
 
         ClubMember clubMember2 = ClubMember.builder()
-                .member(member)
+                .member(leader1)
                 .role(ClubMemberRole.HOST)
                 .club(club2)
                 .build();
         clubMemberRepository.save(clubMember2);
+
+        // 단기 비공개 모임 - 모집중
+        Club club3 = Club.builder()
+                .name("친구 모임2")
+                .category(ClubCategory.TRAVEL)
+                .mainSpot("제주도")
+                .maximumCapacity(5)
+                .recruitingStatus(true)
+                .eventType(EventType.SHORT_TERM)
+                .startDate(LocalDate.parse("2025-07-01"))
+                .endDate(LocalDate.parse("2025-12-31"))
+                .isPublic(false)
+                .leaderId(leader1.getId())
+                .state(true).build();
+        clubRepository.save(club3);
+        clubs.put(club3.getName(), club3);
+
+        ClubMember clubMember3 = ClubMember.builder()
+                .member(leader1)
+                .role(ClubMemberRole.HOST)
+                .club(club3)
+                .build();
+        clubMemberRepository.save(clubMember3);
+
+
+        // 일회성 공개 모임 - 모집 중
+        Club club4 = Club.builder()
+                .name("A도시 러닝 대회")
+                .category(ClubCategory.SPORTS)
+                .mainSpot("서울")
+                .maximumCapacity(50)
+                .recruitingStatus(true)
+                .eventType(EventType.ONE_TIME)
+                .startDate(LocalDate.parse("2025-08-10"))
+                .endDate(LocalDate.parse("2025-08-10"))
+                .isPublic(true)
+                .leaderId(leader2.getId())
+                .state(true).build();
+        clubRepository.save(club4);
+        clubs.put(club4.getName(), club4);
+
+        ClubMember clubMember4 = ClubMember.builder()
+                .member(leader2)
+                .role(ClubMemberRole.HOST)
+                .club(club4)
+                .build();
+        clubMemberRepository.save(clubMember4);
+
+        // 종료일 지난 모임
+        Club nClub1 = Club.builder()
+                .name("독서 모임")
+                .category(ClubCategory.STUDY)
+                .mainSpot("부산")
+                .maximumCapacity(10)
+                .recruitingStatus(true)
+                .eventType(EventType.SHORT_TERM)
+                .startDate(LocalDate.parse("2025-07-12"))
+                .endDate(LocalDate.parse("2025-07-12"))
+                .imageUrl("img3")
+                .isPublic(false)
+                .leaderId(leader2.getId())
+                .state(true).build();
+        clubRepository.save(nClub1);
+        clubs.put(nClub1.getName(), nClub1);
+
+        ClubMember nClubMember1 = ClubMember.builder()
+                .member(leader2)
+                .role(ClubMemberRole.HOST)
+                .club(nClub1)
+                .build();
+        clubMemberRepository.save(nClubMember1);
+
+        // 삭제된 모임
+        Club nClub2 = Club.builder()
+                .name("테니스 모임")
+                .category(ClubCategory.SPORTS)
+                .mainSpot("충청도 A 테니스장")
+                .maximumCapacity(2)
+                .recruitingStatus(false)
+                .eventType(EventType.SHORT_TERM)
+                .startDate(LocalDate.parse("2025-07-05"))
+                .endDate(LocalDate.parse("2025-08-11"))
+                .imageUrl("img4")
+                .isPublic(false)
+                .leaderId(leader1.getId())
+                .state(false).build();
+        clubRepository.save(nClub2);
+        clubs.put(nClub2.getName(), nClub2);
+
+        ClubMember nClubMember2 = ClubMember.builder()
+                .member(leader2)
+                .role(ClubMemberRole.HOST)
+                .club(nClub2)
+                .build();
+        clubMemberRepository.save(nClubMember2);
     }
 
+    private record GroupMemberData(
+            String clubName,
+            String memberNickname,
+            ClubMemberRole role
+    ) {
+    }
+
+    @Transactional
+    public void initGroupMemberTestData() {
+        List<GroupMemberData> groupMembers = List.of(
+                new GroupMemberData("산책 모임", "김철수", ClubMemberRole.MANAGER),
+                new GroupMemberData("산책 모임", "이영희", ClubMemberRole.PARTICIPANT),
+                new GroupMemberData("친구 모임", "박민수", ClubMemberRole.PARTICIPANT),
+                new GroupMemberData("친구 모임", "이영희", ClubMemberRole.PARTICIPANT),
+                new GroupMemberData("친구 모임2", "이덕혜", ClubMemberRole.PARTICIPANT),
+                new GroupMemberData("독서 모임", "레베카", ClubMemberRole.PARTICIPANT)
+        );
+
+        for (GroupMemberData gm : groupMembers) {
+            Club club = clubs.get(gm.clubName());
+            Member member = members.get(gm.memberNickname());
+
+            ClubMember clubMember = ClubMember.builder()
+                    .member(member)
+                    .role(gm.role())
+                    .club(club)
+                    .build();
+
+            clubMemberRepository.save(clubMember);
+        }
+    }
+
+
     /**
-     * 일정 초기 데이터 설정
+     * 모임 일정 초기 데이터 설정
      */
     @Transactional
-    public void scheduleInitData() {
+    public void initScheduleTestData() {
         // 모임 1의 일정 초기 데이터
-        Club club1 = clubRepository.findById(1L).get();
+        Club club1 = clubs.get("산책 모임");
 
         for (int i = 1; i <= 4; i++) {
             Schedule schedule = Schedule.builder()
@@ -158,7 +305,7 @@ public class TestInitData {
         }
 
         // 모임 2의 일정 초기 데이터
-        Club club2 = clubRepository.findById(2L).get();
+        Club club2 = clubs.get("친구 모임");
 
         Schedule schedule2 = Schedule.builder()
                 .title("맛집 탐방")
@@ -181,10 +328,153 @@ public class TestInitData {
         schedule3.deactivate();
         scheduleRepository.save(schedule3);
 
-        CheckList checkList = CheckList.builder()
-                .isActive(true)
+        // 모임 3의 일정 초기 데이터
+        Club club3 = clubs.get("친구 모임2");
+        Schedule schedule4 = Schedule.builder()
+                .title("제주도 여행")
+                .content("제주도에서 함께 여행해요")
+                .startDate(LocalDateTime.parse("2025-07-01T09:00:00"))
+                .endDate(LocalDateTime.parse("2025-07-05T18:00:00"))
+                .spot("제주도")
+                .club(club3)
                 .build();
-        checkList.setSchedule(schedule2);
-        checkListRepository.save(checkList);
+        scheduleRepository.save(schedule4);
+
+        // 모임 3의 일정 초기 데이터 - 비활성화된 일정
+        Schedule schedule5 = Schedule.builder()
+                .title("제주도 여행 (비활성화)")
+                .content("제주도에서 함께 여행해요")
+                .startDate(LocalDateTime.parse("2025-10-01T09:00:00"))
+                .endDate(LocalDateTime.parse("2025-10-05T18:00:00"))
+                .spot("제주도")
+                .club(club3)
+                .build();
+        scheduleRepository.save(schedule5);
+        schedule5.deactivate();
+
+        // 모임 4의 일정 초기 데이터
+        Club club4 = clubs.get("A도시 러닝 대회");
+        Schedule schedule6 = Schedule.builder()
+                .title("A도시 러닝 대회")
+                .content("A도시에서 열리는 러닝 대회에 참여해요")
+                .startDate(LocalDateTime.parse("2025-08-10T07:00:00"))
+                .endDate(LocalDateTime.parse("2025-08-10T12:00:00"))
+                .spot("서울 A도시")
+                .club(club4)
+                .build();
+        scheduleRepository.save(schedule6);
+
+        // 종료된 모임 일정
+        Club nClub1 = clubs.get("독서 모임");
+        Schedule nSchedule1 = Schedule.builder()
+                .title("독서 모임 일정")
+                .content("부산에서 함께 독서해요")
+                .startDate(LocalDateTime.parse("2025-07-12T10:00:00"))
+                .endDate(LocalDateTime.parse("2025-07-12T15:00:00"))
+                .spot("부산")
+                .club(nClub1)
+                .build();
+        scheduleRepository.save(nSchedule1);
+    }
+
+    /**
+     * 모임의 체크리스트 초기 데이터 설정
+     */
+    @Transactional
+    public void initCheckListTestData() {
+        List<String> clubNames = List.of("산책 모임", "친구 모임", "친구 모임2", "A도시 러닝 대회");
+
+        for (String clubName : clubNames) {
+            Club club = clubs.get(clubName);
+            if (club == null) continue;
+
+            List<Schedule> club1Schedules = scheduleRepository.findByClubIdOrderByStartDate(club.getId());
+
+            for (Schedule schedule : club1Schedules) {
+                if (schedule.getTitle().equals("강릉 여행")) continue; // 체크리스트 없는 일정(테스트용)
+
+                CheckList checkList = CheckList.builder()
+                        .isActive(true)
+                        .build();
+                checkList.setSchedule(schedule);
+                checkListRepository.save(checkList);
+            }
+        }
+    }
+
+    @Transactional
+    public void initCheckListItemTestData() {
+        List<CheckList> allCheckLists = checkListRepository.findAll();
+
+        for (CheckList checkList : allCheckLists) {
+            // 각 체크리스트에 3개의 체크리스트 항목 생성
+            for (int i = 1; i <= 3; i++) {
+                CheckListItem item = CheckListItem.builder()
+                        .content("체크리스트 항목 " + i)
+                        .isChecked(false)
+                        .checkList(checkList)
+                        .build();
+                checkListItemRepository.save(item);
+            }
+        }
+    }
+
+    @Transactional
+    public void initItemAssignTestData() {
+        List<CheckListItem> allItems = checkListItemRepository.findAll();
+
+        for (CheckListItem item : allItems) {
+            Long clubId = item.getCheckList().getSchedule().getClub().getId();
+
+            // 모임의 맴버들만 할당 대상
+            List<ClubMember> clubMembers = clubMemberRepository.findByClubId(clubId);
+            if (clubMembers.isEmpty()) {
+                continue;
+            }
+
+            // 랜덤 할당 개수 (1~2명)
+            int assignCount = 1 + (int) (Math.random());
+
+            // 중복되지 않도록 할당
+            Set<ClubMember> assignedMembers = new HashSet<>();
+            for (int i = 0; i < assignCount; i++) {
+                ClubMember assignee;
+
+                // 중복되지 않는 멤버를 랜덤으로 선택
+                do {
+                    assignee = clubMembers.get((int) (Math.random() * clubMembers.size()));
+                } while (assignedMembers.contains(assignee));
+                assignedMembers.add(assignee);
+
+                // 아이템 할당 생성
+                ItemAssign assign = ItemAssign.builder()
+                        .clubMember(assignee)
+                        .checkListItem(item)
+                        .build();
+
+                assignee.addItemAssign(assign);
+                itemAssignRepository.save(assign);
+            }
+        }
+    }
+
+    private Member createMember(String nickname, String password, String email, String bio) {
+        Member member = Member.builder()
+                .nickname(nickname)
+                .password(password)
+                .build();
+        memberRepository.save(member);
+
+        if (email == null) return member;
+
+        MemberInfo info = MemberInfo.builder()
+                .email(email)
+                .bio(bio)
+                .member(member)
+                .build();
+        memberInfoRepository.save(info);
+
+        member.setMemberInfo(info);
+        return member;
     }
 }
