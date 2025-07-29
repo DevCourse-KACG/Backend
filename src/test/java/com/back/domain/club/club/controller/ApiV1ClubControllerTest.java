@@ -514,10 +514,10 @@ class ApiV1ClubControllerTest {
         // then
         resultActions
                 .andExpect(handler().handlerType(ApiV1ClubController.class))
-                .andExpect(handler().methodName("getClubInfo"))
+                .andExpect(handler().methodName("getClubIntro"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value(200))
-                .andExpect(jsonPath("$.message").value("클럽 소개 정보가 조회되었습니다."))
+                .andExpect(jsonPath("$.message").value("클럽 소개 정보가 조회됐습니다."))
                 .andExpect(jsonPath("$.data.clubId").value(club.getId()))
                 .andExpect(jsonPath("$.data.name").value(club.getName()))
                 .andExpect(jsonPath("$.data.bio").value(club.getBio()))
@@ -532,5 +532,27 @@ class ApiV1ClubControllerTest {
                 .andExpect(jsonPath("$.data.imageUrl").value(club.getImageUrl()))
                 .andExpect(jsonPath("$.data.leaderId").value(club.getLeaderId()))
                 .andExpect(jsonPath("$.data.leaderName").value(dto.nickname()));
+    }
+
+    @Test
+    @DisplayName("모임 소개 정보 조회 - 존재하지 않는 클럽")
+    void getNonExistentClubIntro() throws Exception {
+        // given
+        Long nonExistentClubId = 999L; // 존재하지 않는 클럽 ID
+
+        // when
+        ResultActions resultActions = mvc.perform(
+                multipart("/api/v1/clubs/" + nonExistentClubId + "/intro")
+                        .with(request -> {
+                            request.setMethod("GET"); // GET 메소드로 요청
+                            return request;
+                        })
+        ).andDo(print());
+
+        // then
+        resultActions
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.code").value(404))
+                .andExpect(jsonPath("$.message").value("해당 ID의 클럽을 찾을 수 없습니다."));
     }
 }
