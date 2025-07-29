@@ -48,4 +48,13 @@ public class ApiV1PresetController {
 
     return ResponseEntity.status(presetList.code()).body(presetList);
   }
+
+  @DeleteMapping("/{presetId}")
+  @Transactional
+  @Operation(summary = "프리셋 삭제")
+  public ResponseEntity<RsData<Void>> deletePreset(@PathVariable Long presetId) {
+    RsData<Void> deleteResult = presetService.deletePreset(presetId);
+
+    return ResponseEntity.status(deleteResult.code()).body(deleteResult);
+  }
 }

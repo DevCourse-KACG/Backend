@@ -114,8 +114,7 @@ public class PresetService {
     Member member = otnMember.get();
     // 멤버의 프리셋 목록 조회
     List<Preset> presets = presetRepository.findByOwner(member);
-    // 프리셋이 존재하지 않는 경우 RsData 반환
-    if (presets.isEmpty()) return RsData.of(404, "프리셋이 존재하지 않습니다");
+
     // 프리셋 목록을 PresetDTO로 변환
     List<PresetDto> presetDtos = presets.stream()
         .map(PresetDto::new)
@@ -146,5 +145,32 @@ public class PresetService {
     Map<String, Object> jwtData = Ut.jwt.payload(secretKey, cleanToken);
     return RsData.of(200, "토큰 검증 성공", jwtData);
 
+  }
+
+  public RsData<Void> deletePreset(Long presetId) {
+    RsData<Map<String, Object>> jwtRsData = getJwtData();
+
+    // JWT 데이터가 유효하지 않은 경우 RsData 반환
+    if (jwtRsData.code() != 200) {
+      return RsData.of(jwtRsData.code(), jwtRsData.message());
+    }
+    // JWT에서 멤버 ID 추출
+    Map<String, Object> jwtData = jwtRsData.data();
+    long memberId = ((Number) jwtData.get("id")).longValue();
+
+    // 프리셋 ID로 프리셋 조회
+    Optional<Preset> otnPreset = presetRepository.findById(presetId);
+
+    // 프리셋이 존재하지 않는 경우 RsData 반환
+    if (otnPreset.isEmpty()) return RsData.of(404, "프리셋을 찾을 수 없습니다");
+    Preset preset = otnPreset.get();
+
+    // 프리셋의 소유자와 JWT에서 추출한 멤버 ID가 일치하지 않는 경우 RsData 반환
+    if (!preset.getOwner().getId().equals(memberId)) return RsData.of(403, "권한 없는 프리셋");
+
+    // 프리셋 삭제
+    presetRepository.delete(preset);
+
+    return RsData.of(200, "프리셋 삭제 성공");
   }
 }
