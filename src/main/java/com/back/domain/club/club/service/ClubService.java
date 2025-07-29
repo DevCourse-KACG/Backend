@@ -107,6 +107,15 @@ public class ClubService {
         return club;
     }
 
+    /**
+     * 클럽 정보를 업데이트합니다.
+     * @param clubId 클럽 ID
+     * @param dto 클럽 정보 업데이트 요청 DTO
+     * @param image 클럽 이미지 파일 (선택적)
+     * @return 업데이트된 클럽 정보
+     * @throws IOException 이미지 업로드 중 발생할 수 있는 예외
+     */
+    @Transactional
     public Club updateClub (Long clubId, ClubControllerDtos.@Valid UpdateClubRequest dto, MultipartFile image) throws IOException {
         Club club = clubRepository.findById(clubId)
                 .orElseThrow(() -> new IllegalArgumentException("클럽이 존재하지 않습니다."));
@@ -114,11 +123,11 @@ public class ClubService {
         // 클럽 정보 업데이트
         String name = dto.name() != null ? dto.name() : club.getName();
         String bio = dto.bio() != null ? dto.bio() : club.getBio();
-        ClubCategory category = dto.category() != null ? ClubCategory.valueOf(dto.category().toUpperCase()) : club.getCategory();
+        ClubCategory category = dto.category() != null ? ClubCategory.fromString(dto.category().toUpperCase()) : club.getCategory();
         String mainSpot = dto.mainSpot() != null ? dto.mainSpot() : club.getMainSpot();
         int maximumCapacity = dto.maximumCapacity() != null ? dto.maximumCapacity() : club.getMaximumCapacity();
         boolean recruitingStatus = dto.recruitingStatus() != null ? dto.recruitingStatus() : club.isRecruitingStatus();
-        EventType eventType = dto.eventType() != null ? EventType.valueOf(dto.eventType().toUpperCase()) : club.getEventType();
+        EventType eventType = dto.eventType() != null ? EventType.fromString(dto.eventType().toUpperCase()) : club.getEventType();
         LocalDate startDate = dto.startDate() != null ? LocalDate.parse(dto.startDate()) : club.getStartDate();
         LocalDate endDate = dto.endDate() != null ? LocalDate.parse(dto.endDate()) : club.getEndDate();
         boolean isPublic = dto.isPublic() != null ? dto.isPublic() : club.isPublic();
