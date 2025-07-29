@@ -36,6 +36,7 @@ public class MemberService {
         String tag = createTag(dto);
         Member member = createAndSaveMember(dto, tag);
         String apiKey = apiKeyService.generateApiKey();
+        createAndSaveMemberInfo(dto, member, apiKey);
 
         String accessToken = authService.generateAccessToken(member);
 
