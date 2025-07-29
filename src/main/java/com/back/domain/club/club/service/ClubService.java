@@ -18,6 +18,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;
 import java.time.LocalDate;
 import java.util.Arrays;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -33,6 +34,15 @@ public class ClubService {
     public Club getLastCreatedClub() {
         return clubRepository.findFirstByOrderByIdDesc()
                 .orElseThrow(() -> new IllegalStateException("마지막으로 생성된 클럽이 없습니다."));
+    }
+
+    /**
+     * 클럽 ID로 클럽을 조회합니다.
+     * @param clubId 클럽 ID
+     * @return 클럽 정보
+     */
+    public Optional<Club> getClubById(Long clubId) {
+        return clubRepository.findById(clubId);
     }
 
     /**
