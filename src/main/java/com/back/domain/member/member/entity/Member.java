@@ -76,4 +76,8 @@ public class Member {
   public Collection<? extends GrantedAuthority> getAuthorities() {
     return List.of(new SimpleGrantedAuthority("ROLE_USER"));
   }
+
+  public String getEmail() {
+    return memberInfo != null ? memberInfo.getEmail() : null;
+  }
 }
