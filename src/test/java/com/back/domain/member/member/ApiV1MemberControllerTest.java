@@ -2,9 +2,9 @@ package com.back.domain.member.member;
 
 import com.back.domain.api.service.ApiKeyService;
 import com.back.domain.auth.service.AuthService;
-import com.back.domain.member.member.controller.ApiV1MemberController;
 import com.back.domain.member.member.entity.Member;
 import com.back.domain.member.member.entity.MemberInfo;
+import com.back.domain.member.member.repository.MemberRepository;
 import com.back.domain.member.member.support.MemberFixture;
 import com.back.global.security.SecurityUser;
 import io.jsonwebtoken.lang.Collections;
@@ -18,6 +18,9 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Optional;
+
+import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
@@ -33,7 +36,7 @@ public class ApiV1MemberControllerTest {
     private MemberFixture memberFixture;
 
     @Autowired
-    private ApiV1MemberController apiV1MemberController;
+    private MemberRepository memberRepository;
 
     @Autowired
     private MockMvc mockMvc;
@@ -243,8 +246,42 @@ public class ApiV1MemberControllerTest {
                 .andExpect(jsonPath("$.data.nickname").value(member.getNickname()))
                 .andExpect(jsonPath("$.data.tag").value(member.getTag()))
                 .andExpect(cookie().maxAge("accessToken", 0)); // 쿠키 만료 확인
+
+        Optional<Member> deletedMember = memberRepository.findById(member.getId());
+        assertThat(deletedMember).isEmpty();
     }
 
+    @Test
+    @DisplayName("access token 재발급 - 정상")
+    public void reGenerateAccessToken_success() throws Exception {
+        //회원 생성
+        Member member = memberFixture.createMember(1);
+
+        //로그인하여 액세스 토큰 쿠키 받기
+        loginAndGetAccessTokenCookie("test1@example.com", "password123");
+
+        //apiKey 멤버에서 가져오기
+        String apiKey = member.getMemberInfo().getApiKey();
+
+        //액세스 토큰 재발급 요청 바디
+        String requestBody = String.format("""
+        {
+            "refreshToken": "%s"
+        }
+        """, apiKey);
+
+        //재발급 api 호출 및 검증
+        mockMvc.perform(post("/api/v1/members/auth/refresh")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(requestBody))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value(200))
+                .andExpect(jsonPath("$.message").value("Access Token 재발급 성공"))
+                .andExpect(jsonPath("$.data.accessToken").isNotEmpty())
+                .andExpect(jsonPath("$.data.apikey").value(apiKey))
+                .andExpect(cookie().exists("accessToken"))
+                .andDo(print());
+    }
 
     private Cookie loginAndGetAccessTokenCookie(String email, String password) throws Exception {
         String loginRequestBody = String.format("""

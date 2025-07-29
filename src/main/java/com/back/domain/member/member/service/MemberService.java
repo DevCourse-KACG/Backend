@@ -12,9 +12,6 @@ import com.back.domain.member.member.entity.MemberInfo;
 import com.back.domain.member.member.repository.MemberInfoRepository;
 import com.back.domain.member.member.repository.MemberRepository;
 import com.back.global.exception.ServiceException;
-import io.jsonwebtoken.Claims;
-import io.jsonwebtoken.Jws;
-import io.jsonwebtoken.JwtException;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -22,7 +19,6 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.Date;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
@@ -189,9 +185,5 @@ public class MemberService {
         }
 
         return optionalMemberInfo.get().getMember();
-    }
-
-    public boolean isValidApiKey(String apiKey) {
-
     }
 }

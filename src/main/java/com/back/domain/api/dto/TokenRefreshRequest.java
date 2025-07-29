@@ -1,4 +1,4 @@
-package com.back.domain.member.member.dto;
+package com.back.domain.api.dto;
 
 public record TokenRefreshRequest(String refreshToken) {
 }

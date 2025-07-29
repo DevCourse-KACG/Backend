@@ -5,6 +5,7 @@ import com.back.domain.member.member.entity.Member;
 import com.back.domain.member.member.service.MemberService;
 import com.back.global.rsData.RsData;
 import com.back.global.security.SecurityUser;
+import com.back.domain.api.dto.TokenRefreshRequest;
 import io.swagger.v3.oas.annotations.Operation;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
@@ -92,7 +93,7 @@ public class ApiV1MemberController {
         response.addCookie(accessTokenCookie);
 
         return RsData.of(200, "Access Token 재발급 성공",
-                new MemberAuthResponse(newAccessToken, ApiKey));
+                new MemberAuthResponse(ApiKey, newAccessToken));
     }
 
     private Cookie createAccessTokenCookie(String accessToken) {
