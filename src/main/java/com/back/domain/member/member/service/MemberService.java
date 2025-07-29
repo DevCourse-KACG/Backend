@@ -83,7 +83,7 @@ public class MemberService {
         String profileImage = memberInfo.getProfileImageUrl();
 
 
-        return new MemberDetailInfoResponse(nickname, tag, email, bio, profileImage);
+        return new MemberDetailInfoResponse(nickname, email, bio, profileImage, tag);
     }
 
     private void validateDuplicate(MemberRegisterDto dto) {

@@ -5,6 +5,7 @@ import com.back.domain.auth.service.AuthService;
 import com.back.domain.member.member.entity.Member;
 import com.back.domain.member.member.entity.MemberInfo;
 import com.back.domain.member.member.repository.MemberRepository;
+import com.back.domain.member.member.service.MemberService;
 import com.back.domain.member.member.support.MemberFixture;
 import com.back.global.security.SecurityUser;
 import io.jsonwebtoken.lang.Collections;
@@ -23,8 +24,7 @@ import java.util.Optional;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
@@ -46,6 +46,9 @@ public class ApiV1MemberControllerTest {
 
     @Autowired
     private AuthService authService;
+
+    @Autowired
+    private MemberService memberService;
 
     @Test
     @DisplayName("회원가입 - 정상 기입 / 객체 정상 생성")
@@ -281,6 +284,32 @@ public class ApiV1MemberControllerTest {
                 .andExpect(jsonPath("$.data.apikey").value(apiKey))
                 .andExpect(cookie().exists("accessToken"))
                 .andDo(print());
+    }
+
+    @Test
+    @DisplayName("내 정보 조회 - 정상")
+    public void getMyInfo_success() throws Exception {
+        Member member = memberFixture.createMember(1);
+        MemberInfo memberInfo = member.getMemberInfo();
+
+        SecurityUser securityUser = new SecurityUser(
+                member.getId(),
+                member.getNickname(),
+                member.getTag(),
+                member.getPassword(),
+                Collections.emptyList()
+        );
+
+        mockMvc.perform(get("/api/v1/members/me")
+                        .with(user(securityUser))
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value(200))
+                .andExpect(jsonPath("$.message").value("유저 정보 반환 성공"))
+                .andExpect(jsonPath("$.data.nickname").value(member.getNickname()))
+                .andExpect(jsonPath("$.data.email").value(memberInfo.getEmail()))
+                .andExpect(jsonPath("$.data.profileImage").value(memberInfo.getProfileImageUrl()))
+                .andExpect(jsonPath("$.data.bio").value(memberInfo.getBio()));
     }
 
     private Cookie loginAndGetAccessTokenCookie(String email, String password) throws Exception {
