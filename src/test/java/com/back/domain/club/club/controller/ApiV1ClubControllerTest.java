@@ -471,8 +471,8 @@ class ApiV1ClubControllerTest {
     }
 
     @Test
-    @DisplayName("모임 소개 정보 조회")
-    void getClubIntro() throws Exception {
+    @DisplayName("클럽 정보 조회")
+    void getClubInfo() throws Exception {
         // given
         // 리더 생성
         MemberDto dto = new MemberDto(
@@ -504,7 +504,7 @@ class ApiV1ClubControllerTest {
 
         // when
         ResultActions resultActions = mvc.perform(
-                multipart("/api/v1/clubs/" + club.getId() + "/intro")
+                multipart("/api/v1/clubs/" + club.getId())
                         .with(request -> {
                             request.setMethod("GET"); // GET 메소드로 요청
                             return request;
@@ -514,10 +514,10 @@ class ApiV1ClubControllerTest {
         // then
         resultActions
                 .andExpect(handler().handlerType(ApiV1ClubController.class))
-                .andExpect(handler().methodName("getClubIntro"))
+                .andExpect(handler().methodName("getClubInfo"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value(200))
-                .andExpect(jsonPath("$.message").value("클럽 소개 정보가 조회됐습니다."))
+                .andExpect(jsonPath("$.message").value("클럽 정보가 조회됐습니다."))
                 .andExpect(jsonPath("$.data.clubId").value(club.getId()))
                 .andExpect(jsonPath("$.data.name").value(club.getName()))
                 .andExpect(jsonPath("$.data.bio").value(club.getBio()))
@@ -535,14 +535,14 @@ class ApiV1ClubControllerTest {
     }
 
     @Test
-    @DisplayName("모임 소개 정보 조회 - 존재하지 않는 클럽")
-    void getNonExistentClubIntro() throws Exception {
+    @DisplayName("클럽 정보 조회 - 존재하지 않는 클럽")
+    void getNonExistentClubInfo() throws Exception {
         // given
         Long nonExistentClubId = 999L; // 존재하지 않는 클럽 ID
 
         // when
         ResultActions resultActions = mvc.perform(
-                multipart("/api/v1/clubs/" + nonExistentClubId + "/intro")
+                multipart("/api/v1/clubs/" + nonExistentClubId)
                         .with(request -> {
                             request.setMethod("GET"); // GET 메소드로 요청
                             return request;
