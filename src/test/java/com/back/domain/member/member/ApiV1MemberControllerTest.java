@@ -238,7 +238,11 @@ public class ApiV1MemberControllerTest {
                         Collections.emptyList()
                 )))
                 .cookie(accessTokenCookie)
-                .contentType(MediaType.APPLICATION_JSON));
+                .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.nickname").value(member.getNickname()))
+                .andExpect(jsonPath("$.data.tag").value(member.getTag()))
+                .andExpect(cookie().maxAge("accessToken", 0)); // 쿠키 만료 확인
     }
 
 

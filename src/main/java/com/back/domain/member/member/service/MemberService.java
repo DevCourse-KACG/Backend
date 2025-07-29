@@ -64,7 +64,7 @@ public class MemberService {
 
         deleteMember(member);
 
-        return new MemberWithdrawMembershipResponse(member.getNickname(), memberInfo.getEmail(), member.getTag());
+        return new MemberWithdrawMembershipResponse(member.getNickname(), member.getTag());
     }
 
     private void validateDuplicate(MemberDto dto) {

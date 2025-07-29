@@ -2,6 +2,7 @@ package com.back.global.security;
 
 import com.back.domain.member.member.entity.Member;
 import com.back.domain.member.member.service.MemberService;
+import com.back.global.exception.ServiceException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -15,14 +16,17 @@ public class CustomUserDetailsService implements UserDetailsService {
 
     @Override
     public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
-        Member member = memberService.findByEmail(email);
-
-        return new SecurityUser(
-                member.getId(),
-                member.getNickname(),
-                member.getTag(),
-                member.getPassword(),
-                member.getAuthorities()
-        );
-    }
+            try {
+                    Member member = memberService.findByEmail(email);
+                    return new SecurityUser(
+                                    member.getId(),
+                                    member.getNickname(),
+                                    member.getTag(),
+                                    member.getPassword(),
+                                    member.getAuthorities()
+                                    );
+                } catch (ServiceException e) {
+                    throw new UsernameNotFoundException("사용자를 찾을 수 없습니다: " + email, e);
+                }
+        }
 }
