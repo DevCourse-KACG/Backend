@@ -23,6 +23,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;
 import java.time.LocalDate;
 import java.util.Arrays;
+import java.util.NoSuchElementException;
 import java.util.Optional;
 
 @Service
@@ -93,10 +94,8 @@ public class ClubService {
         // 클럽 멤버 설정
         Arrays.stream(reqBody.clubMembers()).forEach(memberInfo -> {
             // 멤버 ID로 Member 엔티티 조회
-//          Member member = memberService.findById(memberInfo.id())
-//              .orElseThrow(() -> new NoSuchElementException("ID " + memberInfo.id() + "에 해당하는 멤버를 찾을 수 없습니다."));
-
-            Member member = new Member(); // TODO : 임시로 Member 객체 생성, 실제로는 memberService.findById(memberInfo.id())를 사용해야 함
+            Member member = memberService.findById(memberInfo.id())
+              .orElseThrow(() -> new NoSuchElementException("ID " + memberInfo.id() + "에 해당하는 멤버를 찾을 수 없습니다."));
 
             // ClubMember 엔티티 생성
             ClubMember clubMember = ClubMember.builder()
@@ -108,7 +107,6 @@ public class ClubService {
             // 연관관계 편의 메서드를 사용하여 Club에 ClubMember 추가
             club.addClubMember(clubMember);
         });
-
         return club;
     }
 
