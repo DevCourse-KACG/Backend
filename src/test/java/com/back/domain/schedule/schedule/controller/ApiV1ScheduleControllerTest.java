@@ -321,4 +321,39 @@ class ApiV1ScheduleControllerTest {
             assertThat(updatedSchedule.getCheckList().isActive()).isFalse();
         }
     }
+
+    @Test
+    @DisplayName("나의 일정 목록 조회")
+    void trm1() throws Exception {
+        String startDateStr = "2025-07-01";
+        String endDateStr = "2025-07-31";
+
+        ResultActions resultActions = mockMvc
+                .perform(get("/api/v1/schedules/me")
+                        .param("startDate", startDateStr)
+                        .param("endDate", endDateStr))
+                .andDo(print());
+
+        List<Schedule> schedules = scheduleService.getMySchedules(1L, LocalDate.parse(startDateStr), LocalDate.parse(endDateStr));
+
+        resultActions
+                .andExpect(handler().handlerType(ApiV1ScheduleController.class))
+                .andExpect(handler().methodName("getMySchedules"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value(200))
+                .andExpect(jsonPath("$.message").value("나의 일정 목록이 조회되었습니다."))
+                .andExpect(jsonPath("$.data.length()").value(schedules.size()));
+
+        for (int i = 0; i < schedules.size(); i++) {
+            Schedule schedule = schedules.get(i);
+
+            resultActions
+                    .andExpect(jsonPath("$.data[%d].id".formatted(i)).value(schedule.getId()))
+                    .andExpect(jsonPath("$.data[%d].title".formatted(i)).value(schedule.getTitle()))
+                    .andExpect(jsonPath("$.data[%d].content".formatted(i)).value(schedule.getContent()))
+                    .andExpect(jsonPath("$.data[%d].startDate".formatted(i)).value(Matchers.startsWith(schedule.getStartDate().toString().substring(0, 16))))
+                    .andExpect(jsonPath("$.data[%d].endDate".formatted(i)).value(Matchers.startsWith(schedule.getEndDate().toString().substring(0, 16))))
+                    .andExpect(jsonPath("$.data[%d].spot".formatted(i)).value(schedule.getSpot()));
+        }
+    }
 }
