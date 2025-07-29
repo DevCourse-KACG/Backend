@@ -16,6 +16,10 @@ public class AuthService {
     private int accessTokenExpirationSeconds;
 
     public String generateAccessToken(Member member) {
+        if (member == null || member.getMemberInfo() == null) {
+            throw new IllegalArgumentException("Member 정보가 없습니다.");
+        }
+
         long id = member.getId();
         String email = member.getMemberInfo().getEmail();
         String name = member.getNickname();

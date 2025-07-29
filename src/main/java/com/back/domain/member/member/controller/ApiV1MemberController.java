@@ -24,11 +24,7 @@ public class ApiV1MemberController {
     public RsData<MemberAuthResponse> register(@Valid @RequestBody MemberDto memberDto, HttpServletResponse response) {
         MemberAuthResponse memberAuthResponse = memberService.register(memberDto);
 
-        Cookie accessTokenCookie = new Cookie("accessToken", memberAuthResponse.accessToken());
-        accessTokenCookie.setHttpOnly(true);
-        accessTokenCookie.setSecure(true);
-        accessTokenCookie.setPath("/");
-        accessTokenCookie.setMaxAge(60 * 60 * 24);
+        Cookie accessTokenCookie = createAccessTokenCookie(memberAuthResponse.accessToken());
 
         response.addCookie(accessTokenCookie);
 
@@ -40,11 +36,7 @@ public class ApiV1MemberController {
     public RsData<MemberAuthResponse> login(@Valid @RequestBody MemberLoginDto memberLoginDto, HttpServletResponse response) {
         MemberAuthResponse memberAuthResponse = memberService.login(memberLoginDto);
 
-        Cookie accessTokenCookie = new Cookie("accessToken", memberAuthResponse.accessToken());
-        accessTokenCookie.setHttpOnly(true);
-        accessTokenCookie.setSecure(true);
-        accessTokenCookie.setPath("/");
-        accessTokenCookie.setMaxAge(60 * 60 * 24);
+        Cookie accessTokenCookie = createAccessTokenCookie(memberAuthResponse.accessToken());
 
         response.addCookie(accessTokenCookie);
 
@@ -64,5 +56,15 @@ public class ApiV1MemberController {
         response.addCookie(deleteCookie);
 
         return RsData.of(200, "로그아웃 성공");
+    }
+
+    private Cookie createAccessTokenCookie(String accessToken) {
+        Cookie cookie = new Cookie("accessToken", accessToken);
+        cookie.setHttpOnly(true);
+        cookie.setSecure(true);
+        cookie.setPath("/");
+        cookie.setMaxAge(60 * 60 * 24);
+        cookie.setAttribute("SameSite", "Strict");
+        return cookie;
     }
 }

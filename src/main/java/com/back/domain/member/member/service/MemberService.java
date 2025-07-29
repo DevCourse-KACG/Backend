@@ -129,6 +129,10 @@ public class MemberService {
     public Member findByEmail(String email) {
         Optional<MemberInfo> memberInfo = memberInfoRepository.findByEmail(email);
 
+        if (memberInfo.isEmpty()) {
+            throw new ServiceException(400, "해당 이메일로 등록된 회원을 찾을 수 없습니다.");
+        }
+
         return memberInfo.get().getMember();
     }
 }

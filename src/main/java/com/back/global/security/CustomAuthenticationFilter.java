@@ -90,9 +90,6 @@ public class CustomAuthenticationFilter extends OncePerRequestFilter {
         Member member = null;
         boolean isAccessTokenValid = false;
 
-        accessToken = rq.getCookieValue("accessToken", "");
-        logger.debug("Access Token from cookie: " + accessToken);
-
         // accessToken이 존재하는 경우, 해당 토큰의 유효성을 검사
         if (isAccessTokenExists){
             Map<String, Object> payload = memberService.payload(accessToken);
@@ -110,13 +107,7 @@ public class CustomAuthenticationFilter extends OncePerRequestFilter {
                     Member DbMember = memberService.findByEmail(email);
 
                     if (DbMember != null) {
-                        member = Member.builder()
-                                .memberInfo(DbMember.getMemberInfo())
-                                .nickname(DbMember.getNickname())
-                                .memberType(DbMember.getMemberType())
-                                .tag(DbMember.getTag())
-                                .password("N/A") // 비밀번호는 필요없음
-                                .build();
+                        member = DbMember;
                         isAccessTokenValid = true;
                     }
                 }
