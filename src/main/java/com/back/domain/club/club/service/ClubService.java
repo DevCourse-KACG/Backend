@@ -187,7 +187,7 @@ public class ClubService {
     }
 
     public ClubControllerDtos.SimpleClubInfoResponse[] getPublicClubs() {
-        return clubRepository.findAllByPublicTrue().stream()
+        return clubRepository.findAllByIsPublicTrue().stream()
                 .map(club -> new ClubControllerDtos.SimpleClubInfoResponse(
                         club.getId(),
                         club.getName(),

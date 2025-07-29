@@ -13,5 +13,5 @@ public interface ClubRepository extends JpaRepository<Club, Long> {
      */
     Optional<Club> findFirstByOrderByIdDesc();
 
-    List<Club> findAllByPublicTrue();
+    List<Club> findAllByIsPublicTrue();
 }
