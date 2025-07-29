@@ -79,4 +79,6 @@ public class ApiV1ClubController {
         Page<ClubControllerDtos.SimpleClubInfoResponse> response = clubService.getPublicClubs(pageable);
         return new RsData<>(200, "공개 클럽 목록이 조회됐습니다.", response);
     }
+
+
 }
