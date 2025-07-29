@@ -57,4 +57,13 @@ public class ApiV1PresetController {
 
     return ResponseEntity.status(deleteResult.code()).body(deleteResult);
   }
+
+  @PutMapping("/{presetId}")
+  @Transactional
+  @Operation(summary = "프리셋 수정")
+  public ResponseEntity<RsData<PresetDto>> updatePreset(@PathVariable Long presetId, @Valid @RequestBody PresetWriteReqDto presetWriteReqDto) {
+    RsData<PresetDto> updatedPreset = presetService.updatePreset(presetId, presetWriteReqDto);
+
+    return ResponseEntity.status(updatedPreset.code()).body(updatedPreset);
+  }
 }

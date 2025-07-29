@@ -5,6 +5,7 @@ import jakarta.persistence.*;
 import jdk.jfr.Description;
 import lombok.*;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Entity
@@ -19,11 +20,13 @@ public class Preset {
     private Long id;
 
     @Description("프리셋 이름")
+    @Setter
     private String name;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     private Member owner;
 
+    @Setter
     @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true, mappedBy = "preset")
     private List<PresetItem> presetItems;
 
