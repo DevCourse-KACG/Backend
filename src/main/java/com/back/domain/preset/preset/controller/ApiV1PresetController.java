@@ -2,6 +2,7 @@ package com.back.domain.preset.preset.controller;
 
 import com.back.domain.preset.preset.dto.PresetDto;
 import com.back.domain.preset.preset.dto.PresetWriteReqDto;
+import com.back.domain.preset.preset.entity.Preset;
 import com.back.domain.preset.preset.entity.PresetItem;
 import com.back.domain.preset.preset.service.PresetService;
 import com.back.global.rsData.RsData;
@@ -38,5 +39,13 @@ public class ApiV1PresetController {
     RsData<PresetDto> presetDto = presetService.getPreset(presetId);
 
     return ResponseEntity.status(presetDto.code()).body(presetDto);
+  }
+
+  @GetMapping
+  @Operation(summary = "프리셋 목록 조회")
+  public ResponseEntity<RsData<List<PresetDto>>> getPresetList() {
+    RsData<List<PresetDto>> presetList = presetService.getPresetList();
+
+    return ResponseEntity.status(presetList.code()).body(presetList);
   }
 }
