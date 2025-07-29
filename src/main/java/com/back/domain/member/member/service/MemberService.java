@@ -40,7 +40,7 @@ public class MemberService {
         String apiKey = apiKeyService.generateApiKey();
         createAndSaveMemberInfo(dto, member, apiKey);
 
-        String accessToken = authService.generateAccessToken(member);
+        String accessToken = generateAccessToken(member);
 
         return new MemberAuthResponse(apiKey, accessToken);
     }
@@ -171,5 +171,19 @@ public class MemberService {
 
     public Optional<Member> findById(Long id) {
         return memberRepository.findById(id);
+    }
+
+    public String generateAccessToken(Member member) {
+        return authService.generateAccessToken(member);
+    }
+
+    public Member findByApiKey(String apiKey) {
+        Optional<MemberInfo> optionalMemberInfo = memberInfoRepository.findByApiKey(apiKey);
+
+        if (optionalMemberInfo.isEmpty()) {
+            throw new ServiceException(400, "사용자를 찾을 수 없습니다.");
+        }
+
+        return optionalMemberInfo.get().getMember();
     }
 }
