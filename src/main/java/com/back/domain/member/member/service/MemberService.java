@@ -135,4 +135,8 @@ public class MemberService {
 
         return memberInfo.get().getMember();
     }
+
+    public Optional<Member> findById(Long id) {
+        return memberRepository.findById(id);
+    }
 }
