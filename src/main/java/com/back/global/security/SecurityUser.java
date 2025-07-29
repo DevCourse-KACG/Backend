@@ -13,19 +13,18 @@ public class SecurityUser extends User {
     @Getter
     private final String email;
     @Getter
-    private final boolean isAdmin;
+    private final String nickname;
 
     public SecurityUser(
             Long id,
             String email,
-            String name,
+            String nickname,
             String password,
-            boolean isAdmin,
             Collection<? extends GrantedAuthority> authorities
     ) {
-        super(name, password, authorities);
+        super(nickname, password, authorities);
         this.id = id;
         this.email = email;
-        this.isAdmin = isAdmin;
+        this.nickname = nickname;
     }
 }

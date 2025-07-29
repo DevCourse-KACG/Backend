@@ -5,6 +5,8 @@ import com.back.domain.auth.service.AuthService;
 import com.back.domain.member.member.controller.ApiV1MemberController;
 import com.back.domain.member.member.entity.Member;
 import com.back.domain.member.member.entity.MemberInfo;
+import com.back.domain.member.member.support.MemberFixture;
+import jakarta.servlet.http.Cookie;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -13,13 +15,12 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
-import com.back.domain.member.member.support.MemberFixture;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @SpringBootTest
 @Transactional
@@ -134,9 +135,9 @@ public class ApiV1MemberControllerTest {
     @Test
     @DisplayName("AccessToken 발급 - 정상")
     public void generateAccessToken_success() throws Exception {
-        String validApiKey = "api_123456abcdef";
+        Member member = memberFixture.createMember(1);
 
-        String accessToken = authService.generateAccessToken(validApiKey);
+        String accessToken = authService.generateAccessToken(member);
 
         assertNotNull(accessToken);
     }
@@ -203,5 +204,37 @@ public class ApiV1MemberControllerTest {
                 .andExpect(jsonPath("$.code").value(400))
                 .andExpect(jsonPath("$.data").doesNotExist());
 
+    }
+
+    @Test
+    @DisplayName("로그아웃 - 정상 처리")
+    public void logout() throws Exception {
+        memberFixture.createMember(1);
+
+        Cookie accessTokenCookie = loginAndGetAccessTokenCookie("test1@example.com", "password123");
+
+        mockMvc.perform(delete("/api/v1/members/auth/logout")
+                        .cookie(accessTokenCookie))
+                .andExpect(status().isOk())
+                .andExpect(cookie().maxAge("accessToken", 0)); // 쿠키 만료 확인
+    }
+
+    private Cookie loginAndGetAccessTokenCookie(String email, String password) throws Exception {
+        String loginRequestBody = String.format("""
+        {
+            "email": "%s",
+            "password": "%s"
+        }
+        """, email, password);
+
+        return  mockMvc.perform(post("/api/v1/members/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(loginRequestBody))
+                .andExpect(status().isOk())
+                .andExpect(cookie().exists("accessToken"))
+                .andDo(print())
+                .andReturn()
+                .getResponse()
+                .getCookie("accessToken");
     }
 }

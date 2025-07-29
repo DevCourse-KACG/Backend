@@ -1,33 +1,43 @@
 package com.back.domain.auth.service;
 
-import com.back.global.config.jwt.JwtProperties;
-import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.security.Keys;
+import com.back.domain.member.member.entity.Member;
+import com.back.standard.util.Ut;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
-import java.security.Key;
-import java.util.Date;
+import java.util.Map;
 
 @Service
 public class AuthService {
-    private final Key secretKey;
-    private final long expirationSeconds;
+    @Value("${custom.jwt.secretKey}")
+    private String jwtSecretKey;
 
-    public AuthService(JwtProperties jwtProperties) {
-        this.secretKey = Keys.hmacShaKeyFor(jwtProperties.getJwt().getSecretKey().getBytes());
-        this.expirationSeconds = jwtProperties.getExpirationSecondsAsLong();
+    @Value("${custom.accessToken.expirationSeconds}")
+    private int accessTokenExpirationSeconds;
+
+    public String generateAccessToken(Member member) {
+        if (member == null || member.getMemberInfo() == null) {
+            throw new IllegalArgumentException("Member 정보가 없습니다.");
+        }
+
+        long id = member.getId();
+        String email = member.getMemberInfo().getEmail();
+        String name = member.getNickname();
+
+        return Ut.jwt.toString(
+                jwtSecretKey,
+                accessTokenExpirationSeconds,
+                Map.of("id", id, "email", email, "name", name)
+        );
     }
 
-    public String generateAccessToken(String validApiKey) {
-        Date now = new Date();
-        Date expired = new Date(now.getTime() + expirationSeconds * 1000);
+    public Map<String, Object> payload(String accessToken) {
+        Map<String, Object> parsedPayload = Ut.jwt.payload(jwtSecretKey, accessToken);
 
-        return Jwts.builder()
-                .setSubject("api-auth")
-                .claim("apiKey", validApiKey)
-                .setIssuedAt(now)
-                .setExpiration(expired)
-                .signWith(secretKey)
-                .compact();
+        if (parsedPayload == null) return null;
+
+        String email = (String) parsedPayload.get("email");
+
+        return Map.of("email", email);
     }
 }

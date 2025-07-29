@@ -18,6 +18,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -35,9 +36,9 @@ public class MemberService {
         String tag = createTag(dto);
         Member member = createAndSaveMember(dto, tag);
         String apiKey = apiKeyService.generateApiKey();
-        MemberInfo memberInfo = createAndSaveMemberInfo(dto, member, apiKey);
+        createAndSaveMemberInfo(dto, member, apiKey);
 
-        String accessToken = authService.generateAccessToken(apiKey);
+        String accessToken = authService.generateAccessToken(member);
 
         return new MemberAuthResponse(apiKey, accessToken);
     }
@@ -99,7 +100,7 @@ public class MemberService {
         validateRightPassword(memberLoginDto.password(), member);
 
         String apiKey = member.getMemberInfo().getApiKey();
-        String accessToken = authService.generateAccessToken(apiKey);
+        String accessToken = authService.generateAccessToken(member);
 
         return new MemberAuthResponse(apiKey, accessToken);
     }
@@ -118,5 +119,20 @@ public class MemberService {
         if (!passwordEncoder.matches(password, member.getPassword())) {
             throw new ServiceException(400, "이메일과 비밀번호가 맞지 않습니다.");
         }
+    }
+
+    public Map<String, Object> payload(String accessToken) {
+        return authService.payload(accessToken);
+    }
+
+
+    public Member findByEmail(String email) {
+        Optional<MemberInfo> memberInfo = memberInfoRepository.findByEmail(email);
+
+        if (memberInfo.isEmpty()) {
+            throw new ServiceException(400, "해당 이메일로 등록된 회원을 찾을 수 없습니다.");
+        }
+
+        return memberInfo.get().getMember();
     }
 }

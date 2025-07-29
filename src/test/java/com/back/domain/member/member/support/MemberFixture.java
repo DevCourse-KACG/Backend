@@ -1,5 +1,6 @@
 package com.back.domain.member.member.support;
 
+import com.back.domain.api.service.ApiKeyService;
 import com.back.domain.member.member.entity.Member;
 import com.back.domain.member.member.entity.MemberInfo;
 import com.back.domain.member.member.repository.MemberInfoRepository;
@@ -14,10 +15,12 @@ import java.util.List;
 public class MemberFixture {
     private final MemberRepository memberRepository;
     private final MemberInfoRepository memberInfoRepository;
+    private final ApiKeyService apiKeyService;
 
     public MemberFixture(MemberRepository memberRepository, MemberInfoRepository memberInfoRepository) {
         this.memberRepository = memberRepository;
         this.memberInfoRepository = memberInfoRepository;
+        this.apiKeyService = new ApiKeyService();
     }
 
     public Member createMember(int i) {
@@ -35,7 +38,7 @@ public class MemberFixture {
                 .email("test" + i + "@example.com")
                 .bio("소개입니다")
                 .profileImageUrl(null)
-                .apiKey("apiKey")
+                .apiKey(apiKeyService.generateApiKey())
                 .member(member)  // MemberInfo → Member 연결
                 .build();
 
