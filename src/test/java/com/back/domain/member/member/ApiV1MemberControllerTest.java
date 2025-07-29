@@ -219,6 +219,22 @@ public class ApiV1MemberControllerTest {
                 .andExpect(cookie().maxAge("accessToken", 0)); // 쿠키 만료 확인
     }
 
+    @Test
+    @DisplayName("회원탈퇴 - 정상 처리")
+    public void withdrawMembership() throws Exception {
+        Member member = memberFixture.createMember(1);
+
+        Cookie accessTokenCookie = loginAndGetAccessTokenCookie("test1@example.com", "password123");
+
+        mockMvc.perform(delete("/api/v1/members/me")
+                        .cookie(accessTokenCookie))
+                .andExpect(status().isOk())
+                .andExpect(cookie().maxAge("accessToken", 0)) // 쿠키 만료 확인
+                .andExpect(jsonPath("$.data.nickname").value(member.getNickname()))
+                .andExpect(jsonPath("$.data.email").value(member.getMemberInfo().getEmail()));
+    }
+
+
     private Cookie loginAndGetAccessTokenCookie(String email, String password) throws Exception {
         String loginRequestBody = String.format("""
         {
