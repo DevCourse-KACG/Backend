@@ -150,23 +150,26 @@ public class MemberService {
         return memberInfo.get().getMember();
     }
 
-    public boolean validateRightPassword(String password, Member member) {
+    private void validateRightPassword(String password, Member member) {
         //비밀번호 오류
         PasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
 
         if (!passwordEncoder.matches(password, member.getPassword())) {
             throw new ServiceException(400, "이메일과 비밀번호가 맞지 않습니다.");
         }
-
-        return true;
     }
 
     public MemberPasswordResponse checkPasswordValidity(Long memberId, String password) {
         Member member = findById(memberId)
-                .orElseThrow(() -> new ServiceException(200, "해당 id로 유저를 찾을 수 없습니다."));
+                .orElseThrow(() -> new ServiceException(400, "해당 id로 유저를 찾을 수 없습니다."));
 
-        boolean isValid = validateRightPassword(password, member);
-        return new MemberPasswordResponse(isValid);
+        try {
+            validateRightPassword(password, member);
+            return new MemberPasswordResponse(true);
+        } catch (ServiceException e) {
+            return new MemberPasswordResponse(false);
+
+        }
     }
 
 

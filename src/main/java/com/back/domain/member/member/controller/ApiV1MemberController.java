@@ -10,6 +10,7 @@ import com.back.domain.member.member.dto.response.MemberPasswordResponse;
 import com.back.domain.member.member.dto.response.MemberWithdrawMembershipResponse;
 import com.back.domain.member.member.entity.Member;
 import com.back.domain.member.member.service.MemberService;
+import com.back.global.exception.ServiceException;
 import com.back.global.rsData.RsData;
 import com.back.global.security.SecurityUser;
 import io.swagger.v3.oas.annotations.Operation;
@@ -78,12 +79,16 @@ public class ApiV1MemberController {
     }
 
     @Operation(summary = "비밀번호 유효성 검사 API", description = "비밀번호의 유효성을 인증하는 API 입니다.")
+    @PreAuthorize("isAuthenticated()")
     @PostMapping("/auth/verify-password")
     public RsData<MemberPasswordResponse> checkPasswordValidity(@AuthenticationPrincipal SecurityUser user,
-                                                                @RequestBody PasswordCheckRequestDto dto) {
+                                                                @Valid @RequestBody PasswordCheckRequestDto dto) {
 
-        MemberPasswordResponse response =
-                new MemberPasswordResponse(memberService.checkPasswordValidity(user.getId(), dto.password()).verified());
+        if (user == null) {
+            throw new ServiceException(401, "인증이 필요합니다.");
+        }
+
+        MemberPasswordResponse response = memberService.checkPasswordValidity(user.getId(), dto.password());
 
         return RsData.of(200,
                 "비밀번호 유효성 반환 성공",
