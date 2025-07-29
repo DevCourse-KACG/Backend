@@ -15,7 +15,7 @@ public class CustomUserDetailsService implements UserDetailsService {
 
     @Override
     public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
-        Member member = memberService.MemberFindByEmail(email);
+        Member member = memberService.findByEmail(email);
 
         return new SecurityUser(
                 member.getId(),
