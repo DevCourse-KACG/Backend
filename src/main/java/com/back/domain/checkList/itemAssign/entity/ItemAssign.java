@@ -27,6 +27,7 @@ public class ItemAssign {
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "club_member_id", nullable = false)
     @Description("할당된 인원")
+    @Setter
     private ClubMember clubMember;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)

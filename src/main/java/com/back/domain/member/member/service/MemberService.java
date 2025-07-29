@@ -3,7 +3,10 @@ package com.back.domain.member.member.service;
 import com.back.domain.api.service.ApiKeyService;
 import com.back.domain.auth.service.AuthService;
 import com.back.domain.member.member.MemberType;
-import com.back.domain.member.member.dto.*;
+import com.back.domain.member.member.dto.MemberAuthResponse;
+import com.back.domain.member.member.dto.MemberDto;
+import com.back.domain.member.member.dto.MemberLoginDto;
+import com.back.domain.member.member.dto.MemberWithdrawMembershipResponse;
 import com.back.domain.member.member.entity.Member;
 import com.back.domain.member.member.entity.MemberInfo;
 import com.back.domain.member.member.repository.MemberInfoRepository;
@@ -142,7 +145,7 @@ public class MemberService {
     }
 
 
-    public Member MemberFindByEmail(String email) {
+    public Member findByEmail(String email) {
         Optional<MemberInfo> memberInfo = memberInfoRepository.findByEmail(email);
 
         if (memberInfo.isEmpty()) {
@@ -164,5 +167,9 @@ public class MemberService {
         }
 
         return optionalMember.get();
+    }
+
+    public Optional<Member> findById(Long id) {
+        return memberRepository.findById(id);
     }
 }

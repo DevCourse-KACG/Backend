@@ -268,7 +268,7 @@ class ApiV1ScheduleControllerTest {
     @Test
     @DisplayName("일정 삭제 - 체크리스트가 없는 경우")
     void td1() throws Exception {
-        Long scheduleId = 4L;
+        Long scheduleId = 6L;
         Schedule schedule = scheduleService.getScheduleById(scheduleId);
 
         Long clubId = schedule.getClub().getId();

@@ -2,6 +2,9 @@ package com.back.domain.club.club.controller;
 
 import com.back.domain.club.club.entity.Club;
 import com.back.domain.club.club.service.ClubService;
+import com.back.domain.member.member.dto.MemberDto;
+import com.back.domain.member.member.entity.Member;
+import com.back.domain.member.member.service.MemberService;
 import com.back.global.aws.S3Service;
 import com.back.global.enums.ClubCategory;
 import com.back.global.enums.EventType;
@@ -23,12 +26,11 @@ import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.BDDMockito.given;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
-
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.BDDMockito.given;
 
 @ActiveProfiles("test")
 @SpringBootTest
@@ -39,13 +41,15 @@ class ApiV1ClubControllerTest {
     private MockMvc mvc;
     @Autowired
     private ClubService clubService;
+    @Autowired
+    private MemberService memberService;
 
     @MockitoBean
     private S3Service s3Service; // S3Service는 MockBean으로 주입하여 실제 S3와의 통신을 피합니다.
 
     @Test
     @DisplayName("빈 그룹 생성 - 이미지 없는 경우")
-    void createGroup() throws Exception {
+    void createClub() throws Exception {
         // given
         String jsonData = """
             {
@@ -162,5 +166,393 @@ class ApiV1ClubControllerTest {
     }
 
 
+    @Test
+    @DisplayName("클럽 정보 수정")
+    void updateClub() throws Exception {
+        // given
+        // 클럽 생성
+        Club club = clubService.createClub(
+                Club.builder()
+                .name("테스트 그룹")
+                .bio("테스트 그룹 설명")
+                .category(ClubCategory.STUDY)
+                .mainSpot("서울")
+                .maximumCapacity(10)
+                .eventType(EventType.ONE_TIME)
+                .startDate(LocalDate.of(2023, 10, 1))
+                .endDate(LocalDate.of(2023, 10, 31))
+                .isPublic(true)
+                .leaderId(1L)
+                .build()
+        );
 
+        // ⭐️ S3 업로더의 행동 정의: 어떤 파일이든 업로드 요청이 오면, 지정된 가짜 URL을 반환한다.
+        String fakeImageUrl = "https://my-s3-bucket.s3.ap-northeast-2.amazonaws.com/club/1/profile/fake-image.jpg";
+        given(s3Service.upload(any(MultipartFile.class), any(String.class))).willReturn(fakeImageUrl);
+
+        // 1. 가짜 이미지 파일(MockMultipartFile) 생성
+        MockMultipartFile imagePart = new MockMultipartFile(
+                "image", // @RequestPart("image") 이름과 일치
+                "image.jpg",
+                MediaType.IMAGE_JPEG_VALUE,
+                "test image".getBytes()
+        );
+
+        // 2. JSON 데이터 파트 생성 (위와 동일)
+        String jsonData = """
+            {
+                "name": "수정된 테스트 그룹",
+                "bio": "수정된 테스트 그룹 설명",
+                "category" : "HOBBY",
+                "mainSpot" : "수정된 서울",
+                "maximumCapacity" : 11,
+                "recruitingStatus": false,
+                "eventType" : "LONG_TERM",
+                "startDate" : "2024-10-01",
+                "endDate" : "2024-10-31",
+                "isPublic": true,
+                "leaderId": 2
+            }
+            """;
+        MockMultipartFile dataPart = new MockMultipartFile("data", "", "application/json", jsonData.getBytes(StandardCharsets.UTF_8));
+
+
+        // when
+        // 3. MockMvc로 multipart 요청 생성 (JSON 파트와 이미지 파트 모두 포함)
+        ResultActions resultActions = mvc.perform(
+                        multipart("/api/v1/clubs/" + club.getId()) // 클럽 ID를 URL에 포함
+                                .file(dataPart)
+                                .file(imagePart) // 'image' 파트 추가
+                                .with(request -> {
+                                    request.setMethod("PATCH"); // PATCH 메소드로 요청
+                                    return request;
+                                })
+                )
+                .andDo(print());
+
+
+        // then
+        resultActions
+                .andExpect(handler().handlerType(ApiV1ClubController.class))
+                .andExpect(handler().methodName("updateClubInfo"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value(200))
+                .andExpect(jsonPath("$.message").value("클럽 정보가 수정됐습니다."))
+                .andExpect(jsonPath("$.data.clubId").value(club.getId()));
+
+
+        // 추가 검증: 클럽이 실제로 수정되었는지 확인
+        club = clubService.getClubById(club.getId()).orElseThrow(
+                () -> new IllegalStateException("클럽이 존재하지 않습니다.")
+        );
+
+        assertThat(club.getName()).isEqualTo("수정된 테스트 그룹");
+        assertThat(club.getBio()).isEqualTo("수정된 테스트 그룹 설명");
+        assertThat(club.getCategory()).isEqualTo(ClubCategory.HOBBY);
+        assertThat(club.getMainSpot()).isEqualTo( "수정된 서울");
+        assertThat(club.getMaximumCapacity()).isEqualTo(11);
+        assertThat(club.getImageUrl()).isEqualTo(fakeImageUrl); // 이미지 URL이 가짜 URL과 일치하는지 확인
+        assertThat(club.getEventType()).isEqualTo(EventType.LONG_TERM);
+        assertThat(club.getStartDate()).isEqualTo(LocalDate.of(2024, 10, 1));
+        assertThat(club.getEndDate()).isEqualTo(LocalDate.of(2024, 10, 31));
+        assertThat(club.isPublic()).isTrue();
+        assertThat(club.getLeaderId()).isEqualTo(2L);
+        assertThat(club.isRecruitingStatus()).isFalse(); // 모집 상태가 false인지 확인
+        assertThat(club.isState()).isTrue(); // 활성화 상태가 true인지 확인
+        assertThat(club.getClubMembers().isEmpty()).isTrue(); // 구성원이 비어있는지 확인
+    }
+
+    @Test
+    @DisplayName("클럽 정보 수정 - 부분 수정")
+    void updateClubPart() throws Exception {
+        // given
+        // 클럽 생성
+        Club club = clubService.createClub(
+                Club.builder()
+                        .name("테스트 그룹")
+                        .bio("수정 안 할 테스트 그룹 설명")
+                        .category(ClubCategory.STUDY)
+                        .mainSpot("수정 안 할 서울")
+                        .maximumCapacity(10)
+                        .eventType(EventType.ONE_TIME)
+                        .startDate(LocalDate.of(2023, 10, 1))
+                        .endDate(LocalDate.of(2023, 10, 31))
+                        .isPublic(true)
+                        .leaderId(1L)
+                        .build()
+        );
+
+        // ⭐️ S3 업로더의 행동 정의: 어떤 파일이든 업로드 요청이 오면, 지정된 가짜 URL을 반환한다.
+        String fakeImageUrl = "https://my-s3-bucket.s3.ap-northeast-2.amazonaws.com/club/1/profile/fake-image.jpg";
+        given(s3Service.upload(any(MultipartFile.class), any(String.class))).willReturn(fakeImageUrl);
+
+        // 1. 가짜 이미지 파일(MockMultipartFile) 생성
+        MockMultipartFile imagePart = new MockMultipartFile(
+                "image", // @RequestPart("image") 이름과 일치
+                "image.jpg",
+                MediaType.IMAGE_JPEG_VALUE,
+                "test image".getBytes()
+        );
+
+        // 2. JSON 데이터 파트 생성 (위와 동일)
+        String jsonData = """
+            {
+                "name": "수정된 테스트 그룹",
+                "maximumCapacity" : 11,
+                "recruitingStatus": false,
+                "startDate" : "2024-10-01",
+                "endDate" : "2024-10-31",
+                "isPublic": true,
+                "leaderId": 2
+            }
+            """;
+        MockMultipartFile dataPart = new MockMultipartFile("data", "", "application/json", jsonData.getBytes(StandardCharsets.UTF_8));
+
+
+        // when
+        // 3. MockMvc로 multipart 요청 생성 (JSON 파트와 이미지 파트 모두 포함)
+        ResultActions resultActions = mvc.perform(
+                        multipart("/api/v1/clubs/" + club.getId()) // 클럽 ID를 URL에 포함
+                                .file(dataPart)
+                                .file(imagePart) // 'image' 파트 추가
+                                .with(request -> {
+                                    request.setMethod("PATCH"); // PATCH 메소드로 요청
+                                    return request;
+                                })
+                )
+                .andDo(print());
+
+
+        // then
+        resultActions
+                .andExpect(handler().handlerType(ApiV1ClubController.class))
+                .andExpect(handler().methodName("updateClubInfo"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value(200))
+                .andExpect(jsonPath("$.message").value("클럽 정보가 수정됐습니다."))
+                .andExpect(jsonPath("$.data.clubId").value(club.getId()));
+
+
+        // 추가 검증: 클럽이 실제로 수정되었는지 확인
+        club = clubService.getClubById(club.getId()).orElseThrow(
+                () -> new IllegalStateException("클럽이 존재하지 않습니다.")
+        );
+
+        assertThat(club.getName()).isEqualTo("수정된 테스트 그룹");
+        assertThat(club.getBio()).isEqualTo("수정 안 할 테스트 그룹 설명");
+        assertThat(club.getCategory()).isEqualTo(ClubCategory.STUDY);
+        assertThat(club.getMainSpot()).isEqualTo( "수정 안 할 서울");
+        assertThat(club.getMaximumCapacity()).isEqualTo(11);
+        assertThat(club.getImageUrl()).isEqualTo(fakeImageUrl); // 이미지 URL이 가짜 URL과 일치하는지 확인
+        assertThat(club.getEventType()).isEqualTo(EventType.ONE_TIME);
+        assertThat(club.getStartDate()).isEqualTo(LocalDate.of(2024, 10, 1));
+        assertThat(club.getEndDate()).isEqualTo(LocalDate.of(2024, 10, 31));
+        assertThat(club.isPublic()).isTrue();
+        assertThat(club.getLeaderId()).isEqualTo(2L);
+        assertThat(club.isRecruitingStatus()).isFalse(); // 모집 상태가 false인지 확인
+        assertThat(club.isState()).isTrue(); // 활성화 상태가 true인지 확인
+        assertThat(club.getClubMembers().isEmpty()).isTrue(); // 구성원이 비어있는지 확인
+    }
+
+    @Test
+    @DisplayName("클럽 수정 - 존재하지 않는 클럽")
+    void updateNonExistentClub() throws Exception {
+        // given
+        Long nonExistentClubId = 999L; // 존재하지 않는 클럽 ID
+
+        // 1. 가짜 이미지 파일(MockMultipartFile) 생성
+        MockMultipartFile imagePart = new MockMultipartFile(
+                "image", // @RequestPart("image") 이름과 일치
+                "image.jpg",
+                MediaType.IMAGE_JPEG_VALUE,
+                "test image".getBytes()
+        );
+
+        // 2. JSON 데이터 파트 생성
+        String jsonData = """
+            {
+                "name": "수정된 테스트 그룹",
+                "bio": "수정된 테스트 그룹 설명",
+                "category" : "HOBBY",
+                "mainSpot" : "수정된 서울",
+                "maximumCapacity" : 11,
+                "eventType" : "LONG_TERM",
+                "startDate" : "2024-10-01",
+                "endDate" : "2024-10-31",
+                "isPublic": true,
+                "leaderId": 2
+            }
+            """;
+        MockMultipartFile dataPart = new MockMultipartFile("data", "", "application/json", jsonData.getBytes(StandardCharsets.UTF_8));
+
+        // when
+        ResultActions resultActions = mvc.perform(
+                        multipart("/api/v1/clubs/" + nonExistentClubId) // 존재하지 않는 클럽 ID로 요청
+                                .file(dataPart)
+                                .file(imagePart) // 'image' 파트 추가
+                                .with(request -> {
+                                    request.setMethod("PATCH"); // PATCH 메소드로 요청
+                                    return request;
+                                })
+                )
+                .andDo(print());
+
+        // then
+        resultActions
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.code").value(404))
+                .andExpect(jsonPath("$.message").value("해당 ID의 클럽을 찾을 수 없습니다."));
+    }
+
+    @Test
+    @DisplayName("클럽 정보 삭제")
+    void deleteClub() throws Exception {
+        // given
+        // 클럽 생성
+        Club club = clubService.createClub(
+                Club.builder()
+                        .name("테스트 그룹")
+                        .bio("테스트 그룹 설명")
+                        .category(ClubCategory.STUDY)
+                        .mainSpot("서울")
+                        .maximumCapacity(10)
+                        .eventType(EventType.ONE_TIME)
+                        .startDate(LocalDate.of(2023, 10, 1))
+                        .endDate(LocalDate.of(2023, 10, 31))
+                        .isPublic(true)
+                        .leaderId(1L)
+                        .build()
+        );
+
+        // when
+        ResultActions resultActions = mvc.perform(
+                multipart("/api/v1/clubs/" + club.getId())
+                        .with(request -> {
+                            request.setMethod("DELETE"); // DELETE 메소드로 요청
+                            return request;
+                        })
+        ).andDo(print());
+
+        // then
+        resultActions
+                .andExpect(handler().handlerType(ApiV1ClubController.class))
+                .andExpect(handler().methodName("deleteClub"))
+                .andExpect(status().isNoContent())
+                .andExpect(jsonPath("$.code").value(204))
+                .andExpect(jsonPath("$.message").value("클럽이 삭제됐습니다."));
+
+        // 추가 검증: 클럽이 실제로는 삭제되지 않고 활성화 상태가 false로 변경됐는지 확인
+        club = clubService.getClubById(club.getId()).orElseThrow(
+                () -> new IllegalStateException("클럽이 존재하지 않습니다.")
+        );
+        assertThat(club.isState()).isFalse(); // 활성화 상태가 false인지 확인
+    }
+
+    @Test
+    @DisplayName("클럽 정보 삭제 - 존재하지 않는 클럽")
+    void deleteNonExistentClub() throws Exception {
+        // given
+        Long nonExistentClubId = 999L; // 존재하지 않는 클럽 ID
+
+        // when
+        ResultActions resultActions = mvc.perform(
+                multipart("/api/v1/clubs/" + nonExistentClubId)
+                        .with(request -> {
+                            request.setMethod("DELETE"); // DELETE 메소드로 요청
+                            return request;
+                        })
+        ).andDo(print());
+
+        // then
+        resultActions
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.code").value(404))
+                .andExpect(jsonPath("$.message").value("해당 ID의 클럽을 찾을 수 없습니다."));
+    }
+
+    @Test
+    @DisplayName("모임 소개 정보 조회")
+    void getClubIntro() throws Exception {
+        // given
+        // 리더 생성
+        MemberDto dto = new MemberDto(
+                "testLeader@gmail.com",
+                "12345678",
+                "testLeader",
+                "I'm a test leader"
+        );
+        memberService.register(dto);
+
+        Member member = memberService.findByEmail(dto.email());
+
+        // 클럽 생성
+        Club club = clubService.createClub(
+                Club.builder()
+                        .name("테스트 그룹")
+                        .bio("테스트 그룹 설명")
+                        .category(ClubCategory.STUDY)
+                        .mainSpot("서울")
+                        .maximumCapacity(10)
+                        .eventType(EventType.ONE_TIME)
+                        .startDate(LocalDate.of(2023, 10, 1))
+                        .endDate(LocalDate.of(2023, 10, 31))
+                        .imageUrl("https://example.com/image.jpg")
+                        .isPublic(true)
+                        .leaderId(member.getId())
+                        .build()
+        );
+
+        // when
+        ResultActions resultActions = mvc.perform(
+                multipart("/api/v1/clubs/" + club.getId() + "/intro")
+                        .with(request -> {
+                            request.setMethod("GET"); // GET 메소드로 요청
+                            return request;
+                        })
+        ).andDo(print());
+
+        // then
+        resultActions
+                .andExpect(handler().handlerType(ApiV1ClubController.class))
+                .andExpect(handler().methodName("getClubIntro"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value(200))
+                .andExpect(jsonPath("$.message").value("클럽 소개 정보가 조회됐습니다."))
+                .andExpect(jsonPath("$.data.clubId").value(club.getId()))
+                .andExpect(jsonPath("$.data.name").value(club.getName()))
+                .andExpect(jsonPath("$.data.bio").value(club.getBio()))
+                .andExpect(jsonPath("$.data.category").value(club.getCategory().name()))
+                .andExpect(jsonPath("$.data.mainSpot").value(club.getMainSpot()))
+                .andExpect(jsonPath("$.data.maximumCapacity").value(club.getMaximumCapacity()))
+                .andExpect(jsonPath("$.data.recruitingStatus").value(club.isRecruitingStatus()))
+                .andExpect(jsonPath("$.data.eventType").value(club.getEventType().name()))
+                .andExpect(jsonPath("$.data.startDate").value(club.getStartDate().toString()))
+                .andExpect(jsonPath("$.data.endDate").value(club.getEndDate().toString()))
+                .andExpect(jsonPath("$.data.isPublic").value(club.isPublic()))
+                .andExpect(jsonPath("$.data.imageUrl").value(club.getImageUrl()))
+                .andExpect(jsonPath("$.data.leaderId").value(club.getLeaderId()))
+                .andExpect(jsonPath("$.data.leaderName").value(dto.nickname()));
+    }
+
+    @Test
+    @DisplayName("모임 소개 정보 조회 - 존재하지 않는 클럽")
+    void getNonExistentClubIntro() throws Exception {
+        // given
+        Long nonExistentClubId = 999L; // 존재하지 않는 클럽 ID
+
+        // when
+        ResultActions resultActions = mvc.perform(
+                multipart("/api/v1/clubs/" + nonExistentClubId + "/intro")
+                        .with(request -> {
+                            request.setMethod("GET"); // GET 메소드로 요청
+                            return request;
+                        })
+        ).andDo(print());
+
+        // then
+        resultActions
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.code").value(404))
+                .andExpect(jsonPath("$.message").value("해당 ID의 클럽을 찾을 수 없습니다."));
+    }
 }
