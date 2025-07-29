@@ -377,4 +377,97 @@ public class ApiV1PresetControllerTest {
         .andDo(print());
   }
 
+  @Test
+  @DisplayName("프리셋 목록 조회")
+  void t13() throws Exception {
+    // 먼저 프리셋을 생성합니다.
+    long presetId1 = presetCreate();
+
+    // 추가 프리셋 생성
+    String requestBody2 = String.format("""
+    {
+      "presetItems": [
+        { "content": "아이템 A", "category": "%s", "sequence":1 },
+        { "content": "아이템 B", "category": "%s", "sequence":2 }
+      ],
+      "name": "Another Preset"
+    }
+    """, CheckListItemCategory.PREPARATION.name(), CheckListItemCategory.ETC.name());
+
+    mockMvc.perform(
+        post("/api/v1/presets")
+            .header("Authorization", "Bearer " + jwtToken)
+            .contentType("application/json")
+            .content(requestBody2)
+    ).andExpect(status().isCreated());
+
+    // 프리셋 목록 조회
+    mockMvc.perform(
+        get("/api/v1/presets")
+            .header("Authorization", "Bearer " + jwtToken)
+            .contentType("application/json")
+    )
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.code").value(200))
+        .andExpect(jsonPath("$.message").value("프리셋 목록 조회 성공"))
+        .andExpect(jsonPath("$.data.length()").value(2)) // 두 개의 프리셋이 있어야 함
+        .andExpect(jsonPath("$.data[0].id").value(presetId1)) // 첫 번째 프리셋 ID 확인
+        .andExpect(jsonPath("$.data[0].name").value("My Custom Preset"))
+        .andExpect(jsonPath("$.data[1].name").value("Another Preset"))
+        .andDo(print());
+  }
+
+  @Test
+  @DisplayName("프리셋 목록 조회 실패 - JWT 토큰 없음")
+  void t14() throws Exception {
+    // JWT 토큰 없이 프리셋 목록 조회 시도
+    mockMvc.perform(
+        get("/api/v1/presets")
+            .contentType("application/json")
+    )
+        .andExpect(status().isNotFound())
+        .andExpect(jsonPath("$.code").value(404))
+        .andExpect(jsonPath("$.message").value("AccessToken을 찾을 수 없습니다"))
+        .andDo(print());
+  }
+
+  @Test
+  @DisplayName("프리셋 목록 조회 실패 - JWT 토큰 만료")
+  void t15() throws Exception {
+    // 먼저 프리셋을 생성합니다.
+    presetCreate();
+
+    // 만료된 JWT 토큰 생성
+    String expiredJwtToken = Ut.jwt.toString(secretKey, -1, Map.of("id", member.getId(), "nickname", member.getNickname()));
+
+    // 프리셋 목록 조회 시도
+    mockMvc.perform(
+        get("/api/v1/presets")
+            .header("Authorization", "Bearer " + expiredJwtToken)
+            .contentType("application/json")
+    )
+        .andExpect(status().is(499))
+        .andExpect(jsonPath("$.code").value(499))
+        .andExpect(jsonPath("$.message").value("AccessToken 만료"))
+        .andDo(print());
+  }
+
+  @Test
+  @DisplayName("프리셋 목록 조회 실패 - 멤버를 찾을 수 없음")
+  void t16() throws Exception {
+    // 유효하지 않은 JWT 토큰 생성 (존재하지 않는 멤버 ID 사용)
+    String invalidJwtToken = Ut.jwt.toString(secretKey, expirationSeconds, Map.of("id", 9999L, "nickname", "Invalid User"));
+
+    // 프리셋 목록 조회 시도
+    mockMvc.perform(
+        get("/api/v1/presets")
+            .header("Authorization", "Bearer " + invalidJwtToken)
+            .contentType("application/json")
+    )
+        .andExpect(status().isNotFound())
+        .andExpect(jsonPath("$.code").value(404))
+        .andExpect(jsonPath("$.message").value("멤버를 찾을 수 없습니다"))
+        .andDo(print());
+  }
+
 }
