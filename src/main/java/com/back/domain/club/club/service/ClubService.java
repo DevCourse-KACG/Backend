@@ -167,7 +167,6 @@ public class ClubService {
         Member leader = memberService.findById(club.getLeaderId())
                 .orElseThrow(() -> new ServiceException(404, "해당 ID의 클럽 리더를 찾을 수 없습니다."));
 
-
         return new ClubControllerDtos.ClubInfoResponse(
                 club.getId(),
                 club.getName(),
