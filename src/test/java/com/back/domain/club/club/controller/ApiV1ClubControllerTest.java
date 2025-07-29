@@ -48,7 +48,7 @@ class ApiV1ClubControllerTest {
     private S3Service s3Service; // S3Service는 MockBean으로 주입하여 실제 S3와의 통신을 피합니다.
 
     @Test
-    @DisplayName("빈 그룹 생성 - 이미지 없는 경우")
+    @DisplayName("빈 클럽 생성 - 이미지 없는 경우")
     void createClub() throws Exception {
         // given
         String jsonData = """
@@ -111,7 +111,7 @@ class ApiV1ClubControllerTest {
 
 
     @Test
-    @DisplayName("그룹 생성 - 이미지가 있는 경우")
+    @DisplayName("빈 클럽 생성 - 이미지가 있는 경우")
     void createClubWithImage() throws Exception {
         // given
         // ⭐️ S3 업로더의 행동 정의: 어떤 파일이든 업로드 요청이 오면, 지정된 가짜 URL을 반환한다.
@@ -164,6 +164,96 @@ class ApiV1ClubControllerTest {
         assertThat(club.getName()).isEqualTo("이미지 있는 그룹");
         assertThat(club.getImageUrl()).isEqualTo(fakeImageUrl); // ⭐️ 이미지 URL이 가짜 URL과 일치하는지 확인
     }
+
+    @Test
+    @DisplayName("초기 유저 있는 클럽 생성")
+    void createClubWithMembers() throws Exception {
+        // given
+        String jsonData = """
+            {
+                "name": "테스트 그룹",
+                "bio": "테스트 그룹 설명",
+                "category" : "TRAVEL",
+                "mainSpot" : "서울",
+                "maximumCapacity" : 10,
+                "eventType" : "SHORT_TERM",
+                "startDate" : "2023-10-01",
+                "endDate" : "2023-10-31",
+                "isPublic": true,
+                "leaderId": 1,
+                "clubMembers" : [
+                    {
+                        "id": 1,
+                        "role" : "HOST"
+                    },
+                    {
+                        "id": 2,
+                        "role" : "MANAGER"
+                    },
+                    {
+                        "id": 3,
+                        "role" : "PARTICIPANT"
+                    },
+                    {
+                        "id": 4,
+                        "role" : "PARTICIPANT"
+                    }
+                ]
+            }
+            """;
+
+        MockMultipartFile dataPart = new MockMultipartFile(
+                "data",
+                "",
+                MediaType.APPLICATION_JSON_VALUE,
+                jsonData.getBytes(StandardCharsets.UTF_8)
+        );
+
+        // when
+        ResultActions resultActions = mvc
+                .perform(
+                        multipart("/api/v1/clubs").file(dataPart)
+                )
+                .andDo(print());
+
+        // then
+        resultActions
+                .andExpect(handler().handlerType(ApiV1ClubController.class))
+                .andExpect(handler().methodName("createClub"))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.code").value(201))
+                .andExpect(jsonPath("$.message").value("클럽이 생성됐습니다."))
+                .andExpect(jsonPath("$.data.clubId").isNumber())
+                .andExpect(jsonPath("$.data.leaderId").value(1));
+
+        // 추가 검증: 클럽이 실제로 생성되었는지 확인
+        Club club = clubService.getLastCreatedClub();
+
+        assertThat(club.getName()).isEqualTo("테스트 그룹");
+        assertThat(club.getBio()).isEqualTo("테스트 그룹 설명");
+        assertThat(club.getCategory()).isEqualTo(ClubCategory.TRAVEL);
+        assertThat(club.getMainSpot()).isEqualTo("서울");
+        assertThat(club.getMaximumCapacity()).isEqualTo(10);
+        assertThat(club.getEventType()).isEqualTo(EventType.SHORT_TERM);
+        assertThat(club.getStartDate()).isEqualTo(LocalDate.of(2023, 10, 1));
+        assertThat(club.getEndDate()).isEqualTo(LocalDate.of(2023, 10, 31));
+        assertThat(club.isPublic()).isTrue();
+        assertThat(club.getLeaderId()).isEqualTo(1L);
+        assertThat(club.isState()).isTrue(); // 활성화 상태가 true인지 확인
+        assertThat(club.getClubMembers().size()).isEqualTo(4); // 클럽 멤버가 4명인지 확인
+
+        // 클럽 멤 검증
+        assertThat(club.getClubMembers().get(0).getRole().name()).isEqualTo("HOST");
+        assertThat(club.getClubMembers().get(0).getMember().getId()).isEqualTo(1L);
+        assertThat(club.getClubMembers().get(1).getRole().name()).isEqualTo("MANAGER");
+        assertThat(club.getClubMembers().get(1).getMember().getId()).isEqualTo(2L);
+        assertThat(club.getClubMembers().get(2).getRole().name()).isEqualTo("PARTICIPANT");
+        assertThat(club.getClubMembers().get(2).getMember().getId()).isEqualTo(3L);
+        assertThat(club.getClubMembers().get(3).getRole().name()).isEqualTo("PARTICIPANT");
+        assertThat(club.getClubMembers().get(3).getMember().getId()).isEqualTo(4L);
+
+    }
+
 
 
     @Test
