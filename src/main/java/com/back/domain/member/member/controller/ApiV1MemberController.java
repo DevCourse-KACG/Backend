@@ -1,8 +1,8 @@
 package com.back.domain.member.member.controller;
 
 import com.back.domain.api.dto.TokenRefreshRequest;
-import com.back.domain.member.member.dto.dto.MemberLoginDto;
-import com.back.domain.member.member.dto.dto.MemberRegisterDto;
+import com.back.domain.member.member.dto.request.MemberLoginDto;
+import com.back.domain.member.member.dto.request.MemberRegisterDto;
 import com.back.domain.member.member.dto.response.MemberAuthResponse;
 import com.back.domain.member.member.dto.response.MemberDetailInfoResponse;
 import com.back.domain.member.member.dto.response.MemberWithdrawMembershipResponse;
@@ -101,9 +101,10 @@ public class ApiV1MemberController {
     }
 
     @Operation(summary = "내 정보 반환 API", description = "현재 로그인한 유저 정보를 반환하는 API 입니다.")
+    @PreAuthorize("isAuthenticated()")
     @GetMapping("/me")
-    public RsData<MemberDetailInfoResponse> getUserInfo(HttpServletResponse response,
-                                                                        @AuthenticationPrincipal SecurityUser user) {
+    public RsData<MemberDetailInfoResponse> getMyInfo(HttpServletResponse response,
+                                                      @AuthenticationPrincipal SecurityUser user) {
 
         MemberDetailInfoResponse memberDetailInfoResponse =
                 memberService.getUserInfo(user.getId());

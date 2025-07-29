@@ -1,6 +1,6 @@
 package com.back.domain.member.member;
 
-import com.back.domain.member.member.dto.dto.MemberRegisterDto;
+import com.back.domain.member.member.dto.request.MemberRegisterDto;
 import com.back.domain.member.member.entity.Member;
 import com.back.domain.member.member.repository.MemberRepository;
 import com.back.domain.member.member.service.MemberService;
