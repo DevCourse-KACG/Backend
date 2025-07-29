@@ -10,6 +10,7 @@ import com.back.global.enums.ClubCategory;
 import com.back.global.enums.ClubMemberRole;
 import com.back.global.enums.ClubMemberState;
 import com.back.global.enums.EventType;
+import com.back.global.exception.ServiceException;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -118,7 +119,7 @@ public class ClubService {
     @Transactional
     public Club updateClub (Long clubId, ClubControllerDtos.@Valid UpdateClubRequest dto, MultipartFile image) throws IOException {
         Club club = clubRepository.findById(clubId)
-                .orElseThrow(() -> new IllegalArgumentException("클럽이 존재하지 않습니다."));
+                .orElseThrow(() -> new ServiceException(404, "해당 ID의 클럽을 찾을 수 없습니다."));
 
         // 클럽 정보 업데이트
         String name = dto.name() != null ? dto.name() : club.getName();
@@ -143,5 +144,13 @@ public class ClubService {
 
 
         return clubRepository.save(club);
+    }
+
+    public void deleteClub(Long clubId) {
+        Club club = clubRepository.findById(clubId)
+                .orElseThrow(() -> new ServiceException(404, "해당 ID의 클럽을 찾을 수 없습니다."));
+
+        // 클럽 삭제
+        club.changeState(false); // 클럽 상태를 비활성화로 변경
     }
 }

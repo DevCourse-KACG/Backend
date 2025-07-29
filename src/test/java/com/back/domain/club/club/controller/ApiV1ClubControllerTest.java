@@ -45,7 +45,7 @@ class ApiV1ClubControllerTest {
 
     @Test
     @DisplayName("빈 그룹 생성 - 이미지 없는 경우")
-    void createGroup() throws Exception {
+    void createClub() throws Exception {
         // given
         String jsonData = """
             {
@@ -163,8 +163,8 @@ class ApiV1ClubControllerTest {
 
 
     @Test
-    @DisplayName("그룹 정보 수정")
-    void updateGroup() throws Exception {
+    @DisplayName("클럽 정보 수정")
+    void updateClub() throws Exception {
         // given
         // 클럽 생성
         Club club = clubService.createClub(
@@ -220,7 +220,7 @@ class ApiV1ClubControllerTest {
                                 .file(dataPart)
                                 .file(imagePart) // 'image' 파트 추가
                                 .with(request -> {
-                                    request.setMethod("PATCH"); // PUT 메소드로 요청
+                                    request.setMethod("PATCH"); // PATCH 메소드로 요청
                                     return request;
                                 })
                 )
@@ -259,8 +259,8 @@ class ApiV1ClubControllerTest {
     }
 
     @Test
-    @DisplayName("그룹 정보 수정 - 부분 수정")
-    void updateGroupPart() throws Exception {
+    @DisplayName("클럽 정보 수정 - 부분 수정")
+    void updateClubPart() throws Exception {
         // given
         // 클럽 생성
         Club club = clubService.createClub(
@@ -312,7 +312,7 @@ class ApiV1ClubControllerTest {
                                 .file(dataPart)
                                 .file(imagePart) // 'image' 파트 추가
                                 .with(request -> {
-                                    request.setMethod("PATCH"); // PUT 메소드로 요청
+                                    request.setMethod("PATCH"); // PATCH 메소드로 요청
                                     return request;
                                 })
                 )
@@ -348,6 +348,122 @@ class ApiV1ClubControllerTest {
         assertThat(club.isRecruitingStatus()).isFalse(); // 모집 상태가 false인지 확인
         assertThat(club.isState()).isTrue(); // 활성화 상태가 true인지 확인
         assertThat(club.getClubMembers().isEmpty()).isTrue(); // 구성원이 비어있는지 확인
+    }
+
+    @Test
+    @DisplayName("클럽 수정 - 존재하지 않는 클럽")
+    void updateNonExistentClub() throws Exception {
+        // given
+        Long nonExistentClubId = 999L; // 존재하지 않는 클럽 ID
+
+        // 1. 가짜 이미지 파일(MockMultipartFile) 생성
+        MockMultipartFile imagePart = new MockMultipartFile(
+                "image", // @RequestPart("image") 이름과 일치
+                "image.jpg",
+                MediaType.IMAGE_JPEG_VALUE,
+                "test image".getBytes()
+        );
+
+        // 2. JSON 데이터 파트 생성
+        String jsonData = """
+            {
+                "name": "수정된 테스트 그룹",
+                "bio": "수정된 테스트 그룹 설명",
+                "category" : "HOBBY",
+                "mainSpot" : "수정된 서울",
+                "maximumCapacity" : 11,
+                "eventType" : "LONG_TERM",
+                "startDate" : "2024-10-01",
+                "endDate" : "2024-10-31",
+                "isPublic": true,
+                "leaderId": 2
+            }
+            """;
+        MockMultipartFile dataPart = new MockMultipartFile("data", "", "application/json", jsonData.getBytes(StandardCharsets.UTF_8));
+
+        // when
+        ResultActions resultActions = mvc.perform(
+                        multipart("/api/v1/clubs/" + nonExistentClubId) // 존재하지 않는 클럽 ID로 요청
+                                .file(dataPart)
+                                .file(imagePart) // 'image' 파트 추가
+                                .with(request -> {
+                                    request.setMethod("PATCH"); // PATCH 메소드로 요청
+                                    return request;
+                                })
+                )
+                .andDo(print());
+
+        // then
+        resultActions
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.code").value(404))
+                .andExpect(jsonPath("$.message").value("해당 ID의 클럽을 찾을 수 없습니다."));
+    }
+
+    @Test
+    @DisplayName("클럽 정보 삭제")
+    void deleteClub() throws Exception {
+        // given
+        // 클럽 생성
+        Club club = clubService.createClub(
+                Club.builder()
+                        .name("테스트 그룹")
+                        .bio("테스트 그룹 설명")
+                        .category(ClubCategory.STUDY)
+                        .mainSpot("서울")
+                        .maximumCapacity(10)
+                        .eventType(EventType.ONE_TIME)
+                        .startDate(LocalDate.of(2023, 10, 1))
+                        .endDate(LocalDate.of(2023, 10, 31))
+                        .isPublic(true)
+                        .leaderId(1L)
+                        .build()
+        );
+
+        // when
+        ResultActions resultActions = mvc.perform(
+                multipart("/api/v1/clubs/" + club.getId())
+                        .with(request -> {
+                            request.setMethod("DELETE"); // DELETE 메소드로 요청
+                            return request;
+                        })
+        ).andDo(print());
+
+        // then
+        resultActions
+                .andExpect(handler().handlerType(ApiV1ClubController.class))
+                .andExpect(handler().methodName("deleteClub"))
+                .andExpect(status().isNoContent())
+                .andExpect(jsonPath("$.code").value(204))
+                .andExpect(jsonPath("$.message").value("클럽이 삭제됐습니다."));
+
+        // 추가 검증: 클럽이 실제로는 삭제되지 않고 활성화 상태가 false로 변경됐는지 확인
+        club = clubService.getClubById(club.getId()).orElseThrow(
+                () -> new IllegalStateException("클럽이 존재하지 않습니다.")
+        );
+        assertThat(club.isState()).isFalse(); // 활성화 상태가 false인지 확인
+    }
+
+    @Test
+    @DisplayName("클럽 정보 삭제 - 존재하지 않는 클럽")
+    void deleteNonExistentClub() throws Exception {
+        // given
+        Long nonExistentClubId = 999L; // 존재하지 않는 클럽 ID
+
+        // when
+        ResultActions resultActions = mvc.perform(
+                multipart("/api/v1/clubs/" + nonExistentClubId)
+                        .with(request -> {
+                            request.setMethod("DELETE"); // DELETE 메소드로 요청
+                            return request;
+                        })
+        ).andDo(print());
+
+        // then
+        resultActions
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.code").value(404))
+                .andExpect(jsonPath("$.message").value("해당 ID의 클럽을 찾을 수 없습니다."));
     }
 
 }

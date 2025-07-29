@@ -53,4 +53,11 @@ public class ApiV1ClubController {
                 )
         );
     }
+
+    @DeleteMapping("/{clubId}")
+    @Operation(summary = "클럽 삭제")
+    public RsData<Void> deleteClub(@PathVariable Long clubId) {
+        clubService.deleteClub(clubId);
+        return new RsData<>(204, "클럽이 삭제됐습니다.", null);
+    }
 }
