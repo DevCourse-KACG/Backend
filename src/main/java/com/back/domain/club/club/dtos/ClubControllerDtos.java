@@ -75,11 +75,12 @@ public class ClubControllerDtos {
 
 
     /**
-     * 클럽 소개 조회 응답을 위한 DTO 클래스입니다.
+
+     * 클럽 정보 조회 응답을 위한 DTO 클래스입니다.
      * 클럽의 ID, 이름, 소개, 카테고리, 주요 장소, 최대 인원 수, 이벤트 유형,
      * 시작일, 종료일, 공개 여부 및 리더 ID를 포함합니다.
      */
-    public static record ClubIntroResponse(
+    public static record ClubInfoResponse(
             Long clubId,
             String name,
             String bio,

@@ -156,19 +156,18 @@ public class ClubService {
     }
 
     /**
-     * 클럽 소개 정보를 조회합니다.
+     * 클럽 정보를 조회합니다.
      * @param clubId 클럽 ID
-     * @return 클럽 소개 정보 DTO
+     * @return 클럽 정보 DTO
      */
-    public ClubControllerDtos.ClubIntroResponse getClubIntro(Long clubId) {
+    public ClubControllerDtos.ClubInfoResponse getClubInfo(Long clubId) {
         Club club = clubRepository.findById(clubId)
                 .orElseThrow(() -> new ServiceException(404, "해당 ID의 클럽을 찾을 수 없습니다."));
 
         Member leader = memberService.findById(club.getLeaderId())
                 .orElseThrow(() -> new ServiceException(404, "해당 ID의 클럽 리더를 찾을 수 없습니다."));
 
-
-        return new ClubControllerDtos.ClubIntroResponse(
+        return new ClubControllerDtos.ClubInfoResponse(
                 club.getId(),
                 club.getName(),
                 club.getBio(),

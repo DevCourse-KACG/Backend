@@ -61,10 +61,10 @@ public class ApiV1ClubController {
         return new RsData<>(204, "클럽이 삭제됐습니다.", null);
     }
 
-    @GetMapping("/{clubId}/intro")
-    @Operation(summary = "클럽 소개 조회")
-    public RsData<ClubControllerDtos.ClubIntroResponse> getClubIntro(@PathVariable Long clubId) {
-        ClubControllerDtos.ClubIntroResponse intro = clubService.getClubIntro(clubId);
-        return new RsData<>(200, "클럽 소개 정보가 조회됐습니다.", intro);
+    @GetMapping("/{clubId}")
+    @Operation(summary = "클럽 정보 조회")
+    public RsData<ClubControllerDtos.ClubInfoResponse> getClubInfo(@PathVariable Long clubId) {
+        ClubControllerDtos.ClubInfoResponse info = clubService.getClubInfo(clubId);
+        return new RsData<>(200, "클럽 정보가 조회됐습니다.", info);
     }
 }
