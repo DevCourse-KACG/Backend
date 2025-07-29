@@ -8,6 +8,8 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -70,8 +72,8 @@ public class ApiV1ClubController {
 
     @GetMapping("/public")
     @Operation(summary = "공개 클럽 목록 조회")
-    public RsData<ClubControllerDtos.SimpleClubInfoResponse[]> getPublicClubs() {
-        ClubControllerDtos.SimpleClubInfoResponse[] response = clubService.getPublicClubs();
+    public RsData<Page<ClubControllerDtos.SimpleClubInfoResponse>> getPublicClubs(Pageable pageable) {
+        Page<ClubControllerDtos.SimpleClubInfoResponse> response = clubService.getPublicClubs(pageable);
         return new RsData<>(200, "공개 클럽 목록이 조회됐습니다.", response);
     }
 }
