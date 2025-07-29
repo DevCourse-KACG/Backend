@@ -47,9 +47,28 @@ public class ClubControllerDtos {
     ){}
 
     /**
+     * 클럽 수정 요청을 위한 DTO 클래스입니다.
+     * 클럽의 이름, 소개, 카테고리, 주요 장소, 최대 인원 수, 이벤트 유형, 시작일, 종료일,
+     * 공개 여부 및 리더 ID를 포함합니다.
+     */
+    public static record UpdateClubRequest(
+            String name,
+            String bio,
+            String category,
+            String mainSpot,
+            Integer maximumCapacity,
+            Boolean recruitingStatus,
+            String eventType,
+            String startDate,
+            String endDate,
+            Boolean isPublic,
+            Long leaderId
+    ) {}
+
+    /**
      * 클럽 생성 응답을 위한 DTO 클래스입니다.
      */
-    public static record CreateClubResponse(
+    public static record ClubResponse(
             Long clubId,
             Long leaderId
     ){}

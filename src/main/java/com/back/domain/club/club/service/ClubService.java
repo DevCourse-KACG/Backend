@@ -10,6 +10,7 @@ import com.back.global.enums.ClubCategory;
 import com.back.global.enums.ClubMemberRole;
 import com.back.global.enums.ClubMemberState;
 import com.back.global.enums.EventType;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -104,5 +105,34 @@ public class ClubService {
         });
 
         return club;
+    }
+
+    public Club updateClub (Long clubId, ClubControllerDtos.@Valid UpdateClubRequest dto, MultipartFile image) throws IOException {
+        Club club = clubRepository.findById(clubId)
+                .orElseThrow(() -> new IllegalArgumentException("클럽이 존재하지 않습니다."));
+
+        // 클럽 정보 업데이트
+        String name = dto.name() != null ? dto.name() : club.getName();
+        String bio = dto.bio() != null ? dto.bio() : club.getBio();
+        ClubCategory category = dto.category() != null ? ClubCategory.valueOf(dto.category().toUpperCase()) : club.getCategory();
+        String mainSpot = dto.mainSpot() != null ? dto.mainSpot() : club.getMainSpot();
+        int maximumCapacity = dto.maximumCapacity() != null ? dto.maximumCapacity() : club.getMaximumCapacity();
+        boolean recruitingStatus = dto.recruitingStatus() != null ? dto.recruitingStatus() : club.isRecruitingStatus();
+        EventType eventType = dto.eventType() != null ? EventType.valueOf(dto.eventType().toUpperCase()) : club.getEventType();
+        LocalDate startDate = dto.startDate() != null ? LocalDate.parse(dto.startDate()) : club.getStartDate();
+        LocalDate endDate = dto.endDate() != null ? LocalDate.parse(dto.endDate()) : club.getEndDate();
+        boolean isPublic = dto.isPublic() != null ? dto.isPublic() : club.isPublic();
+        long leaderId = dto.leaderId() != null ? dto.leaderId() : club.getLeaderId();
+
+        club.updateInfo(name, bio, category, mainSpot, maximumCapacity, recruitingStatus, eventType, startDate, endDate, isPublic, leaderId);
+
+        // 이미지가 제공된 경우 S3에 업로드
+        if (image != null && !image.isEmpty()) {
+            String imageUrl = s3Service.upload(image, "club/" + club.getId() + "/profile");
+            club.updateImageUrl(imageUrl); // 클럽에 이미지 URL 설정
+        }
+
+
+        return clubRepository.save(club);
     }
 }

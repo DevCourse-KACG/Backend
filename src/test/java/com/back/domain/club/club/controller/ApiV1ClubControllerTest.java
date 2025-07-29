@@ -220,7 +220,7 @@ class ApiV1ClubControllerTest {
                                 .file(dataPart)
                                 .file(imagePart) // 'image' 파트 추가
                                 .with(request -> {
-                                    request.setMethod("PUT"); // PUT 메소드로 요청
+                                    request.setMethod("PATCH"); // PUT 메소드로 요청
                                     return request;
                                 })
                 )
@@ -249,6 +249,98 @@ class ApiV1ClubControllerTest {
         assertThat(club.getMaximumCapacity()).isEqualTo(11);
         assertThat(club.getImageUrl()).isEqualTo(fakeImageUrl); // 이미지 URL이 가짜 URL과 일치하는지 확인
         assertThat(club.getEventType()).isEqualTo(EventType.LONG_TERM);
+        assertThat(club.getStartDate()).isEqualTo(LocalDate.of(2024, 10, 1));
+        assertThat(club.getEndDate()).isEqualTo(LocalDate.of(2024, 10, 31));
+        assertThat(club.isPublic()).isTrue();
+        assertThat(club.getLeaderId()).isEqualTo(2L);
+        assertThat(club.isRecruitingStatus()).isFalse(); // 모집 상태가 false인지 확인
+        assertThat(club.isState()).isTrue(); // 활성화 상태가 true인지 확인
+        assertThat(club.getClubMembers().isEmpty()).isTrue(); // 구성원이 비어있는지 확인
+    }
+
+    @Test
+    @DisplayName("그룹 정보 수정 - 부분 수정")
+    void updateGroupPart() throws Exception {
+        // given
+        // 클럽 생성
+        Club club = clubService.createClub(
+                Club.builder()
+                        .name("테스트 그룹")
+                        .bio("수정 안 할 테스트 그룹 설명")
+                        .category(ClubCategory.STUDY)
+                        .mainSpot("수정 안 할 서울")
+                        .maximumCapacity(10)
+                        .eventType(EventType.ONE_TIME)
+                        .startDate(LocalDate.of(2023, 10, 1))
+                        .endDate(LocalDate.of(2023, 10, 31))
+                        .isPublic(true)
+                        .leaderId(1L)
+                        .build()
+        );
+
+        // ⭐️ S3 업로더의 행동 정의: 어떤 파일이든 업로드 요청이 오면, 지정된 가짜 URL을 반환한다.
+        String fakeImageUrl = "https://my-s3-bucket.s3.ap-northeast-2.amazonaws.com/club/1/profile/fake-image.jpg";
+        given(s3Service.upload(any(MultipartFile.class), any(String.class))).willReturn(fakeImageUrl);
+
+        // 1. 가짜 이미지 파일(MockMultipartFile) 생성
+        MockMultipartFile imagePart = new MockMultipartFile(
+                "image", // @RequestPart("image") 이름과 일치
+                "image.jpg",
+                MediaType.IMAGE_JPEG_VALUE,
+                "test image".getBytes()
+        );
+
+        // 2. JSON 데이터 파트 생성 (위와 동일)
+        String jsonData = """
+            {
+                "name": "수정된 테스트 그룹",
+                "maximumCapacity" : 11,
+                "recruitingStatus": false,
+                "startDate" : "2024-10-01",
+                "endDate" : "2024-10-31",
+                "isPublic": true,
+                "leaderId": 2
+            }
+            """;
+        MockMultipartFile dataPart = new MockMultipartFile("data", "", "application/json", jsonData.getBytes(StandardCharsets.UTF_8));
+
+
+        // when
+        // 3. MockMvc로 multipart 요청 생성 (JSON 파트와 이미지 파트 모두 포함)
+        ResultActions resultActions = mvc.perform(
+                        multipart("/api/v1/clubs/" + club.getId()) // 클럽 ID를 URL에 포함
+                                .file(dataPart)
+                                .file(imagePart) // 'image' 파트 추가
+                                .with(request -> {
+                                    request.setMethod("PATCH"); // PUT 메소드로 요청
+                                    return request;
+                                })
+                )
+                .andDo(print());
+
+
+        // then
+        resultActions
+                .andExpect(handler().handlerType(ApiV1ClubController.class))
+                .andExpect(handler().methodName("updateClubInfo"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value(200))
+                .andExpect(jsonPath("$.message").value("클럽 정보가 수정됐습니다."))
+                .andExpect(jsonPath("$.data.clubId").value(club.getId()));
+
+
+        // 추가 검증: 클럽이 실제로 수정되었는지 확인
+        club = clubService.getClubById(club.getId()).orElseThrow(
+                () -> new IllegalStateException("클럽이 존재하지 않습니다.")
+        );
+
+        assertThat(club.getName()).isEqualTo("수정된 테스트 그룹");
+        assertThat(club.getBio()).isEqualTo("수정 안 할 테스트 그룹 설명");
+        assertThat(club.getCategory()).isEqualTo(ClubCategory.STUDY);
+        assertThat(club.getMainSpot()).isEqualTo( "수정 안 할 서울");
+        assertThat(club.getMaximumCapacity()).isEqualTo(11);
+        assertThat(club.getImageUrl()).isEqualTo(fakeImageUrl); // 이미지 URL이 가짜 URL과 일치하는지 확인
+        assertThat(club.getEventType()).isEqualTo(EventType.ONE_TIME);
         assertThat(club.getStartDate()).isEqualTo(LocalDate.of(2024, 10, 1));
         assertThat(club.getEndDate()).isEqualTo(LocalDate.of(2024, 10, 31));
         assertThat(club.isPublic()).isTrue();
