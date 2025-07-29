@@ -47,15 +47,23 @@ public class ApiV1MemberController {
     @PreAuthorize("isAuthenticated()")
     @DeleteMapping("/auth/logout")
     public RsData<MemberAuthResponse> logout(HttpServletResponse response) {
-        Cookie deleteCookie = new Cookie("accessToken", "");
-        deleteCookie.setHttpOnly(true);
-        deleteCookie.setSecure(true);
-        deleteCookie.setPath("/");
-        deleteCookie.setMaxAge(0);
+        Cookie expiredCookie = deleteCookie();
 
-        response.addCookie(deleteCookie);
+        response.addCookie(expiredCookie);
 
         return RsData.of(200, "로그아웃 성공");
+    }
+
+    @Operation(summary = "회원탈퇴 API", description = "회원탈퇴 처리 API입니다.")
+    @PreAuthorize("isAuthenticated()")
+    @DeleteMapping("/me")
+    public RsData<MemberAuthResponse> withdrawMembership(HttpServletResponse response) {
+        memberService.withdrawMemebrship();
+        Cookie expiredCookie = deleteCookie();
+
+        response.addCookie(expiredCookie);
+
+        return RsData.of(200, "회원탈퇴 성공");
     }
 
     private Cookie createAccessTokenCookie(String accessToken) {
@@ -66,5 +74,15 @@ public class ApiV1MemberController {
         cookie.setMaxAge(60 * 60 * 24);
         cookie.setAttribute("SameSite", "Strict");
         return cookie;
+    }
+
+    private Cookie deleteCookie() {
+        Cookie expiredCookie = new Cookie("accessToken", "");
+        expiredCookie.setHttpOnly(true);
+        expiredCookie.setSecure(true);
+        expiredCookie.setPath("/");
+        expiredCookie.setMaxAge(0);
+
+        return expiredCookie;
     }
 }
