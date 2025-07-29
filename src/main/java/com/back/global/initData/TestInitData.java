@@ -4,6 +4,7 @@ import com.back.domain.checkList.checkList.entity.CheckList;
 import com.back.domain.checkList.checkList.repository.CheckListRepository;
 import com.back.domain.club.club.entity.Club;
 import com.back.domain.club.club.repository.ClubRepository;
+import com.back.domain.club.clubMember.entity.ClubMember;
 import com.back.domain.club.clubMember.repository.ClubMemberRepository;
 import com.back.domain.member.member.entity.Member;
 import com.back.domain.member.member.entity.MemberInfo;
@@ -154,8 +155,6 @@ public class TestInitData {
                     .club(club1)
                     .build();
             scheduleRepository.save(schedule);
-
-            System.out.println("모임 %d 일정 : ".formatted(schedule.getId()) + schedule.getStartDate() + " ~ " + schedule.getEndDate());
         }
 
         // 모임 2의 일정 초기 데이터
@@ -179,6 +178,7 @@ public class TestInitData {
                 .spot("강릉")
                 .club(club2)
                 .build();
+        schedule3.deactivate();
         scheduleRepository.save(schedule3);
 
         CheckList checkList = CheckList.builder()
