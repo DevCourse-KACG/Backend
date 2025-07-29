@@ -11,20 +11,23 @@ public class SecurityUser extends User {
     @Getter
     private final Long id;
     @Getter
-    private final String email;
+    private final String password;
     @Getter
     private final String nickname;
+    @Getter
+    private final String tag;
 
     public SecurityUser(
             Long id,
-            String email,
             String nickname,
+            String tag,
             String password,
             Collection<? extends GrantedAuthority> authorities
     ) {
         super(nickname, password, authorities);
         this.id = id;
-        this.email = email;
         this.nickname = nickname;
+        this.tag = tag;
+        this.password = password;
     }
 }

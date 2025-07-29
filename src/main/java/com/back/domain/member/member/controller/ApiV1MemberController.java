@@ -3,14 +3,17 @@ package com.back.domain.member.member.controller;
 import com.back.domain.member.member.dto.MemberAuthResponse;
 import com.back.domain.member.member.dto.MemberDto;
 import com.back.domain.member.member.dto.MemberLoginDto;
+import com.back.domain.member.member.dto.MemberWithdrawMembershipResponse;
 import com.back.domain.member.member.service.MemberService;
 import com.back.global.rsData.RsData;
+import com.back.global.security.SecurityUser;
 import io.swagger.v3.oas.annotations.Operation;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -47,15 +50,26 @@ public class ApiV1MemberController {
     @PreAuthorize("isAuthenticated()")
     @DeleteMapping("/auth/logout")
     public RsData<MemberAuthResponse> logout(HttpServletResponse response) {
-        Cookie deleteCookie = new Cookie("accessToken", "");
-        deleteCookie.setHttpOnly(true);
-        deleteCookie.setSecure(true);
-        deleteCookie.setPath("/");
-        deleteCookie.setMaxAge(0);
+        Cookie expiredCookie = deleteCookie();
 
-        response.addCookie(deleteCookie);
+        response.addCookie(expiredCookie);
 
         return RsData.of(200, "로그아웃 성공");
+    }
+
+    @Operation(summary = "회원탈퇴 API", description = "회원탈퇴 처리 API입니다.")
+    @PreAuthorize("isAuthenticated()")
+    @DeleteMapping("/me")
+    public RsData<MemberWithdrawMembershipResponse> withdrawMembership(HttpServletResponse response,
+                                                                       @AuthenticationPrincipal SecurityUser user) {
+        MemberWithdrawMembershipResponse responseDto =
+                memberService.withdrawMembership(user.getNickname(), user.getTag());
+
+        response.addCookie(deleteCookie());
+
+        return RsData.of(200,
+                "회원탈퇴 성공",
+                responseDto);
     }
 
     private Cookie createAccessTokenCookie(String accessToken) {
@@ -67,4 +81,27 @@ public class ApiV1MemberController {
         cookie.setAttribute("SameSite", "Strict");
         return cookie;
     }
+
+    private Cookie deleteCookie() {
+        Cookie expiredCookie = new Cookie("accessToken", "");
+        expiredCookie.setHttpOnly(true);
+        expiredCookie.setSecure(true);
+        expiredCookie.setPath("/");
+        expiredCookie.setMaxAge(0);
+
+        return expiredCookie;
+    }
 }
+
+//@GetMapping("/{scheduleId}")
+//    @Operation(summary = "일정 조회")
+//    public RsData<ScheduleDto> getSchedule(
+//            @PathVariable Long scheduleId
+//    ) {
+//        Schedule schedule = scheduleService.getScheduleById(scheduleId);
+//        return RsData.of(
+//                200,
+//                "%s번 일정이 조회되었습니다.".formatted(scheduleId),
+//                new ScheduleDto(schedule)
+//        );
+//    }
