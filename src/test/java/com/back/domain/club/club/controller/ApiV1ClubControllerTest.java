@@ -518,6 +518,7 @@ class ApiV1ClubControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value(200))
                 .andExpect(jsonPath("$.message").value("클럽 소개 정보가 조회되었습니다."))
+                .andExpect(jsonPath("$.data.clubId").value(club.getId()))
                 .andExpect(jsonPath("$.data.name").value(club.getName()))
                 .andExpect(jsonPath("$.data.bio").value(club.getBio()))
                 .andExpect(jsonPath("$.data.category").value(club.getCategory().name()))

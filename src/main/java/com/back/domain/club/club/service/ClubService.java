@@ -5,6 +5,7 @@ import com.back.domain.club.club.entity.Club;
 import com.back.domain.club.club.repository.ClubRepository;
 import com.back.domain.club.clubMember.entity.ClubMember;
 import com.back.domain.member.member.entity.Member;
+import com.back.domain.member.member.service.MemberService;
 import com.back.global.aws.S3Service;
 import com.back.global.enums.ClubCategory;
 import com.back.global.enums.ClubMemberRole;
@@ -26,7 +27,7 @@ import java.util.Optional;
 @RequiredArgsConstructor
 public class ClubService {
     private final ClubRepository clubRepository;
-    //private final MemberService memberService;
+    private final MemberService memberService;
     private final S3Service s3Service;
 
     /**
@@ -152,5 +153,36 @@ public class ClubService {
 
         // 클럽 삭제
         club.changeState(false); // 클럽 상태를 비활성화로 변경
+    }
+
+    /**
+     * 클럽 소개 정보를 조회합니다.
+     * @param clubId 클럽 ID
+     * @return 클럽 소개 정보 DTO
+     */
+    public ClubControllerDtos.ClubIntroResponse getClubIntro(Long clubId) {
+        Club club = clubRepository.findById(clubId)
+                .orElseThrow(() -> new ServiceException(404, "해당 ID의 클럽을 찾을 수 없습니다."));
+
+        Member leader = memberService.findById(club.getLeaderId())
+                .orElseThrow(() -> new ServiceException(404, "해당 ID의 클럽 리더를 찾을 수 없습니다."));
+
+
+        return new ClubControllerDtos.ClubIntroResponse(
+                club.getId(),
+                club.getName(),
+                club.getBio(),
+                club.getCategory().toString(),
+                club.getMainSpot(),
+                club.getMaximumCapacity(),
+                club.isRecruitingStatus(),
+                club.getEventType().toString(),
+                club.getStartDate().toString(),
+                club.getEndDate().toString(),
+                club.isPublic(),
+                club.getImageUrl(),
+                club.getLeaderId(),
+                leader.getNickname()
+        );
     }
 }
