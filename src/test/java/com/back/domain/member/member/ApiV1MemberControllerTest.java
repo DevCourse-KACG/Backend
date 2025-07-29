@@ -207,6 +207,7 @@ public class ApiV1MemberControllerTest {
     }
 
     @Test
+    @DisplayName("로그아웃 - 정상 처리")
     public void logout() throws Exception {
         memberFixture.createMember(1);
 
