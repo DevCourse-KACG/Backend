@@ -555,4 +555,59 @@ class ApiV1ClubControllerTest {
                 .andExpect(jsonPath("$.code").value(404))
                 .andExpect(jsonPath("$.message").value("해당 ID의 클럽을 찾을 수 없습니다."));
     }
+
+    @Test
+    @DisplayName("공개 클럽 목록 조회")
+    void getPublicClubList() throws Exception {
+        // given
+        // testinitdata의 club 정보 이용
+        Club club1 = clubService.getClubById(1L).orElseThrow(
+                () -> new IllegalStateException("클럽이 존재하지 않습니다.")
+        );
+
+        Club club2 = clubService.getClubById(4L).orElseThrow(
+                () -> new IllegalStateException("클럽이 존재하지 않습니다.")
+        );
+
+        // when
+        ResultActions resultActions = mvc.perform(
+                multipart("/api/v1/clubs/public")
+                        .with(request -> {
+                            request.setMethod("GET"); // GET 메소드로 요청
+                            return request;
+                        })
+        ).andDo(print());
+
+        // then
+        resultActions
+                .andExpect(handler().handlerType(ApiV1ClubController.class))
+                .andExpect(handler().methodName("getPublicClubs"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value(200))
+                .andExpect(jsonPath("$.message").value("공개 클럽 목록이 조회됐습니다."))
+
+                .andExpect(jsonPath("$.data.content.length()").value(2)) // 공개 클럽은 두개
+
+                .andExpect(jsonPath("$.data.content[0].clubId").value(club1.getId()))
+                .andExpect(jsonPath("$.data.content[0].name").value(club1.getName()))
+                .andExpect(jsonPath("$.data.content[0].category").value(club1.getCategory().name()))
+                .andExpect(jsonPath("$.data.content[0].imageUrl").value(club1.getImageUrl()))
+                .andExpect(jsonPath("$.data.content[0].mainSpot").value(club1.getMainSpot()))
+                .andExpect(jsonPath("$.data.content[0].eventType").value(club1.getEventType().name()))
+                .andExpect(jsonPath("$.data.content[0].startDate").value(club1.getStartDate().toString()))
+                .andExpect(jsonPath("$.data.content[0].endDate").value(club1.getEndDate().toString()))
+                .andExpect(jsonPath("$.data.content[0].leaderId").value(club1.getLeaderId()))
+                .andExpect(jsonPath("$.data.content[0].leaderName").value("홍길동"))
+
+                .andExpect(jsonPath("$.data.content[1].clubId").value(club2.getId()))
+                .andExpect(jsonPath("$.data.content[1].name").value(club2.getName()))
+                .andExpect(jsonPath("$.data.content[1].category").value(club2.getCategory().name()))
+                .andExpect(jsonPath("$.data.content[1].imageUrl").value(club2.getImageUrl()))
+                .andExpect(jsonPath("$.data.content[1].mainSpot").value(club2.getMainSpot()))
+                .andExpect(jsonPath("$.data.content[1].eventType").value(club2.getEventType().name()))
+                .andExpect(jsonPath("$.data.content[1].startDate").value(club2.getStartDate().toString()))
+                .andExpect(jsonPath("$.data.content[1].endDate").value(club2.getEndDate().toString()))
+                .andExpect(jsonPath("$.data.content[1].leaderId").value(club2.getLeaderId()))
+                .andExpect(jsonPath("$.data.content[1].leaderName").value("최지우"));
+    }
 }
