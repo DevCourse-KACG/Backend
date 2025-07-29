@@ -23,14 +23,31 @@ public class ApiV1ClubController {
 
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @Operation(summary = "클럽 생성")
-    public RsData<ClubControllerDtos.CreateClubResponse> createClub(
+    public RsData<ClubControllerDtos.ClubResponse> createClub(
             @Valid @RequestPart("data") ClubControllerDtos.CreateClubRequest reqBody,
             @RequestPart(value = "image", required = false) MultipartFile image
     ) throws IOException {
         Club club = clubService.createClub(reqBody, image);
 
         return new RsData<>(201, "클럽이 생성됐습니다.",
-                new ClubControllerDtos.CreateClubResponse(
+                new ClubControllerDtos.ClubResponse(
+                        club.getId(),
+                        club.getLeaderId()
+                )
+        );
+    }
+
+    @PatchMapping("/{clubId}")
+    @Operation(summary = "클럽 수정")
+    public RsData<ClubControllerDtos.ClubResponse> updateClubInfo(
+            @PathVariable Long clubId,
+            @Valid @RequestPart("data") ClubControllerDtos.UpdateClubRequest reqBody,
+            @RequestPart(value = "image", required = false) MultipartFile image
+    ) throws IOException {
+        Club club = clubService.updateClub(clubId, reqBody, image);
+
+        return new RsData<>(200, "클럽 정보가 수정됐습니다.",
+                new ClubControllerDtos.ClubResponse(
                         club.getId(),
                         club.getLeaderId()
                 )
