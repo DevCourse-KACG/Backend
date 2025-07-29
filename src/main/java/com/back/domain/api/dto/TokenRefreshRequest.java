@@ -1,4 +1,6 @@
 package com.back.domain.api.dto;
 
-public record TokenRefreshRequest(String refreshToken) {
+import jakarta.validation.constraints.NotBlank;
+
+public record TokenRefreshRequest(@NotBlank String refreshToken) {
 }
