@@ -52,7 +52,7 @@ public class PresetService {
             .category(req.category())
             .sequence(req.sequence())
             .build())
-        .toList();
+        .collect(Collectors.toList());
 
     // 프리셋 빌더 생성
     Preset presetBuilder = Preset.builder()
