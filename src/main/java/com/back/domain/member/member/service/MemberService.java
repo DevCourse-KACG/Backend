@@ -12,6 +12,9 @@ import com.back.domain.member.member.entity.MemberInfo;
 import com.back.domain.member.member.repository.MemberInfoRepository;
 import com.back.domain.member.member.repository.MemberRepository;
 import com.back.global.exception.ServiceException;
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.Jws;
+import io.jsonwebtoken.JwtException;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -19,6 +22,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Date;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
@@ -40,7 +44,7 @@ public class MemberService {
         String apiKey = apiKeyService.generateApiKey();
         createAndSaveMemberInfo(dto, member, apiKey);
 
-        String accessToken = authService.generateAccessToken(member);
+        String accessToken = generateAccessToken(member);
 
         return new MemberAuthResponse(apiKey, accessToken);
     }
@@ -171,5 +175,23 @@ public class MemberService {
 
     public Optional<Member> findById(Long id) {
         return memberRepository.findById(id);
+    }
+
+    public String generateAccessToken(Member member) {
+        return authService.generateAccessToken(member);
+    }
+
+    public Member findByApiKey(String apiKey) {
+        Optional<MemberInfo> optionalMemberInfo = memberInfoRepository.findByApiKey(apiKey);
+
+        if (optionalMemberInfo.isEmpty()) {
+            throw new ServiceException(400, "사용자를 찾을 수 없습니다.");
+        }
+
+        return optionalMemberInfo.get().getMember();
+    }
+
+    public boolean isValidApiKey(String apiKey) {
+
     }
 }

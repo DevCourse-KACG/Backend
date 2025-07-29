@@ -1,9 +1,7 @@
 package com.back.domain.member.member.controller;
 
-import com.back.domain.member.member.dto.MemberAuthResponse;
-import com.back.domain.member.member.dto.MemberDto;
-import com.back.domain.member.member.dto.MemberLoginDto;
-import com.back.domain.member.member.dto.MemberWithdrawMembershipResponse;
+import com.back.domain.member.member.dto.*;
+import com.back.domain.member.member.entity.Member;
 import com.back.domain.member.member.service.MemberService;
 import com.back.global.rsData.RsData;
 import com.back.global.security.SecurityUser;
@@ -72,6 +70,31 @@ public class ApiV1MemberController {
                 responseDto);
     }
 
+    @Operation(summary = "access token 재발급 API", description = "리프레시 토큰으로 access token을 재발급하는 API입니다.")
+    @PostMapping("/auth/refresh")
+    public RsData<MemberAuthResponse> apiTokenReissue(@RequestBody TokenRefreshRequest requestBody,
+                                                      HttpServletResponse response) {
+
+        String ApiKey = requestBody.refreshToken();
+
+        if (ApiKey == null || ApiKey.isBlank()) {
+            return RsData.of(401, "Refresh Token이 존재하지 않습니다.");
+        }
+
+        // 사용자 정보 추출
+        Member member = memberService.findByApiKey(ApiKey);
+
+        // 새로운 access token 생성
+        String newAccessToken = memberService.generateAccessToken(member);
+
+        // access token 쿠키에 담아서 응답
+        Cookie accessTokenCookie = createAccessTokenCookie(newAccessToken);
+        response.addCookie(accessTokenCookie);
+
+        return RsData.of(200, "Access Token 재발급 성공",
+                new MemberAuthResponse(newAccessToken, ApiKey));
+    }
+
     private Cookie createAccessTokenCookie(String accessToken) {
         Cookie cookie = new Cookie("accessToken", accessToken);
         cookie.setHttpOnly(true);
@@ -91,6 +114,17 @@ public class ApiV1MemberController {
 
         return expiredCookie;
     }
+
+//    private String extractRefreshTokenFromCookie(HttpServletRequest request) {
+//        if (request.getCookies() == null) return null;
+//
+//        for (Cookie cookie : request.getCookies()) {
+//            if ("refreshToken".equals(cookie.getName())) {
+//                return cookie.getValue();
+//            }
+//        }
+//        return null;
+//    }
 }
 
 //@GetMapping("/{scheduleId}")
