@@ -106,7 +106,6 @@ public class TestInitData {
     @Transactional
     public void initGroupTestData() {
         Member leader1 = members.get("홍길동");
-        Member leader2 = members.get("최지우");
         clubs = new HashMap<>();
 
         // 장기 공개 모임 - 모집 중
@@ -178,6 +177,7 @@ public class TestInitData {
                 .build();
         clubMemberRepository.save(clubMember3);
 
+        Member leader2 = members.get("최지우");
 
         // 일회성 공개 모임 - 모집 중
         Club club4 = Club.builder()
@@ -251,6 +251,9 @@ public class TestInitData {
         clubMemberRepository.save(nClubMember2);
     }
 
+    /**
+     * 모임 맴버 헬퍼 dto
+     */
     private record GroupMemberData(
             String clubName,
             String memberNickname,
@@ -258,6 +261,9 @@ public class TestInitData {
     ) {
     }
 
+    /**
+     * 모임 맴버 초기 데이터 설정
+     */
     @Transactional
     public void initGroupMemberTestData() {
         List<GroupMemberData> groupMembers = List.of(
@@ -325,7 +331,6 @@ public class TestInitData {
                 .spot("강릉")
                 .club(club2)
                 .build();
-        schedule3.deactivate();
         scheduleRepository.save(schedule3);
 
         // 모임 3의 일정 초기 데이터
@@ -402,6 +407,9 @@ public class TestInitData {
         }
     }
 
+    /**
+     * 체크리스트 항목 초기 데이터 설정
+     */
     @Transactional
     public void initCheckListItemTestData() {
         List<CheckList> allCheckLists = checkListRepository.findAll();
@@ -419,6 +427,9 @@ public class TestInitData {
         }
     }
 
+    /**
+     * 체크리스트 항목에 모임 맴버를 랜덤으로 할당
+     */
     @Transactional
     public void initItemAssignTestData() {
         List<CheckListItem> allItems = checkListItemRepository.findAll();
@@ -458,6 +469,9 @@ public class TestInitData {
         }
     }
 
+    /**
+     * 회원 생성 메서드
+     */
     private Member createMember(String nickname, String password, String email, String bio) {
         Member member = Member.builder()
                 .nickname(nickname)
