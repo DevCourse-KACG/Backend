@@ -14,6 +14,8 @@ import com.back.global.enums.EventType;
 import com.back.global.exception.ServiceException;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -84,6 +86,7 @@ public class ClubService {
         if (image != null && !image.isEmpty()){
             String imageUrl = s3Service.upload(image, "club/" + club.getId() + "/profile");
             club.updateImageUrl(imageUrl); // 클럽에 이미지 URL 설정
+            clubRepository.save(club); // 이미지 URL 업데이트 후 클럽 정보 저장
         }
 
 
@@ -160,6 +163,7 @@ public class ClubService {
      * @param clubId 클럽 ID
      * @return 클럽 정보 DTO
      */
+    @Transactional(readOnly = true)
     public ClubControllerDtos.ClubInfoResponse getClubInfo(Long clubId) {
         Club club = clubRepository.findById(clubId)
                 .orElseThrow(() -> new ServiceException(404, "해당 ID의 클럽을 찾을 수 없습니다."));
@@ -183,5 +187,24 @@ public class ClubService {
                 club.getLeaderId(),
                 leader.getNickname()
         );
+    }
+
+    @Transactional(readOnly = true)
+    public Page<ClubControllerDtos.SimpleClubInfoResponse> getPublicClubs(Pageable pageable) {
+        return clubRepository.findAllByIsPublicTrue(pageable)
+                .map(club -> new ClubControllerDtos.SimpleClubInfoResponse(
+                        club.getId(),
+                        club.getName(),
+                        club.getCategory().toString(),
+                        club.getImageUrl(),
+                        club.getMainSpot(),
+                        club.getEventType().toString(),
+                        club.getStartDate().toString(),
+                        club.getEndDate().toString(),
+                        club.getLeaderId(),
+                        memberService.findById(club.getLeaderId())
+                                .map(Member::getNickname)
+                                .orElse("Unknown Leader")
+                ));
     }
 }

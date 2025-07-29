@@ -97,4 +97,17 @@ public class ClubControllerDtos {
             String leaderName
     ) {
     }
+
+    public static record SimpleClubInfoResponse(
+            Long clubId,
+            String name,
+            String category,
+            String imageUrl,
+            String mainSpot,
+            String eventType,
+            String startDate,
+            String endDate,
+            Long leaderId,
+            String leaderName
+    ) {}
 }

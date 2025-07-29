@@ -99,4 +99,25 @@ public class ApiV1ScheduleController {
                 "%s번 일정이 삭제되었습니다.".formatted(scheduleId)
         );
     }
+
+    @GetMapping("/me")
+    @Operation(summary = "나의 일정 목록 조회")
+    public RsData<List<ScheduleDto>> getMySchedules(
+            //@AuthenticationPrincipal SecurityUser user,
+            @RequestParam(value = "startDate", required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate startDate,
+            @RequestParam(value = "endDate", required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate endDate
+    ) {
+        // 테스팅을 위해 임시로 memberId를 하드코딩 -> 시큐리티 완료 시 삭제 예정
+        List<Schedule> mySchedules = scheduleService.getMySchedules(1L, startDate, endDate);
+
+        // 실제로는 SecurityUser를 통해 현재 로그인한 사용자의 정보를 가져와야 함
+        //List<Schedule> mySchedules = scheduleService.getMySchedules(user.getId(), startDate, endDate);
+        return RsData.of(
+                200,
+                "나의 일정 목록이 조회되었습니다.",
+                mySchedules.stream()
+                        .map(ScheduleDto::new)
+                        .toList()
+        );
+    }
 }
