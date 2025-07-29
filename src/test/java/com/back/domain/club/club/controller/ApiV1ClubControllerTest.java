@@ -2,6 +2,9 @@ package com.back.domain.club.club.controller;
 
 import com.back.domain.club.club.entity.Club;
 import com.back.domain.club.club.service.ClubService;
+import com.back.domain.member.member.dto.MemberDto;
+import com.back.domain.member.member.entity.Member;
+import com.back.domain.member.member.service.MemberService;
 import com.back.global.aws.S3Service;
 import com.back.global.enums.ClubCategory;
 import com.back.global.enums.EventType;
@@ -23,12 +26,11 @@ import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.BDDMockito.given;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
-
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.BDDMockito.given;
 
 @ActiveProfiles("test")
 @SpringBootTest
@@ -39,6 +41,8 @@ class ApiV1ClubControllerTest {
     private MockMvc mvc;
     @Autowired
     private ClubService clubService;
+    @Autowired
+    private MemberService memberService;
 
     @MockitoBean
     private S3Service s3Service; // S3Service는 MockBean으로 주입하여 실제 S3와의 통신을 피합니다.
@@ -466,4 +470,66 @@ class ApiV1ClubControllerTest {
                 .andExpect(jsonPath("$.message").value("해당 ID의 클럽을 찾을 수 없습니다."));
     }
 
+    @Test
+    @DisplayName("모임 소개 정보 조회")
+    void getClubIntro() throws Exception {
+        // given
+        // 리더 생성
+        MemberDto dto = new MemberDto(
+                "testLeader@gmail.com",
+                "12345678",
+                "testLeader",
+                "I'm a test leader"
+        );
+        memberService.register(dto);
+
+        Member member = memberService.findByEmail(dto.email());
+
+        // 클럽 생성
+        Club club = clubService.createClub(
+                Club.builder()
+                        .name("테스트 그룹")
+                        .bio("테스트 그룹 설명")
+                        .category(ClubCategory.STUDY)
+                        .mainSpot("서울")
+                        .maximumCapacity(10)
+                        .eventType(EventType.ONE_TIME)
+                        .startDate(LocalDate.of(2023, 10, 1))
+                        .endDate(LocalDate.of(2023, 10, 31))
+                        .imageUrl("https://example.com/image.jpg")
+                        .isPublic(true)
+                        .leaderId(member.getId())
+                        .build()
+        );
+
+        // when
+        ResultActions resultActions = mvc.perform(
+                multipart("/api/v1/clubs/" + club.getId() + "/intro")
+                        .with(request -> {
+                            request.setMethod("GET"); // GET 메소드로 요청
+                            return request;
+                        })
+        ).andDo(print());
+
+        // then
+        resultActions
+                .andExpect(handler().handlerType(ApiV1ClubController.class))
+                .andExpect(handler().methodName("getClubInfo"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value(200))
+                .andExpect(jsonPath("$.message").value("클럽 소개 정보가 조회되었습니다."))
+                .andExpect(jsonPath("$.data.name").value(club.getName()))
+                .andExpect(jsonPath("$.data.bio").value(club.getBio()))
+                .andExpect(jsonPath("$.data.category").value(club.getCategory().name()))
+                .andExpect(jsonPath("$.data.mainSpot").value(club.getMainSpot()))
+                .andExpect(jsonPath("$.data.maximumCapacity").value(club.getMaximumCapacity()))
+                .andExpect(jsonPath("$.data.recruitingStatus").value(club.isRecruitingStatus()))
+                .andExpect(jsonPath("$.data.eventType").value(club.getEventType().name()))
+                .andExpect(jsonPath("$.data.startDate").value(club.getStartDate().toString()))
+                .andExpect(jsonPath("$.data.endDate").value(club.getEndDate().toString()))
+                .andExpect(jsonPath("$.data.isPublic").value(club.isPublic()))
+                .andExpect(jsonPath("$.data.imageUrl").value(club.getImageUrl()))
+                .andExpect(jsonPath("$.data.leaderId").value(club.getLeaderId()))
+                .andExpect(jsonPath("$.data.leaderName").value(dto.nickname()));
+    }
 }
