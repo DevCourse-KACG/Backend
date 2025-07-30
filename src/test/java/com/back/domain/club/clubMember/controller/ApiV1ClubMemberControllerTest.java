@@ -1,10 +1,10 @@
 package com.back.domain.club.clubMember.controller;
 
-import com.back.domain.club.club.controller.ApiV1ClubController;
 import com.back.domain.club.club.entity.Club;
 import com.back.domain.club.club.service.ClubService;
 import com.back.domain.member.member.entity.Member;
 import com.back.domain.member.member.service.MemberService;
+import com.back.global.aws.S3Service;
 import com.back.global.enums.ClubCategory;
 import com.back.global.enums.ClubMemberRole;
 import com.back.global.enums.EventType;
@@ -15,6 +15,7 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.transaction.annotation.Transactional;
@@ -25,7 +26,6 @@ import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 
 @ActiveProfiles("test")
 @SpringBootTest
@@ -38,6 +38,9 @@ class ApiV1ClubMemberControllerTest {
     private ClubService clubService;
     @Autowired
     private MemberService memberService;
+
+    @MockitoBean
+    private S3Service s3Service; // S3Service는 MockBean으로 주입하여 실제 S3와의 통신을 피합니다.
 
     @Test
     @DisplayName("클럽에 멤버 추가")
@@ -94,7 +97,7 @@ class ApiV1ClubMemberControllerTest {
 
         // then
         resultActions
-                .andExpect(handler().handlerType(ApiV1ClubController.class))
+                .andExpect(handler().handlerType(ApiV1ClubMemberController.class))
                 .andExpect(handler().methodName("addMembersToClub"))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.code").value(201))

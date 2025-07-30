@@ -17,7 +17,7 @@ public class ApiV1ClubMemberController {
 
     @PostMapping
     @Operation(summary = "클럽에 멤버 추가")
-    public RsData<Void> addMemberToClub(
+    public RsData<Void> addMembersToClub(
             @PathVariable Long clubId,
             @RequestBody ClubMemberDtos.ClubMemberRegisterRequest reqBody
     ) {
