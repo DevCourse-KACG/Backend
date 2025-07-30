@@ -5,6 +5,7 @@ import com.back.domain.club.clubMember.service.ClubMemberService;
 import com.back.global.rsData.RsData;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
@@ -19,7 +20,7 @@ public class ApiV1ClubMemberController {
     @Operation(summary = "클럽에 멤버 추가")
     public RsData<Void> addMembersToClub(
             @PathVariable Long clubId,
-            @RequestBody ClubMemberDtos.ClubMemberRegisterRequest reqBody
+            @RequestBody @Valid ClubMemberDtos.ClubMemberRegisterRequest reqBody
     ) {
         clubMemberService.addMembersToClub(clubId, reqBody);
 
