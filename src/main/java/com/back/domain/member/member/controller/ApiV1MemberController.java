@@ -3,11 +3,14 @@ package com.back.domain.member.member.controller;
 import com.back.domain.api.dto.TokenRefreshRequest;
 import com.back.domain.member.member.dto.request.MemberLoginDto;
 import com.back.domain.member.member.dto.request.MemberRegisterDto;
+import com.back.domain.member.member.dto.request.PasswordCheckRequestDto;
 import com.back.domain.member.member.dto.response.MemberAuthResponse;
 import com.back.domain.member.member.dto.response.MemberDetailInfoResponse;
+import com.back.domain.member.member.dto.response.MemberPasswordResponse;
 import com.back.domain.member.member.dto.response.MemberWithdrawMembershipResponse;
 import com.back.domain.member.member.entity.Member;
 import com.back.domain.member.member.service.MemberService;
+import com.back.global.exception.ServiceException;
 import com.back.global.rsData.RsData;
 import com.back.global.security.SecurityUser;
 import io.swagger.v3.oas.annotations.Operation;
@@ -73,6 +76,23 @@ public class ApiV1MemberController {
         return RsData.of(200,
                 "회원탈퇴 성공",
                 responseDto);
+    }
+
+    @Operation(summary = "비밀번호 유효성 검사 API", description = "비밀번호의 유효성을 인증하는 API 입니다.")
+    @PreAuthorize("isAuthenticated()")
+    @PostMapping("/auth/verify-password")
+    public RsData<MemberPasswordResponse> checkPasswordValidity(@AuthenticationPrincipal SecurityUser user,
+                                                                @Valid @RequestBody PasswordCheckRequestDto dto) {
+
+        if (user == null) {
+            throw new ServiceException(401, "인증이 필요합니다.");
+        }
+
+        MemberPasswordResponse response = memberService.checkPasswordValidity(user.getId(), dto.password());
+
+        return RsData.of(200,
+                "비밀번호 유효성 반환 성공",
+                response);
     }
 
     @Operation(summary = "access token 재발급 API", description = "리프레시 토큰으로 access token을 재발급하는 API 입니다.")

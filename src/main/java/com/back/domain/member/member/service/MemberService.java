@@ -7,6 +7,7 @@ import com.back.domain.member.member.dto.request.MemberLoginDto;
 import com.back.domain.member.member.dto.request.MemberRegisterDto;
 import com.back.domain.member.member.dto.response.MemberAuthResponse;
 import com.back.domain.member.member.dto.response.MemberDetailInfoResponse;
+import com.back.domain.member.member.dto.response.MemberPasswordResponse;
 import com.back.domain.member.member.dto.response.MemberWithdrawMembershipResponse;
 import com.back.domain.member.member.entity.Member;
 import com.back.domain.member.member.entity.MemberInfo;
@@ -157,6 +158,20 @@ public class MemberService {
             throw new ServiceException(400, "이메일과 비밀번호가 맞지 않습니다.");
         }
     }
+
+    public MemberPasswordResponse checkPasswordValidity(Long memberId, String password) {
+        Member member = findById(memberId)
+                .orElseThrow(() -> new ServiceException(400, "해당 id로 유저를 찾을 수 없습니다."));
+
+        try {
+            validateRightPassword(password, member);
+            return new MemberPasswordResponse(true);
+        } catch (ServiceException e) {
+            return new MemberPasswordResponse(false);
+
+        }
+    }
+
 
     public Map<String, Object> payload(String accessToken) {
         //토큰 파싱

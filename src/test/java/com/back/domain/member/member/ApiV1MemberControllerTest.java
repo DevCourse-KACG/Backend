@@ -312,6 +312,114 @@ public class ApiV1MemberControllerTest {
                 .andExpect(jsonPath("$.data.bio").value(memberInfo.getBio()));
     }
 
+    @Test
+    @DisplayName("비밀번호 유효성 검사 - 정상")
+    public void checkPasswordValidity_success() throws Exception {
+        Member member = memberFixture.createMember(1);
+        MemberInfo memberInfo = member.getMemberInfo();
+        String rawPassword = "password123"; //평문 비밀번호
+
+        String requestBody = String.format("""
+        {
+            "password": "%s"
+        }
+        """, rawPassword);
+
+        SecurityUser securityUser = new SecurityUser(
+                member.getId(),
+                member.getNickname(),
+                member.getTag(),
+                member.getPassword(),
+                Collections.emptyList()
+        );
+
+        mockMvc.perform(post("/api/v1/members/auth/verify-password")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(requestBody)
+                    .cookie(loginAndGetAccessTokenCookie(memberInfo.getEmail(), rawPassword))
+                    .with(user(securityUser)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value(200))
+                .andExpect(jsonPath("$.message").value("비밀번호 유효성 반환 성공"))
+                .andExpect(jsonPath("$.data.verified").value(true))    ;
+
+    }
+
+    @Test
+    @DisplayName("비밀번호 유효성 검사 - 잘못된 비밀번호")
+    public void checkPasswordValidity_wrongPassword() throws Exception {
+        Member member = memberFixture.createMember(1);
+        MemberInfo memberInfo = member.getMemberInfo();
+        String wrongPassword = "wrongPassword!"; // 틀린 비밀번호
+
+        String requestBody = String.format("""
+    {
+        "password": "%s"
+    }
+    """, wrongPassword);
+
+        SecurityUser securityUser = new SecurityUser(
+                member.getId(),
+                member.getNickname(),
+                member.getTag(),
+                member.getPassword(),
+                Collections.emptyList()
+        );
+
+        mockMvc.perform(post("/api/v1/members/auth/verify-password")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(requestBody)
+                        .cookie(loginAndGetAccessTokenCookie(memberInfo.getEmail(), "password123")) // 실제 맞는 비밀번호로 로그인
+                        .with(user(securityUser)))
+                .andExpect(jsonPath("$.code").value(200))
+                .andExpect(jsonPath("$.data.verified").value(false));
+    }
+
+    @Test
+    @DisplayName("비밀번호 유효성 검사 - 인증되지 않은 사용자")
+    public void checkPasswordValidity_unauthorized() throws Exception {
+        String requestBody = """
+    {
+        "password": "password123"
+    }
+    """;
+
+        mockMvc.perform(post("/api/v1/members/auth/verify-password")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(requestBody))
+                .andExpect(status().isUnauthorized()); // 인증 없으면 401
+    }
+
+    @Test
+    @DisplayName("비밀번호 유효성 검사 - 빈 비밀번호")
+    public void checkPasswordValidity_blankPassword() throws Exception {
+        Member member = memberFixture.createMember(1);
+        MemberInfo memberInfo = member.getMemberInfo();
+
+        String requestBody = """
+    {
+        "password": ""
+    }
+    """;
+
+        SecurityUser securityUser = new SecurityUser(
+                member.getId(),
+                member.getNickname(),
+                member.getTag(),
+                member.getPassword(),
+                Collections.emptyList()
+        );
+
+        mockMvc.perform(post("/api/v1/members/auth/verify-password")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(requestBody)
+                        .cookie(loginAndGetAccessTokenCookie(memberInfo.getEmail(), "password123"))
+                        .with(user(securityUser)))
+                .andExpect(status().isBadRequest())  // @NotBlank 검증 실패 예상
+                .andExpect(jsonPath("$.code").value(400)); // 상세 메시지는 DTO의 @NotBlank 메시지에 따라 다름
+    }
+
+
     private Cookie loginAndGetAccessTokenCookie(String email, String password) throws Exception {
         String loginRequestBody = String.format("""
         {
