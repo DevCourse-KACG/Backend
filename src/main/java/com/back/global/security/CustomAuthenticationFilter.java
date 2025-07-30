@@ -127,6 +127,7 @@ public class CustomAuthenticationFilter extends OncePerRequestFilter {
                 member.getId(),
                 member.getNickname(),
                 member.getTag(),
+                member.getMemberType(),
                 member.getPassword(),
                 Collections.emptyList()
         );

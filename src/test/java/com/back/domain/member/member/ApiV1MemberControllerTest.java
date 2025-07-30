@@ -255,6 +255,7 @@ public class ApiV1MemberControllerTest {
                         member.getId(),
                         member.getNickname(),
                         member.getTag(),
+                        member.getMemberType(),
                         member.getPassword(),
                         Collections.emptyList()
                 )))
@@ -311,6 +312,7 @@ public class ApiV1MemberControllerTest {
                 member.getId(),
                 member.getNickname(),
                 member.getTag(),
+                member.getMemberType(),
                 member.getPassword(),
                 Collections.emptyList()
         );
@@ -344,6 +346,7 @@ public class ApiV1MemberControllerTest {
                 member.getId(),
                 member.getNickname(),
                 member.getTag(),
+                member.getMemberType(),
                 member.getPassword(),
                 Collections.emptyList()
         );
@@ -377,6 +380,7 @@ public class ApiV1MemberControllerTest {
                 member.getId(),
                 member.getNickname(),
                 member.getTag(),
+                member.getMemberType(),
                 member.getPassword(),
                 Collections.emptyList()
         );
@@ -421,6 +425,7 @@ public class ApiV1MemberControllerTest {
                 member.getId(),
                 member.getNickname(),
                 member.getTag(),
+                member.getMemberType(),
                 member.getPassword(),
                 Collections.emptyList()
         );
@@ -443,6 +448,7 @@ public class ApiV1MemberControllerTest {
                 member.getId(),
                 member.getNickname(),
                 member.getTag(),
+                member.getMemberType(),
                 member.getPassword(),
                 Collections.emptyList()
         );
