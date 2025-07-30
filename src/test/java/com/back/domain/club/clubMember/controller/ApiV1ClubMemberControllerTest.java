@@ -819,9 +819,9 @@ class ApiV1ClubMemberControllerTest {
         resultActions
                 .andExpect(handler().handlerType(ApiV1ClubMemberController.class))
                 .andExpect(handler().methodName("getClubMembers"))
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.code").value(400))
-                .andExpect(jsonPath("$.message").value("Invalid club ID format."));
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.code").value(404))
+                .andExpect(jsonPath("$.message").value("클럽이 존재하지 않습니다."));
     }
 
     @Test
