@@ -59,6 +59,8 @@ public class ClubMemberService {
     public void addMembersToClub(Long clubId, ClubMemberDtos.ClubMemberRegisterRequest reqBody) {
         Club club = clubService.getClubById(clubId).orElseThrow(() -> new ServiceException(404, "클럽이 존재하지 않습니다."));
 
+        // TODO : 유저 권한 체크
+
         // 요청된 이메일 추출
         List<String> requestEmails = reqBody.members().stream()
                 .map(ClubMemberDtos.ClubMemberRegisterInfo::email)
@@ -95,7 +97,7 @@ public class ClubMemberService {
      */
     @Transactional
     public void withdrawMemberFromClub(Long clubId, Long memberId) {
-        // TODO : 유저 권한 체크
+        // TODO : 유저 권한 체크 (본인, HOST)
 
         Club club = clubService.getClubById(clubId)
                 .orElseThrow(() -> new ServiceException(404, "클럽이 존재하지 않습니다."));

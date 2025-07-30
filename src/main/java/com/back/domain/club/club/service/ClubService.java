@@ -91,6 +91,8 @@ public class ClubService {
         }
 
 
+        // TODO : 클럽 생성 시 유저를 리더로 설정하고 멤버에 추가
+
         // 클럽 멤버 설정
         Arrays.stream(reqBody.clubMembers()).forEach(memberInfo -> {
             // 멤버 ID로 Member 엔티티 조회
@@ -123,6 +125,8 @@ public class ClubService {
         Club club = clubRepository.findById(clubId)
                 .orElseThrow(() -> new ServiceException(404, "해당 ID의 클럽을 찾을 수 없습니다."));
 
+        // TODO : 유저 권한 체크
+
         // 클럽 정보 업데이트
         String name = dto.name() != null ? dto.name() : club.getName();
         String bio = dto.bio() != null ? dto.bio() : club.getBio();
@@ -149,6 +153,9 @@ public class ClubService {
     }
 
     public void deleteClub(Long clubId) {
+
+        // TODO : 유저 권한 체크
+
         Club club = clubRepository.findById(clubId)
                 .orElseThrow(() -> new ServiceException(404, "해당 ID의 클럽을 찾을 수 없습니다."));
 
