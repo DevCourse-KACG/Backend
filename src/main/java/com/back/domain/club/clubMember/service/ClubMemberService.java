@@ -6,6 +6,7 @@ import com.back.domain.club.clubMember.dtos.ClubMemberDtos;
 import com.back.domain.club.clubMember.entity.ClubMember;
 import com.back.domain.club.clubMember.repository.ClubMemberRepository;
 import com.back.domain.member.member.entity.Member;
+import com.back.domain.member.member.entity.MemberInfo;
 import com.back.domain.member.member.service.MemberService;
 import com.back.global.enums.ClubMemberRole;
 import com.back.global.enums.ClubMemberState;
@@ -17,6 +18,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 
 @Service
@@ -33,19 +35,19 @@ public class ClubMemberService {
      * @param role 클럽 멤버 역할
      */
     @Transactional
-    public void addMemberToClub(Long clubId, Member member, ClubMemberRole role) {
+    public ClubMember addMemberToClub(Long clubId, Member member, ClubMemberRole role) {
         Club club = clubService.getClubById(clubId)
                 .orElseThrow(() -> new ServiceException(404, "클럽이 존재하지 않습니다."));
 
         ClubMember clubMember = ClubMember.builder()
                 .member(member)
                 .role(role) // 기본 역할은 MEMBER
-                .state(ClubMemberState.INVITED) // 기본 상태는 JOINED
+                .state(ClubMemberState.INVITED) // 기본 상태는 INVITED
                 .build();
 
         club.addClubMember(clubMember);
 
-        clubMemberRepository.save(clubMember);
+        return clubMemberRepository.save(clubMember);
     }
 
     /**
@@ -127,5 +129,52 @@ public class ClubMemberService {
         // 역할 변경
         clubMember.updateRole(ClubMemberRole.fromString(role.toUpperCase()));
         clubMemberRepository.save(clubMember);
+    }
+
+    /**
+     * 클럽의 멤버 목록을 조회합니다.
+     * @param clubId 클럽 ID
+     * @param state 상태 필터링 (선택적)
+     * @return 클럽 멤버 목록 DTO
+     */
+    @Transactional(readOnly = true)
+    public ClubMemberDtos.ClubMemberResponse getClubMembers(Long clubId, String state) {
+        // 클럽 확인
+        Club club = clubService.getClubById(clubId)
+                .orElseThrow(() -> new ServiceException(404, "클럽이 존재하지 않습니다."));
+
+        // 클럽멤버 목록 반환
+        List<ClubMember> clubMembers;
+        if(state != null){
+            clubMembers = clubMemberRepository.findByClubAndState(club, ClubMemberState.fromString(state));
+        }
+        else {
+            clubMembers = clubMemberRepository.findByClub(club);
+        }
+
+        // 클럽 멤버 정보를 DTO로 변환
+        List<ClubMemberDtos.ClubMemberInfo> memberInfos = clubMembers.stream()
+                .map(clubMember -> {
+                    Member m = clubMember.getMember();
+
+                    return new ClubMemberDtos.ClubMemberInfo(
+                            clubMember.getId(),
+                            m.getId(),
+                            m.getNickname(),
+                            m.getTag(),
+                            clubMember.getRole(),
+                            Optional.ofNullable(m.getMemberInfo())
+                                    .map(MemberInfo::getEmail)
+                                    .orElse(""),
+                            m.getMemberType(),
+                            Optional.ofNullable(m.getMemberInfo())
+                                    .map(MemberInfo::getProfileImageUrl)
+                                    .orElse(""),
+                            clubMember.getState()
+                    );
+                }).toList();
+
+        return new ClubMemberDtos.ClubMemberResponse(memberInfos);
+
     }
 }

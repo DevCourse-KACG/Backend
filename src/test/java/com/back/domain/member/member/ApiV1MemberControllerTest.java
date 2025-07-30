@@ -549,7 +549,7 @@ public class ApiV1MemberControllerTest {
         }
     """.formatted(guest.getNickname(), rawPassword, club.getId());
 
-        mockMvc.perform(put("/api/v1/members/auth/guest-login")
+        mockMvc.perform(post("/api/v1/members/auth/guest-login")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(requestBody))
                 .andExpect(status().isOk())

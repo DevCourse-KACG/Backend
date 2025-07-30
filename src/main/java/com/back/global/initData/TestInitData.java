@@ -13,6 +13,7 @@ import com.back.domain.club.clubMember.repository.ClubMemberRepository;
 import com.back.domain.member.friend.entity.Friend;
 import com.back.domain.member.friend.entity.FriendStatus;
 import com.back.domain.member.friend.repository.FriendRepository;
+import com.back.domain.member.member.MemberType;
 import com.back.domain.member.member.entity.Member;
 import com.back.domain.member.member.entity.MemberInfo;
 import com.back.domain.member.member.repository.MemberInfoRepository;
@@ -531,6 +532,8 @@ public class TestInitData {
         Member member = Member.builder()
                 .nickname(nickname)
                 .password(password)
+                .memberType(MemberType.MEMBER)
+                .tag(UUID.randomUUID().toString().substring(0, 5))
                 .build();
         memberRepository.save(member);
 

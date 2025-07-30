@@ -49,4 +49,15 @@ public class ApiV1ClubMemberController {
 
         return RsData.of(200, "멤버의 권한이 변경됐습니다.", null);
     }
+
+    @GetMapping
+    @Operation(summary = "클럽 멤버 목록 조회")
+    public RsData<ClubMemberDtos.ClubMemberResponse> getClubMembers(
+            @PathVariable Long clubId,
+            @RequestParam(required = false) String state // Optional: 상태 필터링
+    ) {
+        ClubMemberDtos.ClubMemberResponse clubMemberResponse = clubMemberService.getClubMembers(clubId, state);
+
+        return RsData.of(200, "클럽 멤버 목록이 조회됐습니다.", clubMemberResponse);
+    }
 }
