@@ -479,18 +479,24 @@ public class ApiV1MemberControllerTest {
     }
 
     @Test
-    @DisplayName("비회원 모임 등록 - 성공")
-    public void GuestRegister_success() throws Exception {
+    @DisplayName("비회원 모임 등록 - 성공 및 DB 저장 확인")
+    public void GuestRegister_success_withDbCheck() throws Exception {
+        // 회원 생성 (기존 회원 fixture)
         memberFixture.createMember(1);
 
-        String requestBody = """
-            {
-                "nickname": "guestUser",
-                "password": "guestPassword123",
-                "clubId": 42
-            }
-            """;
+        // API 요청 바디 (요청하는 비회원 정보)
+        String nickname = "guestUser";
+        String rawPassword = "guestPassword123";
+        int clubId = 42;
+        String requestBody = String.format("""
+        {
+            "nickname": "%s",
+            "password": "%s",
+            "clubId": %d
+        }
+        """, nickname, rawPassword, clubId);
 
+        // API 호출 및 응답 검증
         mockMvc.perform(post("/api/v1/members/auth/guest-register")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(requestBody))
@@ -498,9 +504,25 @@ public class ApiV1MemberControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value(200))
                 .andExpect(jsonPath("$.message").value("비회원 모임 가입 성공"))
-                .andExpect(jsonPath("$.data.nickname").value("guestUser"))
-                .andExpect(jsonPath("$.data.clubId").value(42))
+                .andExpect(jsonPath("$.data.nickname").value(nickname))
+                .andExpect(jsonPath("$.data.clubId").value(clubId))
                 .andExpect(cookie().exists("accessToken"));
+
+        // DB에서 저장 여부 확인
+        Optional<Member> savedGuestOpt = memberRepository.findByNickname(nickname);
+        assertTrue(savedGuestOpt.isPresent(), "비회원 게스트 회원이 DB에 저장되어야 합니다.");
+
+        Member savedGuest = savedGuestOpt.get();
+        assertEquals(nickname, savedGuest.getNickname());
+        assertEquals(MemberType.GUEST, savedGuest.getMemberType());
+
+        // 비밀번호는 암호화되어 저장되었을 것이므로, 평문과 다를 것
+        assertNotEquals(rawPassword, savedGuest.getPassword());
+
+        // tag가 자동 생성되거나 세팅된다면, null이 아닌지 확인 가능
+        assertNotNull(savedGuest.getTag());
+
+        // clubId는 Member 엔티티에 직접 없으면, 연관된 클럽 객체로 확인 (필요시)
     }
 
 
