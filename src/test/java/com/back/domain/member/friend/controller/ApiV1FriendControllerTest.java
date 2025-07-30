@@ -1,6 +1,7 @@
 package com.back.domain.member.friend.controller;
 
-import com.back.domain.member.friend.repository.FriendRepository;
+import com.back.domain.member.friend.dto.FriendsResDto;
+import com.back.domain.member.friend.service.FriendService;
 import com.back.domain.member.member.entity.Member;
 import com.back.domain.member.member.repository.MemberRepository;
 import org.junit.jupiter.api.DisplayName;
@@ -14,6 +15,8 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
@@ -29,7 +32,7 @@ class ApiV1FriendControllerTest {
     @Autowired
     private MemberRepository memberRepository;
     @Autowired
-    private FriendRepository friendRepository;
+    private FriendService friendService;
 
     /**
      * 친구 추가 요청 예외 처리하는 메서드
@@ -104,6 +107,39 @@ class ApiV1FriendControllerTest {
                 .andExpect(status().is(expectedStatus))
                 .andExpect(jsonPath("$.code").value(expectedStatus))
                 .andExpect(jsonPath("$.message").value(expectedMessage));
+    }
+
+    @Test
+    @DisplayName("친구 목록 조회")
+    @WithUserDetails(value = "hgd222@test.com")
+    void trl1() throws Exception {
+        Long memberId = 1L;
+
+        ResultActions resultActions = mockMvc
+                .perform(get("/api/v1/members/me/friends")
+                        .contentType(MediaType.APPLICATION_JSON)
+                )
+                .andDo(print());
+
+        List<FriendsResDto> friends = friendService.getFriends(memberId);
+
+        resultActions
+                .andExpect(handler().handlerType(ApiV1FriendController.class))
+                .andExpect(handler().methodName("getFriends"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value(200))
+                .andExpect(jsonPath("$.message").value("친구 목록을 성공적으로 조회하였습니다."));
+
+        for (int i = 0; i < friends.size(); i++) {
+            FriendsResDto friend = friends.get(i);
+
+            resultActions
+                    .andExpect(jsonPath("$.data[%d].friendId".formatted(i)).value(friend.friendId()))
+                    .andExpect(jsonPath("$.data[%d].friendMemberId".formatted(i)).value(friend.friendMemberId()))
+                    .andExpect(jsonPath("$.data[%d].friendNickname".formatted(i)).value(friend.friendNickname()))
+                    .andExpect(jsonPath("$.data[%d].friendProfileImageUrl".formatted(i)).value(friend.friendProfileImageUrl()))
+                    .andExpect(jsonPath("$.data[%d].status".formatted(i)).value("ACCEPTED"));
+        }
     }
 
     @Test

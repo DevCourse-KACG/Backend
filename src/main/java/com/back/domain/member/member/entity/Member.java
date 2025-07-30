@@ -13,6 +13,7 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Set;
 
 @Entity
 @NoArgsConstructor
@@ -50,9 +51,9 @@ public class Member {
 
   // 친구 관계 (내가 포함된 모든 관계)
   @OneToMany(mappedBy = "member1", cascade = CascadeType.ALL, orphanRemoval = true)
-  private List<Friend> friendshipsAsMember1;
+  private Set<Friend> friendshipsAsMember1;
   @OneToMany(mappedBy = "member2", cascade = CascadeType.ALL, orphanRemoval = true)
-  private List<Friend> friendshipsAsMember2;
+  private Set<Friend> friendshipsAsMember2;
 
   @OneToMany(mappedBy = "member", cascade = CascadeType.ALL, orphanRemoval = true)
   private List<ClubMember> clubMembers; // 소속 그룹 목록

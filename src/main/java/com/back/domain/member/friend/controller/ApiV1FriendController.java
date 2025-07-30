@@ -3,6 +3,7 @@ package com.back.domain.member.friend.controller;
 import com.back.domain.member.friend.dto.FriendAddReqBody;
 import com.back.domain.member.friend.dto.FriendDelDto;
 import com.back.domain.member.friend.dto.FriendDto;
+import com.back.domain.member.friend.dto.FriendsResDto;
 import com.back.domain.member.friend.service.FriendService;
 import com.back.global.rsData.RsData;
 import com.back.global.security.SecurityUser;
@@ -13,12 +14,28 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/api/v1/members/me/friends")
 @RequiredArgsConstructor
 @Tag(name = "ApiV1FriendController", description = "친구 컨트롤러")
 public class ApiV1FriendController {
     private final FriendService friendService;
+
+    @GetMapping
+    @Operation(summary = "내 친구 목록 조회")
+    public RsData<List<FriendsResDto>> getFriends(
+            @AuthenticationPrincipal SecurityUser user
+    ) {
+        List<FriendsResDto> friendDtoList = friendService.getFriends(user.getId());
+
+        return RsData.of(
+                200,
+                "친구 목록을 성공적으로 조회하였습니다.",
+                friendDtoList
+        );
+    }
 
     @PostMapping
     @Operation(summary = "친구 추가")
@@ -79,5 +96,4 @@ public class ApiV1FriendController {
                 friendDelDto
         );
     }
-
 }

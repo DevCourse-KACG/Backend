@@ -2,6 +2,7 @@ package com.back.domain.member.friend.service;
 
 import com.back.domain.member.friend.dto.FriendDelDto;
 import com.back.domain.member.friend.dto.FriendDto;
+import com.back.domain.member.friend.dto.FriendsResDto;
 import com.back.domain.member.friend.entity.Friend;
 import com.back.domain.member.friend.entity.FriendStatus;
 import com.back.domain.member.friend.repository.FriendRepository;
@@ -14,7 +15,11 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Comparator;
+import java.util.List;
 import java.util.NoSuchElementException;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Service
 @RequiredArgsConstructor
@@ -22,6 +27,28 @@ public class FriendService {
     private final MemberRepository memberRepository;
     private final MemberInfoRepository memberInfoRepository;
     private final FriendRepository friendRepository;
+
+    /**
+     * 내 친구 목록을 조회하는 메서드
+     * @param memberId
+     * @return List<FriendsResDto>
+     */
+    public List<FriendsResDto> getFriends(Long memberId) {
+        // 로그인 회원
+        Member member = memberRepository.findWithFriendsById(memberId)
+                .orElseThrow(() -> new NoSuchElementException("회원이 존재하지 않습니다."));
+
+        // 친구 목록 조회 - 우선 친구만 조회
+        // TODO: 필터, 정렬, 페이징 추가 예정
+        return Stream.concat(
+                        member.getFriendshipsAsMember1().stream(), // member1로 등록된 친구 관계
+                        member.getFriendshipsAsMember2().stream()  // member2로 등록된 친구 관계
+                )
+                .filter(friend -> friend.getStatus() == FriendStatus.ACCEPTED)     // 친구만
+                .map(friend -> new FriendsResDto(friend, friend.getOther(member))) // DTO 변환
+                .sorted(Comparator.comparing(FriendsResDto::friendNickname))             // 이름 오름차순
+                .collect(Collectors.toList());
+    }
 
     /**
      * 친구 추가 요청을 처리하는 메서드

@@ -1,6 +1,7 @@
 package com.back.domain.member.member.repository;
 
 import com.back.domain.member.member.entity.Member;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -15,6 +16,18 @@ public interface MemberRepository extends JpaRepository<Member, Long> {
     boolean existsByNicknameAndTag(String nickname, String tag);
 
     Optional<Member> findByNicknameAndTag(String nickname, String tag);
+
+    // 회원 ID로 회원 정보를 조회하며, 회원 상세 정보 포함 (n+1 쿼리 방지)
+    /*@EntityGraph(attributePaths = "memberInfo")
+    Optional<Member> findByIdWithMemberInfo(Long memberId);*/
+
+    // 회원 ID로 회원 정보를 조회하며, 친구 관계를 포함 (n+1 쿼리 방지)
+    @EntityGraph(attributePaths = {
+            "friendshipsAsMember1.member2.memberInfo", // member1로 등록 된 경우 친구 member2의 정보
+            "friendshipsAsMember2.member1.memberInfo"  // member2로 등록 된 경우 친구 member1의 정보
+    })
+    @Query("SELECT m FROM Member m WHERE m.id = :memberId")
+    Optional<Member> findWithFriendsById(Long memberId);
 
     @Query("""
     select case when count(m) > 0 then true else false end
