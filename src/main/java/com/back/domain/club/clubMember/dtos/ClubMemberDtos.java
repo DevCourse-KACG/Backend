@@ -45,7 +45,7 @@ public class ClubMemberDtos {
     ){}
 
     public static record ClubMemberInfo(
-            Long clubMemberid,
+            Long clubMemberId,
             Long memberId,
             String nickname,
             String tag,
@@ -57,6 +57,6 @@ public class ClubMemberDtos {
     ) {}
 
     public static record ClubMemberResponse(
-            List<ClubMemberInfo> clubMembers
+            List<ClubMemberInfo> members
     ) {}
 }

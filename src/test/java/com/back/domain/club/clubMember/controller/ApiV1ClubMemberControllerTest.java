@@ -626,7 +626,7 @@ class ApiV1ClubMemberControllerTest {
 
     @Test
     @DisplayName("참여자 목록 반환 - state 필터 없음")
-    void getMembersOfClub() throws Exception {
+    void getClubMembers() throws Exception {
         // given
         // 테스트 클럽 생성
         Club club = clubService.createClub(
@@ -679,45 +679,46 @@ class ApiV1ClubMemberControllerTest {
         // then
         resultActions
                 .andExpect(handler().handlerType(ApiV1ClubMemberController.class))
-                .andExpect(handler().methodName("getMembersOfClub"))
+                .andExpect(handler().methodName("getClubMembers"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value(200))
                 .andExpect(jsonPath("$.message").value("클럽 멤버 목록이 조회됐습니다."))
                 .andExpect(jsonPath("$.data.members.length()").value(3)) // 멤버가 3명인지 확인
 
-                .andExpect(jsonPath("$.data[0].members.clubMemberId").value(clubMember1.getId()))
-                .andExpect(jsonPath("$.data[0].members.memberId").value(member1.getId()))
-                .andExpect(jsonPath("$.data[0].members.nickname").value(member1.getNickname()))
-                .andExpect(jsonPath("$.data[0].members.tag").value(member1.getTag()))
-                .andExpect(jsonPath("$.data[0].members.role").value(ClubMemberRole.PARTICIPANT))
-                .andExpect(jsonPath("$.data[0].members.email").value(member1.getEmail()))
-                .andExpect(jsonPath("$.data[0].members.memberType").value(member1.getMemberType()))
-                .andExpect(jsonPath("$.data[0].members.profileImageUrl").value(member1.getMemberInfo().getProfileImageUrl()))
-                .andExpect(jsonPath("$.data[0].members.state").value(clubMember1.getState()))
+                .andExpect(jsonPath("$.data.members[0].clubMemberId").value(clubMember1.getId()))
+                .andExpect(jsonPath("$.data.members[0].memberId").value(member1.getId()))
+                .andExpect(jsonPath("$.data.members[0].nickname").value(member1.getNickname()))
+                .andExpect(jsonPath("$.data.members[0].tag").value(member1.getTag()))
+                .andExpect(jsonPath("$.data.members[0].role").value(ClubMemberRole.PARTICIPANT.name()))
+                .andExpect(jsonPath("$.data.members[0].email").value(member1.getEmail()))
+                .andExpect(jsonPath("$.data.members[0].memberType").value(member1.getMemberType().name()))
+                .andExpect(jsonPath("$.data.members[0].profileImageUrl").value(""))
+                .andExpect(jsonPath("$.data.members[0].state").value(clubMember1.getState().name()))
 
-                .andExpect(jsonPath("$.data[1].members.clubMemberId").value(clubMember2.getId()))
-                .andExpect(jsonPath("$.data[1].members.memberId").value(member2.getId()))
-                .andExpect(jsonPath("$.data[1].members.nickname").value(member2.getNickname()))
-                .andExpect(jsonPath("$.data[1].members.tag").value(member2.getTag()))
-                .andExpect(jsonPath("$.data[1].members.role").value(ClubMemberRole.MANAGER))
-                .andExpect(jsonPath("$.data[1].members.email").value(member2.getEmail()))
-                .andExpect(jsonPath("$.data[1].members.memberType").value(member2.getMemberType()))
-                .andExpect(jsonPath("$.data[1].members.profileImageUrl").value(member2.getMemberInfo().getProfileImageUrl()))
-                .andExpect(jsonPath("$.data[1].members.state").value(clubMember2.getState()))
+                .andExpect(jsonPath("$.data.members[1].clubMemberId").value(clubMember2.getId()))
+                .andExpect(jsonPath("$.data.members[1].memberId").value(member2.getId()))
+                .andExpect(jsonPath("$.data.members[1].nickname").value(member2.getNickname()))
+                .andExpect(jsonPath("$.data.members[1].tag").value(member2.getTag()))
+                .andExpect(jsonPath("$.data.members[1].role").value(ClubMemberRole.MANAGER.name()))
+                .andExpect(jsonPath("$.data.members[1].email").value(member2.getEmail()))
+                .andExpect(jsonPath("$.data.members[1].memberType").value(member2.getMemberType().name()))
+                .andExpect(jsonPath("$.data.members[1].profileImageUrl").value(""))
+                .andExpect(jsonPath("$.data.members[1].state").value(clubMember2.getState().name()))
 
-                .andExpect(jsonPath("$.data[2].members.clubMemberId").value(nonMemberClubMember.getId()))
-                .andExpect(jsonPath("$.data[2].members.memberId").value(nonMember.getId()))
-                .andExpect(jsonPath("$.data[2].members.nickname").value(nonMember.getNickname()))
-                .andExpect(jsonPath("$.data[2].members.tag").value(nonMember.getTag()))
-                .andExpect(jsonPath("$.data[2].members.role").value(ClubMemberRole.PARTICIPANT))
-                .andExpect(jsonPath("$.data[2].members.email").value("")) // 비회원은 이메일이 없으므로 빈 문자열
-                .andExpect(jsonPath("$.data[2].members.memberType").value(nonMember.getMemberType()))
-                .andExpect(jsonPath("$.data[2].members.profileImageUrl").value("")) // 비회원은 이미지 URL이 없으므로 빈 문자열
-                .andExpect(jsonPath("$.data[2].members.state").value(nonMemberClubMember.getState())); // 비회원의 상태 확인}
+                .andExpect(jsonPath("$.data.members[2].clubMemberId").value(nonMemberClubMember.getId()))
+                .andExpect(jsonPath("$.data.members[2].memberId").value(nonMember.getId()))
+                .andExpect(jsonPath("$.data.members[2].nickname").value(nonMember.getNickname()))
+                .andExpect(jsonPath("$.data.members[2].tag").value(nonMember.getTag()))
+                .andExpect(jsonPath("$.data.members[2].role").value(ClubMemberRole.PARTICIPANT.name()))
+                .andExpect(jsonPath("$.data.members[2].email").value("")) // 비회원은 이메일이 없으므로 빈 문자열
+                .andExpect(jsonPath("$.data.members[2].memberType").value(nonMember.getMemberType().name()))
+                .andExpect(jsonPath("$.data.members[2].profileImageUrl").value("")) // 비회원은 이미지 URL이 없으므로 빈 문자열
+                .andExpect(jsonPath("$.data.members[2].state").value(nonMemberClubMember.getState().name())); // 비회원의 상태 확인
     }
+
     @Test
     @DisplayName("참여자 목록 반환 - state 필터 (INVITED)")
-    void getMembersOfClub_stateFiltered() throws Exception {
+    void getClubMembers_stateFiltered() throws Exception {
         // given
         // 테스트 클럽 생성
         Club club = clubService.createClub(
@@ -774,35 +775,36 @@ class ApiV1ClubMemberControllerTest {
         // then
         resultActions
                 .andExpect(handler().handlerType(ApiV1ClubMemberController.class))
-                .andExpect(handler().methodName("getMembersOfClub"))
+                .andExpect(handler().methodName("getClubMembers"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value(200))
                 .andExpect(jsonPath("$.message").value("클럽 멤버 목록이 조회됐습니다."))
                 .andExpect(jsonPath("$.data.members.length()").value(2)) // 멤버가 2명인지 확인
 
-                .andExpect(jsonPath("$.data[0].members.memberId").value(member1.getId()))
-                .andExpect(jsonPath("$.data[0].members.nickname").value(member1.getNickname()))
-                .andExpect(jsonPath("$.data[0].members.tag").value(member1.getTag()))
-                .andExpect(jsonPath("$.data[0].members.role").value(ClubMemberRole.PARTICIPANT))
-                .andExpect(jsonPath("$.data[0].members.email").value(member1.getEmail()))
-                .andExpect(jsonPath("$.data[0].members.memberType").value(member1.getMemberType()))
-                .andExpect(jsonPath("$.data[0].members.profileImageUrl").value(member1.getMemberInfo().getProfileImageUrl()))
-                .andExpect(jsonPath("$.data[0].members.state").value(clubMember1.getState()))
+                .andExpect(jsonPath("$.data.members[0].clubMemberId").value(clubMember1.getId()))
+                .andExpect(jsonPath("$.data.members[0].memberId").value(member1.getId()))
+                .andExpect(jsonPath("$.data.members[0].nickname").value(member1.getNickname()))
+                .andExpect(jsonPath("$.data.members[0].tag").value(member1.getTag()))
+                .andExpect(jsonPath("$.data.members[0].role").value(ClubMemberRole.PARTICIPANT.name()))
+                .andExpect(jsonPath("$.data.members[0].email").value(member1.getEmail()))
+                .andExpect(jsonPath("$.data.members[0].memberType").value(member1.getMemberType().name()))
+                .andExpect(jsonPath("$.data.members[0].profileImageUrl").value(""))
+                .andExpect(jsonPath("$.data.members[0].state").value(clubMember1.getState().name()))
 
-                .andExpect(jsonPath("$.data[1].members.clubMemberId").value(nonMemberClubMember.getId()))
-                .andExpect(jsonPath("$.data[1].members.memberId").value(nonMember.getId()))
-                .andExpect(jsonPath("$.data[1].members.nickname").value(nonMember.getNickname()))
-                .andExpect(jsonPath("$.data[1].members.tag").value(nonMember.getTag()))
-                .andExpect(jsonPath("$.data[1].members.role").value(ClubMemberRole.PARTICIPANT))
-                .andExpect(jsonPath("$.data[1].members.email").value("")) // 비회원은 이메일이 없으므로 빈 문자열
-                .andExpect(jsonPath("$.data[1].members.memberType").value(nonMember.getMemberType()))
-                .andExpect(jsonPath("$.data[1].members.profileImageUrl").value("")) // 비회원은 이미지 URL이 없으므로 빈 문자열
-                .andExpect(jsonPath("$.data[1].members.state").value(nonMemberClubMember.getState())); // 비회원의 상태 확인
+                .andExpect(jsonPath("$.data.members[1].clubMemberId").value(nonMemberClubMember.getId()))
+                .andExpect(jsonPath("$.data.members[1].memberId").value(nonMember.getId()))
+                .andExpect(jsonPath("$.data.members[1].nickname").value(nonMember.getNickname()))
+                .andExpect(jsonPath("$.data.members[1].tag").value(nonMember.getTag()))
+                .andExpect(jsonPath("$.data.members[1].role").value(ClubMemberRole.PARTICIPANT.name()))
+                .andExpect(jsonPath("$.data.members[1].email").value("")) // 비회원은 이메일이 없으므로 빈 문자열
+                .andExpect(jsonPath("$.data.members[1].memberType").value(nonMember.getMemberType().name()))
+                .andExpect(jsonPath("$.data.members[1].profileImageUrl").value("")) // 비회원은 이미지 URL이 없으므로 빈 문자열
+                .andExpect(jsonPath("$.data.members[1].state").value(nonMemberClubMember.getState().name())); // 비회원의 상태 확인
     }
 
     @Test
     @DisplayName("참여자 목록 반환 - 존재하지 않는 클럽")
-    void getMembersOfClub_InvalidClubId() throws Exception {
+    void getClubMembers_InvalidClubId() throws Exception {
         // given
         int invalidClubId = 9999; // 잘못된 클럽 ID
 
@@ -816,7 +818,7 @@ class ApiV1ClubMemberControllerTest {
         // then
         resultActions
                 .andExpect(handler().handlerType(ApiV1ClubMemberController.class))
-                .andExpect(handler().methodName("getMembersOfClub"))
+                .andExpect(handler().methodName("getClubMembers"))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.code").value(400))
                 .andExpect(jsonPath("$.message").value("Invalid club ID format."));
@@ -824,7 +826,7 @@ class ApiV1ClubMemberControllerTest {
 
     @Test
     @DisplayName("참여자 목록 반환 - 잘못된 state 필터")
-    void getMembersOfClub_InvalidStateFilter() throws Exception {
+    void getClubMembers_InvalidStateFilter() throws Exception {
         // given
         // 테스트 클럽 생성
         Club club = clubService.createClub(
@@ -852,7 +854,7 @@ class ApiV1ClubMemberControllerTest {
         // then
         resultActions
                 .andExpect(handler().handlerType(ApiV1ClubMemberController.class))
-                .andExpect(handler().methodName("getMembersOfClub"))
+                .andExpect(handler().methodName("getClubMembers"))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.code").value(400))
                 .andExpect(jsonPath("$.message").value("Unknown Member state: INVALID_STATE"));
