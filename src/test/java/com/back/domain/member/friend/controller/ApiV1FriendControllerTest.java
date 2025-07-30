@@ -15,8 +15,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.transaction.annotation.Transactional;
 
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
@@ -58,14 +57,41 @@ class ApiV1FriendControllerTest {
     }
 
     /**
+     * 친구 요청 수락, 거절 예외 처리하는 메서드
+     * @param friendId          친구의 ID
+     * @param pathUrl           URL 경로 (accept, reject 등)
+     * @param methodName        메서드 이름
+     * @param expectedStatus    예상되는 HTTP 상태 코드
+     * @param expectedMessage   예상되는 에러 메시지
+     */
+    void performErrPatchFriend(Long friendId,
+                               String pathUrl,
+                               String methodName,
+                               int expectedStatus,
+                               String expectedMessage
+    ) throws Exception {
+        ResultActions resultActions = mockMvc
+                .perform(patch("/api/v1/members/me/friends/%d/%s".formatted(friendId, pathUrl))
+                )
+                .andDo(print());
+
+        resultActions
+                .andExpect(handler().handlerType(ApiV1FriendController.class))
+                .andExpect(handler().methodName(methodName))
+                .andExpect(status().is(expectedStatus))
+                .andExpect(jsonPath("$.code").value(expectedStatus))
+                .andExpect(jsonPath("$.message").value(expectedMessage));
+    }
+
+    /**
      * 친구 삭제 요청 예외 처리하는 메서드
      * @param friendId          친구의 ID
      * @param expectedStatus    예상되는 HTTP 상태 코드
      * @param expectedMessage   예상되는 에러 메시지
      */
     void performErrDelFriend(Long friendId,
-                              int expectedStatus,
-                              String expectedMessage
+                             int expectedStatus,
+                             String expectedMessage
     ) throws Exception {
         ResultActions resultActions = mockMvc
                 .perform(delete("/api/v1/members/me/friends/" + friendId)
@@ -173,6 +199,83 @@ class ApiV1FriendControllerTest {
                 "pms4@test.com",
                 409,
                 "이전에 거절한 친구 요청입니다. 다시 요청할 수 없습니다."
+        );
+    }
+
+    @Test
+    @DisplayName("친구 수락")
+    @WithUserDetails(value = "lyh3@test.com")
+    void ta1() throws Exception {
+        Long friendId = 1L;
+        Member friend = memberRepository.findById(friendId).orElseThrow();
+
+        ResultActions resultActions = mockMvc
+                .perform(patch("/api/v1/members/me/friends/%d/accept".formatted(friendId))
+                )
+                .andDo(print());
+
+        resultActions
+                .andExpect(handler().handlerType(ApiV1FriendController.class))
+                .andExpect(handler().methodName("acceptFriend"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value(200))
+                .andExpect(jsonPath("$.message").value("%s님과 친구가 되었습니다.".formatted(friend.getNickname())))
+                .andExpect(jsonPath("$.data.friendId").value(friend.getId()))
+                .andExpect(jsonPath("$.data.friendNickname").value(friend.getNickname()))
+                .andExpect(jsonPath("$.data.friendBio").value(friend.getMemberInfo().getBio()))
+                .andExpect(jsonPath("$.data.friendProfileImageUrl").value(friend.getMemberInfo().getProfileImageUrl()))
+                .andExpect(jsonPath("$.data.status").value("ACCEPTED"));
+    }
+
+    @Test
+    @DisplayName("친구 수락 - 친구 대상이 없는 경우 예외 처리")
+    @WithUserDetails(value = "lyh3@test.com")
+    void ta2() throws Exception {
+        performErrPatchFriend(
+                100L,
+                "accept",
+                "acceptFriend",
+                404,
+                "친구 대상이 존재하지 않습니다."
+        );
+    }
+
+    @Test
+    @DisplayName("친구 수락 - 친구 요청이 없는 경우 예외 처리")
+    @WithUserDetails(value = "lyh3@test.com")
+    void ta3() throws Exception {
+        performErrPatchFriend(
+                2L,
+                "accept",
+                "acceptFriend",
+                404,
+                "친구 요청이 존재하지 않습니다."
+        );
+    }
+
+    @Test
+    @DisplayName("친구 수락 - 받는이가 아닌 요청자가 친구 요청을 수락하는 경우 예외 처리")
+    @WithUserDetails(value = "hgd222@test.com")
+    void ta4() throws Exception {
+        performErrPatchFriend(
+                3L,
+                "accept",
+                "acceptFriend",
+                400,
+                "요청한 사람이 친구 수락할 수 없습니다. 친구에게 요청 수락을 받으세요."
+        );
+    }
+
+    @Test
+    @DisplayName("친구 수락 - 이미 친구인 경우 예외 처리")
+    @WithUserDetails(value = "cjw5@test.com")
+    void ta5() throws Exception {
+        performErrPatchFriend(
+                1L,
+                "accept",
+                "acceptFriend",
+                400,
+                "이미 친구입니다."
         );
     }
 

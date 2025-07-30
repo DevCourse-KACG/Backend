@@ -35,6 +35,21 @@ public class ApiV1FriendController {
         );
     }
 
+    @PatchMapping("/{friendId}/accept")
+    @Operation(summary = "친구 요청 수락")
+    public RsData<FriendDto> acceptFriend(
+            @AuthenticationPrincipal SecurityUser user,
+            @PathVariable Long friendId
+    ) {
+        FriendDto friendDto = friendService.acceptFriend(user.getId(), friendId);
+
+        return RsData.of(
+                200,
+                "%s님과 친구가 되었습니다.".formatted(friendDto.friendNickname()),
+                friendDto
+        );
+    }
+
     @DeleteMapping("/{friendId}")
     @Operation(summary = "친구 삭제")
     public RsData<FriendDelDto> deleteFriend(

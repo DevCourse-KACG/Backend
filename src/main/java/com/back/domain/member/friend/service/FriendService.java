@@ -85,9 +85,44 @@ public class FriendService {
     }
 
     @Transactional
-    public FriendDelDto deleteFriend(Long id, Long friendId) {
+    public FriendDto acceptFriend(Long memberId, Long friendId) {
+        // 친구 요청을 받은 회원과 보낸 회원 조회
+        Member member = memberRepository.findById(memberId)
+                .orElseThrow(() -> new NoSuchElementException("회원이 존재하지 않습니다."));
+
+        Member friendMember = memberRepository.findById(friendId)
+                .orElseThrow(() -> new NoSuchElementException("친구 대상이 존재하지 않습니다."));
+
+        Friend friend = friendRepository.findByMembers(member, friendMember)
+                .orElseThrow(() -> new NoSuchElementException("친구 요청이 존재하지 않습니다."));
+
+        // 받는이가 아닌 요청자가 친구 요청을 수락하는 경우 예외 처리
+        if (member.equals(friend.getRequestedBy())) {
+            throw new ServiceException(400, "요청한 사람이 친구 수락할 수 없습니다. 친구에게 요청 수락을 받으세요.");
+        }
+
+        // 친구 요청의 상태가 PENDING이 아닌 경우 예외 처리
+        if (friend.getStatus() == FriendStatus.ACCEPTED) {
+            throw new ServiceException(400, "이미 친구입니다.");
+        }
+
+        // 친구 요청 수락
+        friend.setStatus(FriendStatus.ACCEPTED);
+        friendRepository.save(friend);
+
+        return new FriendDto(friend, friendMember, friendMember.getMemberInfo());
+    }
+
+    /**
+     * 친구 삭제를 처리하는 메서드
+     * @param memberId
+     * @param friendId
+     * @return FriendDelDto
+     */
+    @Transactional
+    public FriendDelDto deleteFriend(Long memberId, Long friendId) {
         // 친구 요청을 보낸 회원과 받는 회원 조회
-        Member requester = memberRepository.findById(id)
+        Member requester = memberRepository.findById(memberId)
                 .orElseThrow(() -> new NoSuchElementException("회원이 존재하지 않습니다."));
 
         Member friendMember = memberRepository.findById(friendId)
