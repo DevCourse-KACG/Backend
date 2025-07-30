@@ -57,4 +57,16 @@ public class CheckList {
         }
     }
 
+    public void updateIsActive(boolean isActive) {
+        this.isActive = isActive;
+    }
+
+    public void updateCheckListItems(List<CheckListItem> checkListItems) {
+        this.checkListItems = checkListItems;
+
+        // 양방향 연관관계 설정
+        if (checkListItems != null) {
+            checkListItems.forEach(item -> item.setCheckList(this));
+        }
+    }
 }
