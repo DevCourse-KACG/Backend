@@ -162,7 +162,7 @@ public class ApiV1MemberController {
     }
 
     @Operation(summary = "비회원 임시 로그인 API", description = "비회원 임시 로그인 API 입니다.")
-    @PutMapping("/auth/guest-login")
+    @PostMapping("/auth/guest-login")
     public RsData<GuestResponse> guestLogin(HttpServletResponse response,
                                                 @Valid @RequestBody GuestLoginDto guestLoginDto) {
         GuestResponse guestAuthResponse = memberService.guestLogin(guestLoginDto);
