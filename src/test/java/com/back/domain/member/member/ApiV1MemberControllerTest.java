@@ -4,11 +4,14 @@ import com.back.domain.api.service.ApiKeyService;
 import com.back.domain.auth.service.AuthService;
 import com.back.domain.club.club.entity.Club;
 import com.back.domain.club.club.repository.ClubRepository;
+import com.back.domain.member.member.dto.request.MemberRegisterDto;
 import com.back.domain.member.member.dto.response.MemberDetailInfoResponse;
 import com.back.domain.member.member.entity.Member;
 import com.back.domain.member.member.entity.MemberInfo;
 import com.back.domain.member.member.repository.MemberRepository;
+import com.back.domain.member.member.service.MemberService;
 import com.back.domain.member.member.support.MemberFixture;
+import com.back.global.exception.ServiceException;
 import com.back.global.security.SecurityUser;
 import io.jsonwebtoken.lang.Collections;
 import jakarta.servlet.http.Cookie;
@@ -20,6 +23,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
@@ -28,6 +32,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.Optional;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
+import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
@@ -56,6 +61,9 @@ public class ApiV1MemberControllerTest {
 
     @Autowired
     private ClubRepository clubRepository;
+
+    @Autowired
+    private MemberService memberService;
 
     @Test
     @DisplayName("회원가입 - 정상 기입 / 객체 정상 생성")
@@ -560,6 +568,38 @@ public class ApiV1MemberControllerTest {
                 .andExpect(jsonPath("$.data.accessToken").isNotEmpty())
                 .andExpect(cookie().exists("accessToken"))
                 .andDo(print());
+    }
+
+    @Test
+    @DisplayName("회원가입 - 이메일 중복 시 예외 발생")
+    public void registerWithDuplicateEmailThrowsException() {
+        MemberRegisterDto memberRegisterDto1 = new MemberRegisterDto("1", "pw1", "user1", "안녕하세요");
+        MemberRegisterDto memberRegisterDto2 = new MemberRegisterDto("1", "pw1", "user2", "안녕하세요");
+
+        memberService.registerMember(memberRegisterDto1);
+
+        assertThatThrownBy(() -> {
+            memberService.registerMember(memberRegisterDto2);
+        }).isInstanceOf(ServiceException.class);
+    }
+
+    @Test
+    @DisplayName("회원가입 - 비밀번호 해싱 성공")
+    public void registerPasswordHashingAndMatching() {
+        BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
+
+        String rawPassword = "pw1";
+
+        memberService.registerMember(new MemberRegisterDto("1", rawPassword, "user1", "<>"));
+        Member savedMember = memberRepository.findByNickname("user1").get();
+
+        String savedHashedPassword = savedMember.getPassword();
+
+        assertNotEquals(rawPassword, savedHashedPassword);
+
+        assertTrue(encoder.matches(rawPassword, savedHashedPassword));
+
+        assertFalse(encoder.matches("wrongPassword", savedHashedPassword));
     }
 
 
