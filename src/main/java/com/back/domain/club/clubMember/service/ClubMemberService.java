@@ -13,7 +13,9 @@ import com.back.global.exception.ServiceException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 @Service
 @RequiredArgsConstructor
@@ -40,36 +42,32 @@ public class ClubMemberService {
     public void addMembersToClub(Long clubId, ClubMemberDtos.ClubMemberRegisterRequest reqBody) {
         Club club = clubService.getClubById(clubId).orElseThrow(() -> new ServiceException(404, "클럽이 존재하지 않습니다."));
 
-        // 클럽 멤버가 이미 존재하는지 확인
-        List<String> existingMemberEmails = clubMemberRepository.findAllByClubId(clubId)
-                .stream()
-                .map(clubMember -> clubMember.getMember().getEmail())
+        // 요청된 이메일 추출
+        List<String> requestEmails = reqBody.members().stream()
+                .map(ClubMemberDtos.ClubMemberRegisterInfo::email)
                 .toList();
 
-        List<ClubMemberDtos.ClubMemberRegisterInfo> newMembers = reqBody.members().stream()
-                .filter(memberInfo -> !existingMemberEmails.contains(memberInfo.email()))
-                .distinct()
-                .toList();
+        // 이미 가입된 멤버 이메일만 조회 (IN 쿼리)
+        Set<String> existingEmails = new HashSet<>(
+                clubMemberRepository.findExistingEmails(clubId, requestEmails)
+        );
 
+        // 중복 제외한 새로운 멤버만 추가
+        reqBody.members().stream()
+                .distinct() // 중복 제거
+                .filter(memberInfo -> !existingEmails.contains(memberInfo.email()))
+                .forEach(memberInfo -> {
+                    Member member = memberService.findByEmail(memberInfo.email());
 
+                    ClubMember clubMember = ClubMember.builder()
+                            .member(member)
+                            .role(ClubMemberRole.fromString(memberInfo.role().toUpperCase()))
+                            .state(ClubMemberState.INVITED)
+                            .build();
 
-        newMembers.forEach(memberInfo -> {
-            // 멤버 정보가 존재하는지 확인
-            Member member = memberService.findByEmail(memberInfo.email());
-
-            // 클럽 멤버 생성
-            ClubMember clubMember = ClubMember.builder()
-                    .member(member)
-                    .role(ClubMemberRole.fromString(memberInfo.role().toUpperCase()))
-                    .state(ClubMemberState.INVITED) // 기본 상태는 초대됨
-                    .build();
-
-            // 클럽과 멤버 연결
-            club.addClubMember(clubMember);
-
-            // 클럽 멤버 저장
-            clubMemberRepository.save(clubMember);
-        });
+                    club.addClubMember(clubMember);
+                    clubMemberRepository.save(clubMember);
+                });
 
     }
 }
