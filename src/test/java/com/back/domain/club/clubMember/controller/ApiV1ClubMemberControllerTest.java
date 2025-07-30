@@ -689,30 +689,30 @@ class ApiV1ClubMemberControllerTest {
                 .andExpect(jsonPath("$.data[0].memberId").value(member1.getId()))
                 .andExpect(jsonPath("$.data[0].nickname").value(member1.getNickname()))
                 .andExpect(jsonPath("$.data[0].tag").value(member1.getTag()))
-                .andExpect(jsonPath("$.data[0].role").value("PARTICIPANT"))
+                .andExpect(jsonPath("$.data[0].role").value(ClubMemberRole.PARTICIPANT))
                 .andExpect(jsonPath("$.data[0].email").value(member1.getEmail()))
-                .andExpect(jsonPath("$.data[0].memberType").value(member1.getMemberType().toString()))
-                .andExpect(jsonPath("$.data[0].imageUrl").value(member1.getMemberInfo().getProfileImageUrl()))
+                .andExpect(jsonPath("$.data[0].memberType").value(member1.getMemberType()))
+                .andExpect(jsonPath("$.data[0].profileImageUrl").value(member1.getMemberInfo().getProfileImageUrl()))
                 .andExpect(jsonPath("$.data[0].state").value(clubMember1.getState()))
 
                 .andExpect(jsonPath("$.data[1].clubMemberId").value(clubMember2.getId()))
                 .andExpect(jsonPath("$.data[1].memberId").value(member2.getId()))
                 .andExpect(jsonPath("$.data[1].nickname").value(member2.getNickname()))
                 .andExpect(jsonPath("$.data[1].tag").value(member2.getTag()))
-                .andExpect(jsonPath("$.data[1].role").value("MANAGER"))
+                .andExpect(jsonPath("$.data[1].role").value(ClubMemberRole.MANAGER))
                 .andExpect(jsonPath("$.data[1].email").value(member2.getEmail()))
-                .andExpect(jsonPath("$.data[1].memberType").value(member2.getMemberType().toString()))
-                .andExpect(jsonPath("$.data[1].imageUrl").value(member2.getMemberInfo().getProfileImageUrl()))
+                .andExpect(jsonPath("$.data[1].memberType").value(member2.getMemberType()))
+                .andExpect(jsonPath("$.data[1].profileImageUrl").value(member2.getMemberInfo().getProfileImageUrl()))
                 .andExpect(jsonPath("$.data[1].state").value(clubMember2.getState()))
 
                 .andExpect(jsonPath("$.data[2].clubMemberId").value(nonMemberClubMember.getId()))
                 .andExpect(jsonPath("$.data[2].memberId").value(nonMember.getId()))
                 .andExpect(jsonPath("$.data[2].nickname").value(nonMember.getNickname()))
                 .andExpect(jsonPath("$.data[2].tag").value(nonMember.getTag()))
-                .andExpect(jsonPath("$.data[2].role").value("PARTICIPANT"))
+                .andExpect(jsonPath("$.data[2].role").value(ClubMemberRole.PARTICIPANT))
                 .andExpect(jsonPath("$.data[2].email").value("")) // 비회원은 이메일이 없으므로 빈 문자열
-                .andExpect(jsonPath("$.data[2].memberType").value(nonMember.getMemberType().toString()))
-                .andExpect(jsonPath("$.data[2].imageUrl").value("")) // 비회원은 이미지 URL이 없으므로 빈 문자열
+                .andExpect(jsonPath("$.data[2].memberType").value(nonMember.getMemberType()))
+                .andExpect(jsonPath("$.data[2].profileImageUrl").value("")) // 비회원은 이미지 URL이 없으므로 빈 문자열
                 .andExpect(jsonPath("$.data[2].state").value(nonMemberClubMember.getState())); // 비회원의 상태 확인
     }
 
@@ -785,20 +785,20 @@ class ApiV1ClubMemberControllerTest {
                 .andExpect(jsonPath("$.data[0].memberId").value(member1.getId()))
                 .andExpect(jsonPath("$.data[0].nickname").value(member1.getNickname()))
                 .andExpect(jsonPath("$.data[0].tag").value(member1.getTag()))
-                .andExpect(jsonPath("$.data[0].role").value("PARTICIPANT"))
+                .andExpect(jsonPath("$.data[0].role").value(ClubMemberRole.PARTICIPANT))
                 .andExpect(jsonPath("$.data[0].email").value(member1.getEmail()))
-                .andExpect(jsonPath("$.data[0].memberType").value(member1.getMemberType().toString()))
-                .andExpect(jsonPath("$.data[0].imageUrl").value(member1.getMemberInfo().getProfileImageUrl()))
+                .andExpect(jsonPath("$.data[0].memberType").value(member1.getMemberType()))
+                .andExpect(jsonPath("$.data[0].profileImageUrl").value(member1.getMemberInfo().getProfileImageUrl()))
                 .andExpect(jsonPath("$.data[0].state").value(clubMember1.getState()))
 
                 .andExpect(jsonPath("$.data[1].clubMemberId").value(nonMemberClubMember.getId()))
                 .andExpect(jsonPath("$.data[1].memberId").value(nonMember.getId()))
                 .andExpect(jsonPath("$.data[1].nickname").value(nonMember.getNickname()))
                 .andExpect(jsonPath("$.data[1].tag").value(nonMember.getTag()))
-                .andExpect(jsonPath("$.data[1].role").value("PARTICIPANT"))
+                .andExpect(jsonPath("$.data[1].role").value(ClubMemberRole.PARTICIPANT))
                 .andExpect(jsonPath("$.data[1].email").value("")) // 비회원은 이메일이 없으므로 빈 문자열
-                .andExpect(jsonPath("$.data[1].memberType").value(nonMember.getMemberType().toString()))
-                .andExpect(jsonPath("$.data[1].imageUrl").value("")) // 비회원은 이미지 URL이 없으므로 빈 문자열
+                .andExpect(jsonPath("$.data[1].memberType").value(nonMember.getMemberType()))
+                .andExpect(jsonPath("$.data[1].profileImageUrl").value("")) // 비회원은 이미지 URL이 없으므로 빈 문자열
                 .andExpect(jsonPath("$.data[1].state").value(nonMemberClubMember.getState())); // 비회원의 상태 확인
 
     }

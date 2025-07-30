@@ -1,5 +1,8 @@
 package com.back.domain.club.clubMember.dtos;
 
+import com.back.domain.member.member.MemberType;
+import com.back.global.enums.ClubMemberRole;
+import com.back.global.enums.ClubMemberState;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;
 
@@ -40,4 +43,16 @@ public class ClubMemberDtos {
             @NotBlank
             String role
     ){}
+
+    public static record ClubMemberResponse(
+            Long clubMemberid,
+            Long memberId,
+            String nickname,
+            String tag,
+            ClubMemberRole role,
+            String email,
+            MemberType memberType,
+            String profileImageUrl,
+            ClubMemberState state
+    ) {}
 }
