@@ -122,7 +122,7 @@ public class ApiV1CheckListControllerTest {
     schedule = scheduleRepository.save(scheduleBuilder);
   }
 
-  Long checkListCreate() throws Exception {
+  JsonNode checkListCreate() throws Exception {
     String requestBody = """
           {
             "scheduleId": %d,
@@ -157,8 +157,7 @@ public class ApiV1CheckListControllerTest {
     String responseContent = result.getResponse().getContentAsString();
     ObjectMapper objectMapper = new ObjectMapper();
     JsonNode jsonNode = objectMapper.readTree(responseContent);
-    Long checkListId = jsonNode.get("data").get("id").asLong();
-    return checkListId;
+    return jsonNode;
   }
 
   @Test
@@ -428,8 +427,8 @@ public class ApiV1CheckListControllerTest {
   @DisplayName("체크리스트 생성 실패 - 일정에 체크리스트가 이미 존재하는 경우")
   void t8() throws Exception {
     // 먼저 체크리스트를 생성
-    Long checkListId = checkListCreate();
-
+    JsonNode jsonNode = checkListCreate();
+    Long checkListId = jsonNode.get("data").get("id").asLong();
     // 동일한 일정에 다시 체크리스트를 생성하려고 시도
     String requestBody = """
           {
@@ -464,7 +463,8 @@ public class ApiV1CheckListControllerTest {
   @DisplayName("체크리스트 조회")
   void t9() throws Exception {
     // 먼저 체크리스트를 생성
-    Long checkListId = checkListCreate();
+    JsonNode jsonNode = checkListCreate();
+    Long checkListId = jsonNode.get("data").get("id").asLong();
 
     mockMvc.perform(
             get("/api/v1/checklists/" + checkListId)
@@ -493,7 +493,8 @@ public class ApiV1CheckListControllerTest {
   @Test
   @DisplayName("체크리스트 조회 실패 - JWT가 유효하지 않은 경우")
   void t11() throws Exception {
-    Long checkListId = checkListCreate();
+    JsonNode jsonNode = checkListCreate();
+    Long checkListId = jsonNode.get("data").get("id").asLong();
 
     mockMvc.perform(
             get("/api/v1/checklists/" + checkListId)
@@ -507,7 +508,8 @@ public class ApiV1CheckListControllerTest {
   @Test
   @DisplayName("체크리스트 조회 실패 - JWT가 없는 경우")
   void t12() throws Exception {
-    Long checkListId = checkListCreate();
+    JsonNode jsonNode = checkListCreate();
+    Long checkListId = jsonNode.get("data").get("id").asLong();
 
     mockMvc.perform(
             get("/api/v1/checklists/" + checkListId))
@@ -526,7 +528,8 @@ public class ApiV1CheckListControllerTest {
         "nickname", member.getNickname());
     String expiredJwtToken = Ut.jwt.toString(secretKey, -1, expiredClaims); // 만료 시간을 -1로 설정
 
-    Long checkListId = checkListCreate();
+    JsonNode jsonNode = checkListCreate();
+    Long checkListId = jsonNode.get("data").get("id").asLong();
 
     mockMvc.perform(
             get("/api/v1/checklists/" + checkListId)
@@ -553,7 +556,8 @@ public class ApiV1CheckListControllerTest {
         "nickname", anotherMember.getNickname());
     String anotherJwtToken = Ut.jwt.toString(secretKey, expirationSeconds, anotherClaims);
 
-    Long checkListId = checkListCreate();
+    JsonNode jsonNode = checkListCreate();
+    Long checkListId = jsonNode.get("data").get("id").asLong();
 
     mockMvc.perform(
             get("/api/v1/checklists/" + checkListId)
@@ -568,7 +572,10 @@ public class ApiV1CheckListControllerTest {
   @DisplayName("체크리스트 수정")
   void t15() throws Exception {
     // 먼저 체크리스트를 생성
-    Long checkListId = checkListCreate();
+    JsonNode jsonNode = checkListCreate();
+    Long checkListId = jsonNode.get("data").get("id").asLong();
+    Long firstItemId = jsonNode.get("data").get("checkListItems").get(0).get("id").asLong();
+    Long secondItemId = jsonNode.get("data").get("checkListItems").get(1).get("id").asLong();
     // 다른 클럽 멤버 생성
     Member anotherMember = Member.builder()
         .nickname("다른 유저")
@@ -588,7 +595,7 @@ public class ApiV1CheckListControllerTest {
           {
             "checkListItems": [
               {
-                "id": 1,
+                "id": %d,
                 "content": "수정된 체크리스트 아이템 1",
                 "category": "%s",
                 "isChecked": true,
@@ -601,7 +608,7 @@ public class ApiV1CheckListControllerTest {
                 ]
               },
               {
-                "id": 2,
+                "id": %d,
                 "content": "수정된 체크리스트 아이템 2",
                 "category": "%s",
                 "sequence": 2,
@@ -609,7 +616,7 @@ public class ApiV1CheckListControllerTest {
               }
             ]
           }
-        """.formatted(CheckListItemCategory.PREPARATION.name(), anotherClubMember.getId(), CheckListItemCategory.ETC.name());
+        """.formatted(firstItemId, CheckListItemCategory.PREPARATION.name(), anotherClubMember.getId(), secondItemId, CheckListItemCategory.ETC.name());
 
     mockMvc.perform(
             put("/api/v1/checklists/" + checkListId)
@@ -664,7 +671,8 @@ public class ApiV1CheckListControllerTest {
     memberRepository.save(anotherMember);
 
     // 먼저 체크리스트를 생성
-    Long checkListId = checkListCreate();
+    JsonNode jsonNode = checkListCreate();
+    Long checkListId = jsonNode.get("data").get("id").asLong();
 
     String requestBody = """
           {
@@ -722,7 +730,8 @@ public class ApiV1CheckListControllerTest {
     clubRepository.save(club);
 
     // 먼저 체크리스트를 생성
-    Long checkListId = checkListCreate();
+    JsonNode jsonNode = checkListCreate();
+    Long checkListId = jsonNode.get("data").get("id").asLong();
 
     String requestBody = """
           {
@@ -754,7 +763,8 @@ public class ApiV1CheckListControllerTest {
   @DisplayName("체크리스트 수정 실패 - JWT가 유효하지 않은 경우")
   void t19() throws Exception {
     // 먼저 체크리스트를 생성
-    Long checkListId = checkListCreate();
+    JsonNode jsonNode = checkListCreate();
+    Long checkListId = jsonNode.get("data").get("id").asLong();
 
     String requestBody = """
           {
@@ -786,7 +796,8 @@ public class ApiV1CheckListControllerTest {
   @DisplayName("체크리스트 수정 실패 - JWT가 없는 경우")
   void t20() throws Exception {
     // 먼저 체크리스트를 생성
-    Long checkListId = checkListCreate();
+    JsonNode jsonNode = checkListCreate();
+    Long checkListId = jsonNode.get("data").get("id").asLong();
 
     String requestBody = """
           {
@@ -817,7 +828,8 @@ public class ApiV1CheckListControllerTest {
   @DisplayName("체크리스트 수정 실패 - JWT 토큰 만료")
   void t21() throws Exception {
     // 먼저 체크리스트를 생성
-    Long checkListId = checkListCreate();
+    JsonNode jsonNode = checkListCreate();
+    Long checkListId = jsonNode.get("data").get("id").asLong();
 
     // 만료된 JWT 토큰 생성
     Map<String, Object> expiredClaims = Map.of(

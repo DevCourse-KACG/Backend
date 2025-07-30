@@ -216,7 +216,7 @@ public class CheckListService {
     } catch (IllegalArgumentException e) {
       return RsData.of(403, e.getMessage());
     }
-    // CheckList의 활성화 여부 업데이트
+    // CheckList의 아이템 업데이트
     checkList.updateCheckListItems(checkListItems);
 
     // CheckList 엔티티 저장

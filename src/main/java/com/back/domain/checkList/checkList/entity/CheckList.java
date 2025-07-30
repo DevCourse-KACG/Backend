@@ -29,7 +29,7 @@ public class CheckList {
     @JoinColumn(name = "schedule_id", nullable = false)
     private Schedule schedule;
 
-    @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL, mappedBy = "checkList")
+    @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL, mappedBy = "checkList", orphanRemoval = true)
     @Description("체크리스트 아이템들")
     private List<CheckListItem> checkListItems;
 
