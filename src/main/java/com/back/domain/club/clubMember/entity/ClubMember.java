@@ -50,4 +50,8 @@ public class ClubMember {
         this.itemAssigns.add(itemAssign);
         itemAssign.setClubMember(this);
     }
+
+    public void updateState(ClubMemberState newState) {
+        this.state = newState;
+    }
 }

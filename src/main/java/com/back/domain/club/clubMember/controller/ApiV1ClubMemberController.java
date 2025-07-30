@@ -26,4 +26,15 @@ public class ApiV1ClubMemberController {
 
         return RsData.of(201, "클럽에 멤버가 추가됐습니다.", null);
     }
+
+    @DeleteMapping("/{memberId}")
+    @Operation(summary = "클럽에서 멤버 탈퇴")
+    public RsData<Void> withdrawMemberFromClub(
+            @PathVariable Long clubId,
+            @PathVariable Long memberId
+    ) {
+        clubMemberService.withdrawMemberFromClub(clubId, memberId);
+
+        return RsData.of(200, "클럽에서 멤버가 탈퇴됐습니다.", null);
+    }
 }

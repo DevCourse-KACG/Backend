@@ -8,6 +8,7 @@ import com.back.domain.member.member.service.MemberService;
 import com.back.global.aws.S3Service;
 import com.back.global.enums.ClubCategory;
 import com.back.global.enums.ClubMemberRole;
+import com.back.global.enums.ClubMemberState;
 import com.back.global.enums.EventType;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -389,7 +390,7 @@ class ApiV1ClubMemberControllerTest {
         assertThat(club.getClubMembers().size()).isEqualTo(1); // 클럽에 멤버가 여전히 존재해야 함
         assertThat(club.getClubMembers().get(0).getMember().getEmail()).isEqualTo(member1.getEmail());
         assertThat(club.getClubMembers().get(0).getRole()).isEqualTo(ClubMemberRole.PARTICIPANT);
-        assertThat(club.getClubMembers().get(0).getState()).isEqualTo("WITHDRAWN"); // 상태가 WITHDRAWN으로 변경되었는지 확인
+        assertThat(club.getClubMembers().get(0).getState()).isEqualTo(ClubMemberState.WITHDRAWN); // 상태가 WITHDRAWN으로 변경되었는지 확인
     }
 
     @Test
@@ -448,9 +449,9 @@ class ApiV1ClubMemberControllerTest {
         resultActions
                 .andExpect(handler().handlerType(ApiV1ClubMemberController.class))
                 .andExpect(handler().methodName("withdrawMemberFromClub"))
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.code").value(400))
-                .andExpect(jsonPath("$.message").value("사용자를 찾을 수 없습니다."));
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.code").value(404))
+                .andExpect(jsonPath("$.message").value("멤버가 존재하지 않습니다."));
     }
 }
 

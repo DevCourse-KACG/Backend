@@ -12,6 +12,7 @@ import com.back.global.enums.ClubMemberState;
 import com.back.global.exception.ServiceException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.HashSet;
 import java.util.List;
@@ -24,6 +25,13 @@ public class ClubMemberService {
     private final ClubService clubService;
     private final MemberService memberService;
 
+    /**
+     * 클럽에 멤버를 추가합니다.
+     * @param clubId 클럽 ID
+     * @param member 추가할 멤버
+     * @param role 클럽 멤버 역할
+     */
+    @Transactional
     public void addMemberToClub(Long clubId, Member member, ClubMemberRole role) {
         Club club = clubService.getClubById(clubId)
                 .orElseThrow(() -> new ServiceException(404, "클럽이 존재하지 않습니다."));
@@ -39,6 +47,12 @@ public class ClubMemberService {
         clubMemberRepository.save(clubMember);
     }
 
+    /**
+     * 클럽에 멤버를 추가합니다. 요청된 이메일을 기반으로 중복된 멤버는 제외하고 추가합니다.
+     * @param clubId 클럽 ID
+     * @param reqBody 클럽 멤버 등록 요청 DTO
+     */
+    @Transactional
     public void addMembersToClub(Long clubId, ClubMemberDtos.ClubMemberRegisterRequest reqBody) {
         Club club = clubService.getClubById(clubId).orElseThrow(() -> new ServiceException(404, "클럽이 존재하지 않습니다."));
 
@@ -69,5 +83,26 @@ public class ClubMemberService {
                     clubMemberRepository.save(clubMember);
                 });
 
+    }
+
+    /**
+     * 클럽에서 멤버를 탈퇴시킵니다.
+     * @param clubId 클럽 ID
+     * @param memberId 탈퇴할 멤버 ID
+     */
+    @Transactional
+    public void withdrawMemberFromClub(Long clubId, Long memberId) {
+        // TODO : 유저 권한 체크
+
+        Club club = clubService.getClubById(clubId)
+                .orElseThrow(() -> new ServiceException(404, "클럽이 존재하지 않습니다."));
+        Member member = memberService.findById(memberId)
+                .orElseThrow(() -> new ServiceException(404, "멤버가 존재하지 않습니다."));
+        ClubMember clubMember = clubMemberRepository.findByClubAndMember(club, member)
+                .orElseThrow(() -> new ServiceException(404, "멤버가 존재하지 않습니다."));
+
+        // 클럽에서 멤버 탈퇴
+        clubMember.updateState(ClubMemberState.WITHDRAWN);
+        clubMemberRepository.save(clubMember);
     }
 }
