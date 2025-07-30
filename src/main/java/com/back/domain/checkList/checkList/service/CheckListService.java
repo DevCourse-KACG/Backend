@@ -61,7 +61,7 @@ public class CheckListService {
     Schedule schedule = otnSchedule.get();
 
     // Schedule에 CheckList가 이미 존재하는 경우 RsData 반환
-    if (schedule.getCheckList() != null) return RsData.of(403, "이미 체크리스트가 존재합니다");
+    if (schedule.getCheckList() != null) return RsData.of(409, "이미 체크리스트가 존재합니다");
 
     // Schedule 엔티티에서 클럽 조회 멤버 조회
     Optional<ClubMember> otnClubMember = schedule.getClub().getClubMembers().stream()
@@ -117,7 +117,39 @@ public class CheckListService {
     return RsData.of(201, "체크리스트 생성 성공", checkListDto);
   }
 
+  public RsData<CheckListDto> getCheckList(Long checkListId) {
+    RsData<Map<String, Object>> jwtRsData = getJwtData();
 
+    // JWT 데이터가 유효하지 않은 경우 RsData 반환
+    if (jwtRsData.code() != 200) {
+      return RsData.of(jwtRsData.code(), jwtRsData.message());
+    }
+    // JWT에서 멤버 ID 추출
+    Map<String, Object> jwtData = jwtRsData.data();
+    long memberId = ((Number) jwtData.get("id")).longValue();
+
+    // 체크리스트 ID로 체크리스트 조회
+    Optional<CheckList> otnCheckList = checkListRepository.findById(checkListId);
+
+    // 체크리스트가 존재하지 않는 경우 RsData 반환
+    if (otnCheckList.isEmpty()) return RsData.of(404, "체크리스트를 찾을 수 없습니다");
+    CheckList checkList = otnCheckList.get();
+
+    // 체크리스트의 연동된 일정이 존재하지 않는 경우 RsData 반환
+    if (checkList.getSchedule() == null) return RsData.of(404, "체크리스트에 연동된 일정이 없습니다");
+
+    // 체크리스트의 연동된 일정의 클럽 멤버 조회
+    Optional<ClubMember> otnClubMember = checkList.getSchedule().getClub().getClubMembers().stream()
+        .filter(clubMember -> clubMember.getMember().getId().equals(memberId)).findFirst();
+
+    // 클럽 멤버가 아닌 경우 RsData 반환
+    if (otnClubMember.isEmpty() || !otnClubMember.get().getState().equals(ClubMemberState.JOINING)) return RsData.of(403, "클럽 멤버가 아닙니다");
+
+    // 체크리스트가 존재하는 경우 체크리스트 DTO로 변환
+    CheckListDto checkListDto = new CheckListDto(checkList);
+
+    return RsData.of(200, "체크리스트 조회 성공", checkListDto);
+  }
 
 
 
@@ -168,4 +200,6 @@ public class CheckListService {
     return RsData.of(200, "토큰 검증 성공", jwtData);
 
   }
+
+
 }

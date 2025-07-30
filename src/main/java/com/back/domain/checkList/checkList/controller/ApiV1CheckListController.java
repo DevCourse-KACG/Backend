@@ -10,10 +10,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/v1/checklists")
@@ -26,6 +23,14 @@ public class ApiV1CheckListController {
   @Operation(summary = "체크리스트 생성")
   public ResponseEntity<RsData<CheckListDto>> write(@Valid @RequestBody CheckListWriteReqDto checkListWriteReqDto) {
     RsData<CheckListDto> checkListDto = checkListService.write(checkListWriteReqDto);
+
+    return ResponseEntity.status(checkListDto.code()).body(checkListDto);
+  }
+
+  @GetMapping("/{checkListId}")
+  @Operation(summary = "체크리스트 조회")
+  public ResponseEntity<RsData<CheckListDto>> getCheckList(@PathVariable Long checkListId) {
+    RsData<CheckListDto> checkListDto = checkListService.getCheckList(checkListId);
 
     return ResponseEntity.status(checkListDto.code()).body(checkListDto);
   }
