@@ -26,6 +26,7 @@ public interface MemberRepository extends JpaRepository<Member, Long> {
             "friendshipsAsMember1.member2.memberInfo", // member1로 등록 된 경우 친구 member2의 정보
             "friendshipsAsMember2.member1.memberInfo"  // member2로 등록 된 경우 친구 member1의 정보
     })
+    @Query("SELECT m FROM Member m WHERE m.id = :memberId")
     Optional<Member> findWithFriendsById(Long memberId);
 
     @Query("""
