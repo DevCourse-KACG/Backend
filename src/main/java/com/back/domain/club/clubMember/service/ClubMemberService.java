@@ -33,19 +33,19 @@ public class ClubMemberService {
      * @param role 클럽 멤버 역할
      */
     @Transactional
-    public void addMemberToClub(Long clubId, Member member, ClubMemberRole role) {
+    public ClubMember addMemberToClub(Long clubId, Member member, ClubMemberRole role) {
         Club club = clubService.getClubById(clubId)
                 .orElseThrow(() -> new ServiceException(404, "클럽이 존재하지 않습니다."));
 
         ClubMember clubMember = ClubMember.builder()
                 .member(member)
                 .role(role) // 기본 역할은 MEMBER
-                .state(ClubMemberState.INVITED) // 기본 상태는 JOINED
+                .state(ClubMemberState.INVITED) // 기본 상태는 INVITED
                 .build();
 
         club.addClubMember(clubMember);
 
-        clubMemberRepository.save(clubMember);
+        return clubMemberRepository.save(clubMember);
     }
 
     /**
@@ -128,4 +128,5 @@ public class ClubMemberService {
         clubMember.updateRole(ClubMemberRole.fromString(role.toUpperCase()));
         clubMemberRepository.save(clubMember);
     }
+
 }
