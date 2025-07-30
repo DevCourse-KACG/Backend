@@ -108,8 +108,6 @@ class ApiV1ClubControllerTest {
         assertThat(club.getClubMembers().isEmpty()).isTrue(); // 구성원이 비어있는지 확인
     }
 
-
-
     @Test
     @DisplayName("빈 클럽 생성 - 이미지가 있는 경우")
     void createClubWithImage() throws Exception {
@@ -253,8 +251,6 @@ class ApiV1ClubControllerTest {
         assertThat(club.getClubMembers().get(3).getMember().getId()).isEqualTo(4L);
 
     }
-
-
 
     @Test
     @DisplayName("클럽 정보 수정")
@@ -700,4 +696,6 @@ class ApiV1ClubControllerTest {
                 .andExpect(jsonPath("$.data.content[1].leaderId").value(club2.getLeaderId()))
                 .andExpect(jsonPath("$.data.content[1].leaderName").value("최지우"));
     }
+
+
 }
