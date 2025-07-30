@@ -2,10 +2,7 @@ package com.back.domain.member.member.service;
 
 import com.back.domain.api.service.ApiKeyService;
 import com.back.domain.auth.service.AuthService;
-import com.back.domain.member.member.dto.request.GuestRegisterDto;
-import com.back.domain.member.member.dto.request.MemberLoginDto;
-import com.back.domain.member.member.dto.request.MemberRegisterDto;
-import com.back.domain.member.member.dto.request.UpdateMemberInfoDto;
+import com.back.domain.member.member.dto.request.*;
 import com.back.domain.member.member.dto.response.*;
 import com.back.domain.member.member.entity.Member;
 import com.back.domain.member.member.entity.MemberInfo;
@@ -71,6 +68,19 @@ public class MemberService {
         String accessToken = authService.generateAccessToken(member);
 
         return new MemberAuthResponse(apiKey, accessToken);
+    }
+
+    //비회원 임시 로그인 메인 메소드
+    public GuestResponse GuestLogin(@Valid GuestLoginDto guestLoginDto) {
+        Optional<Member> optionalMember = memberRepository.findByGuestNicknameInClub(guestLoginDto.nickname(), guestLoginDto.clubId());
+        Member member = validateGuestLogin(optionalMember);
+        validateRightPassword(guestLoginDto.password(), member);
+
+        String accessToken = authService.generateAccessToken(member);
+        String nickname = guestLoginDto.nickname();
+        Long clubId = guestLoginDto.clubId();
+
+        return new GuestResponse(nickname, accessToken, clubId);
     }
 
     //회원 탈퇴 메인 메소드
@@ -213,10 +223,19 @@ public class MemberService {
     private Member validateUserLogin(Optional<MemberInfo> memberInfo) {
         //이메일 오류
         if (memberInfo.isEmpty()) {
-            throw new ServiceException(400, "이메일과 비밀번호가 맞지 않습니다.");
+            throw new ServiceException(400, "해당 사용자를 찾을 수 없습니다.");
         }
 
         return memberInfo.get().getMember();
+    }
+
+    private Member validateGuestLogin(Optional<Member> member) {
+        //닉네임 오류
+        if (member.isEmpty()) {
+            throw new ServiceException(400, "해당 사용자를 찾을 수 없습니다.");
+        }
+
+        return member.get();
     }
 
     private void validateRightPassword(String password, Member member) {
@@ -224,7 +243,7 @@ public class MemberService {
         PasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
 
         if (!passwordEncoder.matches(password, member.getPassword())) {
-            throw new ServiceException(400, "이메일과 비밀번호가 맞지 않습니다.");
+            throw new ServiceException(400, "해당 사용자를 찾을 수 없습니다.");
         }
     }
 
