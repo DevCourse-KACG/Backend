@@ -35,6 +35,7 @@ public class Friend {
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
+    @Setter
     private FriendStatus status;
 
     @CreatedDate
