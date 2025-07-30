@@ -14,6 +14,7 @@ import com.back.domain.member.member.service.MemberService;
 import com.back.global.exception.ServiceException;
 import com.back.global.rsData.RsData;
 import com.back.global.security.SecurityUser;
+import io.jsonwebtoken.io.IOException;
 import io.swagger.v3.oas.annotations.Operation;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
@@ -139,10 +140,10 @@ public class ApiV1MemberController {
     @PreAuthorize("isAuthenticated()")
     @PutMapping("/me")
     public RsData<MemberDetailInfoResponse> updateInfo(@AuthenticationPrincipal SecurityUser user,
-                                                       @RequestPart(value = "info") UpdateMemberInfoDto dto,
-                                                       @RequestPart(value = "profileImage", required = false) MultipartFile profileImage) {
+                                                       @RequestPart(value = "data") UpdateMemberInfoDto dto,
+                                                       @RequestPart(value = "profileImage", required = false) MultipartFile profileImage) throws IOException {
         MemberDetailInfoResponse memberDetailInfoResponse =
-                memberService.updateUserInfo(user.getId(), dto, profileImage);
+                memberService.updateInfo(user.getId(), dto, profileImage);
 
         return RsData.of(200,
                 "유저 정보 수정 성공",

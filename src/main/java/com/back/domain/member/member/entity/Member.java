@@ -76,4 +76,10 @@ public class Member {
   public Collection<? extends GrantedAuthority> getAuthorities() {
     return List.of(new SimpleGrantedAuthority("ROLE_USER"));
   }
+
+  public void updateInfo(String nickname, String tag, String password) {
+    this.nickname = nickname;
+    this.tag = tag;
+    this.password = password;
+  }
 }

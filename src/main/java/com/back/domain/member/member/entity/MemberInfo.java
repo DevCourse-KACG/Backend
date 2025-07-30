@@ -46,4 +46,11 @@ public class MemberInfo {
         this.member = member;
     }
 
+    public void updateImageUrl(String imageUrl) {
+        this.profileImageUrl = imageUrl;
+    }
+
+    public void updateBio(String bio) {
+        this.bio = bio;
+    }
 }
