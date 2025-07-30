@@ -4,6 +4,7 @@ import com.back.domain.api.dto.TokenRefreshRequest;
 import com.back.domain.member.member.dto.request.MemberLoginDto;
 import com.back.domain.member.member.dto.request.MemberRegisterDto;
 import com.back.domain.member.member.dto.request.PasswordCheckRequestDto;
+import com.back.domain.member.member.dto.request.UpdateMemberInfoDto;
 import com.back.domain.member.member.dto.response.MemberAuthResponse;
 import com.back.domain.member.member.dto.response.MemberDetailInfoResponse;
 import com.back.domain.member.member.dto.response.MemberPasswordResponse;
@@ -21,6 +22,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 @RestController
 @RequiredArgsConstructor
@@ -133,7 +135,19 @@ public class ApiV1MemberController {
                 "유저 정보 반환 성공",
                 memberDetailInfoResponse);
     }
+    @Operation(summary = "내 정보 수정 API", description = "현재 로그인한 유저 정보를 수정하는 API 입니다.")
+    @PreAuthorize("isAuthenticated()")
+    @PutMapping("/me")
+    public RsData<MemberDetailInfoResponse> updateInfo(@AuthenticationPrincipal SecurityUser user,
+                                                       @RequestPart(value = "info") UpdateMemberInfoDto dto,
+                                                       @RequestPart(value = "profileImage", required = false) MultipartFile profileImage) {
+        MemberDetailInfoResponse memberDetailInfoResponse =
+                memberService.updateUserInfo(user.getId(), dto, profileImage);
 
+        return RsData.of(200,
+                "유저 정보 수정 성공",
+                memberDetailInfoResponse);
+    }
 
     private Cookie createAccessTokenCookie(String accessToken) {
         Cookie cookie = new Cookie("accessToken", accessToken);
