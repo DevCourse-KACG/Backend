@@ -2,6 +2,7 @@ package com.back.domain.member.member;
 
 import com.back.domain.api.service.ApiKeyService;
 import com.back.domain.auth.service.AuthService;
+import com.back.domain.member.member.dto.response.MemberDetailInfoResponse;
 import com.back.domain.member.member.entity.Member;
 import com.back.domain.member.member.entity.MemberInfo;
 import com.back.domain.member.member.repository.MemberRepository;
@@ -15,10 +16,13 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
+import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.nio.charset.StandardCharsets;
 import java.util.Optional;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
@@ -417,6 +421,61 @@ public class ApiV1MemberControllerTest {
                         .with(user(securityUser)))
                 .andExpect(status().isBadRequest())  // @NotBlank 검증 실패 예상
                 .andExpect(jsonPath("$.code").value(400)); // 상세 메시지는 DTO의 @NotBlank 메시지에 따라 다름
+    }
+
+    @Test
+    @DisplayName("유저 정보 수정 - 성공")
+    public void updateUserInfoTest_green() throws Exception {
+        Member member = memberFixture.createMember(1);
+
+        SecurityUser securityUser = new SecurityUser(
+                member.getId(),
+                member.getNickname(),
+                member.getTag(),
+                member.getPassword(),
+                Collections.emptyList()
+        );
+
+        MemberDetailInfoResponse response = new MemberDetailInfoResponse(
+                "개나리", "test1@example.com", "노란색 개나리", "http://s3.com/profile.jpg", "newTag");
+
+
+        String requestBody = """
+                {
+                    "nickname": "개나리",
+                    "password": "newPassword",
+                    "bio": "노란색 개나리"
+                }
+                """;
+
+        MockMultipartFile dataPart = new MockMultipartFile(
+                "data", "data",
+                MediaType.APPLICATION_JSON_VALUE,
+                requestBody.getBytes(StandardCharsets.UTF_8)
+        );
+
+        MockMultipartFile imagePart = new MockMultipartFile(
+                "profileImage", "profileImage",
+                MediaType.IMAGE_JPEG_VALUE,
+                "fake-image-content".getBytes(StandardCharsets.UTF_8)
+        );
+
+        mockMvc.perform(multipart(HttpMethod.PUT, "/api/v1/members/me")
+                        .file(dataPart)
+                        .file(imagePart)
+                        .with(user(securityUser))
+                        .contentType(MediaType.MULTIPART_FORM_DATA))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.nickname").value("개나리"))
+                .andExpect(jsonPath("$.data.bio").value("노란색 개나리"))
+                .andExpect(jsonPath("$.data.profileImage").isNotEmpty());
+
+        Member updated = memberRepository.findById(member.getId()).orElseThrow();
+        assertThat(updated.getNickname()).isEqualTo("개나리");
+        assertThat(updated.getTag()).isNotNull();
+        assertThat(updated.getPassword()).isNotEqualTo("newPassword");
+        assertThat(updated.getMemberInfo().getBio()).isEqualTo("노란색 개나리");
+        assertThat(updated.getMemberInfo().getProfileImageUrl()).isNotBlank();
     }
 
 
