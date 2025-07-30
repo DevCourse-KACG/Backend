@@ -1,5 +1,6 @@
 package com.back.domain.auth.service;
 
+import com.back.domain.member.member.MemberType;
 import com.back.domain.member.member.entity.Member;
 import com.back.standard.util.Ut;
 import org.springframework.beans.factory.annotation.Value;
@@ -16,24 +17,31 @@ public class AuthService {
     private int accessTokenExpirationSeconds;
 
     public String generateAccessToken(Member member) {
+        //1. 회원, 비회원 공통 검증
         if (member == null) {
             throw new IllegalArgumentException("Member 정보가 없습니다.");
         }
 
         long id = member.getId();
-        String email = null;
+        String email = "";
+        String nickname = member.getNickname();
+        String tag = member.getTag();
+        MemberType memberType = member.getMemberType();
+
+        //2. 회원 검증
         if (member.getMemberInfo() != null) {
             email = member.getMemberInfo().getEmail();
         }
-        String name = member.getNickname();
 
         return Ut.jwt.toString(
                 jwtSecretKey,
                 accessTokenExpirationSeconds,
                 Map.of(
                         "id", id,
-                        "email", email == null ? "" : email,  // null 대신 빈 문자열로 처리하거나,
-                        "name", name
+                        "email", email == null ? "" : email,
+                        "nickname", nickname,
+                        "tag", tag,
+                        "memberType", memberType.toString()
                 )
         );
     }
