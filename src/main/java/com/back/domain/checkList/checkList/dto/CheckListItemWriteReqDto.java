@@ -15,6 +15,7 @@ public record CheckListItemWriteReqDto(
     CheckListItemCategory category,
     int sequence,
     boolean isChecked,
+    @Valid
     List<ItemAssignReqDto> itemAssigns
 ) {
 }

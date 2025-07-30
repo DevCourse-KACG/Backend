@@ -13,6 +13,7 @@ import com.back.standard.util.Ut;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Map;
@@ -29,6 +30,7 @@ public class PresetService {
   @Value("${custom.jwt.secretKey}")
   private String secretKey;
 
+  @Transactional
   public RsData<PresetDto> write(PresetWriteReqDto presetWriteReqDto) {
     RsData<Map<String, Object>> jwtRsData = getJwtData();
 
@@ -123,6 +125,7 @@ public class PresetService {
     return RsData.of(200, "프리셋 목록 조회 성공", presetDtos);
   }
 
+  @Transactional
   public RsData<Void> deletePreset(Long presetId) {
     RsData<Map<String, Object>> jwtRsData = getJwtData();
 
@@ -150,6 +153,7 @@ public class PresetService {
     return RsData.of(200, "프리셋 삭제 성공");
   }
 
+  @Transactional
   public RsData<PresetDto> updatePreset(Long presetId, PresetWriteReqDto presetWriteReqDto) {
     RsData<Map<String, Object>> jwtRsData = getJwtData();
 

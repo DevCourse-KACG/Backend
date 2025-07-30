@@ -62,6 +62,7 @@ public class ApiV1CheckListControllerTest {
   private Member member;
   private ClubMember clubMember;
   private Schedule schedule;
+
   @BeforeEach
   void setUp() {
     Member memberBuilder = Member.builder()
@@ -79,7 +80,7 @@ public class ApiV1CheckListControllerTest {
     // JWT 토큰 생성
     jwtToken = Ut.jwt.toString(secretKey, expirationSeconds, claims);
 
-     clubMember = ClubMember.builder()
+    clubMember = ClubMember.builder()
         .member(member)
         .role(ClubMemberRole.MANAGER)
         .state(ClubMemberState.JOINING)
@@ -272,7 +273,7 @@ public class ApiV1CheckListControllerTest {
               }
             ]
           }
-        """.formatted(schedule.getId(), CheckListItemCategory.PREPARATION.name(), anotherClubMember.getId());
+        """.formatted(schedule.getId(), CheckListItemCategory.PREPARATION.name(), member.getId());
     mockMvc.perform(
             post("/api/v1/checklists")
                 .header("Authorization", "Bearer " + anotherJwtToken)

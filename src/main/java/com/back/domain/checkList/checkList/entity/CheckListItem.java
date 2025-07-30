@@ -33,7 +33,7 @@ public class CheckListItem {
     @Description("체크리스트 이름")
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "check_list_id", nullable = false)
-    @Setter
+    @Setter(AccessLevel.PACKAGE)
     private CheckList checkList;
 
     @Description("체크 아이템 완료 여부")

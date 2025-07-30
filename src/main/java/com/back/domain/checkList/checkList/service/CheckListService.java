@@ -21,6 +21,7 @@ import com.back.standard.util.Ut;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Collections;
 import java.util.List;
@@ -33,14 +34,13 @@ import java.util.stream.Collectors;
 public class CheckListService {
   private final CheckListRepository checkListRepository;
   private final ScheduleRepository scheduleRepository;
-  private final ClubRepository clubRepository;
-  private final ClubMemberRepository clubMemberRepository;
   private final MemberRepository memberRepository;
   private final Rq rq;
 
   @Value("${custom.jwt.secretKey}")
   private String secretKey;
 
+  @Transactional
   public RsData<CheckListDto> write(CheckListWriteReqDto checkListWriteReqDto) {
     RsData<Map<String, Object>> jwtRsData = getJwtData();
 
@@ -109,7 +109,7 @@ public class CheckListService {
 
     // CheckList 엔티티 저장
     CheckList checkList = checkListRepository.save(checkListBuilder);
-    schedule.setCheckList(checkList); // Schedule과 CheckList 연관 설정
+    schedule.updateCheckList(checkList); // Schedule과 CheckList 연관 설정
     scheduleRepository.save(schedule); // Schedule 업데이트
     // CheckListDto로 변환
     CheckListDto checkListDto = new CheckListDto(checkList);

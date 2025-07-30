@@ -23,7 +23,6 @@ public class ApiV1CheckListController {
   private final CheckListService checkListService;
 
   @PostMapping
-  @Transactional
   @Operation(summary = "체크리스트 생성")
   public ResponseEntity<RsData<CheckListDto>> write(@Valid @RequestBody CheckListWriteReqDto checkListWriteReqDto) {
     RsData<CheckListDto> checkListDto = checkListService.write(checkListWriteReqDto);
