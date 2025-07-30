@@ -71,7 +71,7 @@ public class MemberService {
     }
 
     //비회원 임시 로그인 메인 메소드
-    public GuestResponse GuestLogin(@Valid GuestLoginDto guestLoginDto) {
+    public GuestResponse guestLogin(@Valid GuestLoginDto guestLoginDto) {
         Optional<Member> optionalMember = memberRepository.findByGuestNicknameInClub(guestLoginDto.nickname(), guestLoginDto.clubId());
         Member member = validateGuestLogin(optionalMember);
         validateRightPassword(guestLoginDto.password(), member);

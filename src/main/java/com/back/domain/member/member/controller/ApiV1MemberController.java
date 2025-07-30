@@ -165,7 +165,7 @@ public class ApiV1MemberController {
     @PutMapping("/auth/guest-login")
     public RsData<GuestResponse> guestLogin(HttpServletResponse response,
                                                 @Valid @RequestBody GuestLoginDto guestLoginDto) {
-        GuestResponse guestAuthResponse = memberService.GuestLogin(guestLoginDto);
+        GuestResponse guestAuthResponse = memberService.guestLogin(guestLoginDto);
 
         Cookie accessTokenCookie = createAccessTokenCookie(guestAuthResponse.accessToken(), true);
 
