@@ -2,11 +2,12 @@ package com.back.domain.member.member;
 
 import com.back.domain.api.service.ApiKeyService;
 import com.back.domain.auth.service.AuthService;
+import com.back.domain.club.club.entity.Club;
+import com.back.domain.club.club.repository.ClubRepository;
 import com.back.domain.member.member.dto.response.MemberDetailInfoResponse;
 import com.back.domain.member.member.entity.Member;
 import com.back.domain.member.member.entity.MemberInfo;
 import com.back.domain.member.member.repository.MemberRepository;
-import com.back.domain.member.member.service.MemberService;
 import com.back.domain.member.member.support.MemberFixture;
 import com.back.global.security.SecurityUser;
 import io.jsonwebtoken.lang.Collections;
@@ -19,6 +20,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -32,6 +34,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
+@ActiveProfiles("test")
 @SpringBootTest
 @Transactional
 @AutoConfigureMockMvc
@@ -52,7 +55,7 @@ public class ApiV1MemberControllerTest {
     private AuthService authService;
 
     @Autowired
-    private MemberService memberService;
+    private ClubRepository clubRepository;
 
     @Test
     @DisplayName("회원가입 - 정상 기입 / 객체 정상 생성")
@@ -191,7 +194,7 @@ public class ApiV1MemberControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(requestBody))
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.message").value("이메일과 비밀번호가 맞지 않습니다."))
+                .andExpect(jsonPath("$.message").value("해당 사용자를 찾을 수 없습니다."))
                 .andExpect(jsonPath("$.code").value(400))
                 .andExpect(jsonPath("$.data").doesNotExist());
 
@@ -213,7 +216,7 @@ public class ApiV1MemberControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(requestBody))
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.message").value("이메일과 비밀번호가 맞지 않습니다."))
+                .andExpect(jsonPath("$.message").value("해당 사용자를 찾을 수 없습니다."))
                 .andExpect(jsonPath("$.code").value(400))
                 .andExpect(jsonPath("$.data").doesNotExist());
 
@@ -524,6 +527,42 @@ public class ApiV1MemberControllerTest {
 
         // clubId는 Member 엔티티에 직접 없으면, 연관된 클럽 객체로 확인 (필요시)
     }
+
+    @Test
+    @DisplayName("비회원 임시 로그인 - 정상 처리")
+    public void guestLogin_success() throws Exception {
+        Member guest = memberRepository.findByNickname("김암호").orElseThrow();
+
+        Club club = clubRepository.findAll().stream()
+                .filter(c -> c.getName().equals("친구 모임2"))
+                .findFirst()
+                .orElseThrow(() -> new IllegalArgumentException("친구 모임2 클럽을 찾을 수 없습니다."));
+        System.out.println("친구 모임2 ID = " + club.getId());
+
+        String rawPassword = "password13";
+
+        String requestBody = """
+        {
+            "nickname": "%s",
+            "password": "%s",
+            "clubId": %d
+        }
+    """.formatted(guest.getNickname(), rawPassword, club.getId());
+
+        mockMvc.perform(put("/api/v1/members/auth/guest-login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(requestBody))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value(200))
+                .andExpect(jsonPath("$.message").value("비회원 로그인 성공"))
+                .andExpect(jsonPath("$.data.nickname").value(guest.getNickname()))
+                .andExpect(jsonPath("$.data.clubId").value(club.getId().intValue()))
+                .andExpect(jsonPath("$.data.accessToken").isNotEmpty())
+                .andExpect(cookie().exists("accessToken"))
+                .andDo(print());
+    }
+
+
 
 
     private Cookie loginAndGetAccessTokenCookie(String email, String password) throws Exception {

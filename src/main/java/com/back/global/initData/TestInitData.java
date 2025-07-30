@@ -29,6 +29,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
@@ -110,6 +111,9 @@ public class TestInitData {
 
         Member guest2 = createMember("레베카", "password12", null, null);
         members.put(guest2.getNickname(), guest2);
+
+        Member guest3 = createEncodedMember("김암호", "password13", null, null);
+        members.put(guest3.getNickname(), guest3);
     }
 
     /**
@@ -322,7 +326,8 @@ public class TestInitData {
                 new GroupMemberData("친구 모임", "박민수", ClubMemberRole.PARTICIPANT),
                 new GroupMemberData("친구 모임", "이영희", ClubMemberRole.PARTICIPANT),
                 new GroupMemberData("친구 모임2", "이덕혜", ClubMemberRole.PARTICIPANT),
-                new GroupMemberData("독서 모임", "레베카", ClubMemberRole.PARTICIPANT)
+                new GroupMemberData("독서 모임", "레베카", ClubMemberRole.PARTICIPANT),
+                new GroupMemberData("친구 모임2", "김암호", ClubMemberRole.PARTICIPANT) //암호화 테스트용 데이터
         );
 
         for (GroupMemberData gm : groupMembers) {
@@ -527,6 +532,28 @@ public class TestInitData {
                 .nickname(nickname)
                 .password(password)
                 .build();
+        memberRepository.save(member);
+
+        if (email == null) return member;
+
+        MemberInfo info = MemberInfo.builder()
+                .email(email)
+                .bio(bio)
+                .member(member)
+                .build();
+        memberInfoRepository.save(info);
+
+        member.setMemberInfo(info);
+        return member;
+    }
+
+    /**
+     * 회원 생성 메서드 2 - 비밀번호 암호화 테스트용
+     */
+    private Member createEncodedMember(String nickname, String password, String email, String bio) {
+        BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
+
+        Member member = Member.createGuest(nickname, passwordEncoder.encode(password), "2344");
         memberRepository.save(member);
 
         if (email == null) return member;

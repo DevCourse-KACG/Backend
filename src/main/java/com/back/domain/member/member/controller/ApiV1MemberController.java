@@ -30,7 +30,7 @@ public class ApiV1MemberController {
     public RsData<MemberAuthResponse> register(@Valid @RequestBody MemberRegisterDto memberRegisterDto, HttpServletResponse response) {
         MemberAuthResponse memberAuthResponse = memberService.register(memberRegisterDto);
 
-        Cookie accessTokenCookie = createAccessTokenCookie(memberAuthResponse.accessToken());
+        Cookie accessTokenCookie = createAccessTokenCookie(memberAuthResponse.accessToken(), false);
 
         response.addCookie(accessTokenCookie);
 
@@ -42,7 +42,7 @@ public class ApiV1MemberController {
     public RsData<MemberAuthResponse> login(@Valid @RequestBody MemberLoginDto memberLoginDto, HttpServletResponse response) {
         MemberAuthResponse memberAuthResponse = memberService.login(memberLoginDto);
 
-        Cookie accessTokenCookie = createAccessTokenCookie(memberAuthResponse.accessToken());
+        Cookie accessTokenCookie = createAccessTokenCookie(memberAuthResponse.accessToken(), false);
 
         response.addCookie(accessTokenCookie);
 
@@ -110,7 +110,7 @@ public class ApiV1MemberController {
         String newAccessToken = memberService.generateAccessToken(member);
 
         // access token 쿠키에 담아서 응답
-        Cookie accessTokenCookie = createAccessTokenCookie(newAccessToken);
+        Cookie accessTokenCookie = createAccessTokenCookie(newAccessToken, false);
         response.addCookie(accessTokenCookie);
 
         return RsData.of(200, "Access Token 재발급 성공",
@@ -152,7 +152,7 @@ public class ApiV1MemberController {
         GuestResponse guestResponse =
                 memberService.registerGuest(dto);
 
-        Cookie accessTokenCookie = createAccessTokenCookie(guestResponse.accessToken());
+        Cookie accessTokenCookie = createAccessTokenCookie(guestResponse.accessToken(), true);
 
         response.addCookie(accessTokenCookie);
 
@@ -161,12 +161,26 @@ public class ApiV1MemberController {
                 guestResponse);
     }
 
-    private Cookie createAccessTokenCookie(String accessToken) {
+    @Operation(summary = "비회원 임시 로그인 API", description = "비회원 임시 로그인 API 입니다.")
+    @PostMapping("/auth/guest-login")
+    public RsData<GuestResponse> guestLogin(HttpServletResponse response,
+                                                @Valid @RequestBody GuestLoginDto guestLoginDto) {
+        GuestResponse guestAuthResponse = memberService.guestLogin(guestLoginDto);
+
+        Cookie accessTokenCookie = createAccessTokenCookie(guestAuthResponse.accessToken(), true);
+
+        response.addCookie(accessTokenCookie);
+
+        return RsData.of(200, "비회원 로그인 성공", guestAuthResponse);
+    }
+
+    private Cookie createAccessTokenCookie(String accessToken, boolean isGuest) {
         Cookie cookie = new Cookie("accessToken", accessToken);
         cookie.setHttpOnly(true);
         cookie.setSecure(true);
         cookie.setPath("/");
-        cookie.setMaxAge(60 * 60 * 24);
+
+        cookie.setMaxAge(isGuest ? 60 * 60 * 24 * 30 : 60 * 60 * 24);
         cookie.setAttribute("SameSite", "Strict");
         return cookie;
     }
