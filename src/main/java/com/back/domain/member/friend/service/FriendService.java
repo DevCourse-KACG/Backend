@@ -84,6 +84,12 @@ public class FriendService {
         return new FriendDto(friend, responder, responderInfo);
     }
 
+    /**
+     * 친구 요청을 수락하는 메서드
+     * @param memberId
+     * @param friendId
+     * @return FriendDto
+     */
     @Transactional
     public FriendDto acceptFriend(Long memberId, Long friendId) {
         // 친구 요청을 받은 회원과 보낸 회원 조회
@@ -108,6 +114,35 @@ public class FriendService {
 
         // 친구 요청 수락
         friend.setStatus(FriendStatus.ACCEPTED);
+        friendRepository.save(friend);
+
+        return new FriendDto(friend, friendMember, friendMember.getMemberInfo());
+    }
+
+    @Transactional
+    public FriendDto rejectFriend(Long memberId, Long friendId) {
+        // 친구 요청을 받은 회원과 보낸 회원 조회
+        Member member = memberRepository.findById(memberId)
+                .orElseThrow(() -> new NoSuchElementException("회원이 존재하지 않습니다."));
+
+        Member friendMember = memberRepository.findById(friendId)
+                .orElseThrow(() -> new NoSuchElementException("친구 대상이 존재하지 않습니다."));
+
+        Friend friend = friendRepository.findByMembers(member, friendMember)
+                .orElseThrow(() -> new NoSuchElementException("친구 요청이 존재하지 않습니다."));
+
+        // 받는이가 아닌 요청자가 친구 요청을 거절하는 경우 예외 처리
+        if (member.equals(friend.getRequestedBy())) {
+            throw new ServiceException(400, "요청한 사람이 친구 요청을 거절할 수 없습니다. 친구의 요청 수락/거절을 기다리세요.");
+        }
+
+        // 이미 친구인 경우 예외 처리
+        if (friend.getStatus() == FriendStatus.ACCEPTED) {
+            throw new ServiceException(400, "이미 친구입니다. 친구 삭제를 이용해 주세요.");
+        }
+
+        // 친구 요청 거절
+        friend.setStatus(FriendStatus.REJECTED);
         friendRepository.save(friend);
 
         return new FriendDto(friend, friendMember, friendMember.getMemberInfo());

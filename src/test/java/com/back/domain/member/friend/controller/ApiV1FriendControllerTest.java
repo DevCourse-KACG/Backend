@@ -280,6 +280,83 @@ class ApiV1FriendControllerTest {
     }
 
     @Test
+    @DisplayName("친구 요청 거절")
+    @WithUserDetails(value = "lyh3@test.com")
+    void trj1() throws Exception {
+        Long friendId = 1L;
+        Member friend = memberRepository.findById(friendId).orElseThrow();
+
+        ResultActions resultActions = mockMvc
+                .perform(patch("/api/v1/members/me/friends/%d/reject".formatted(friendId))
+                )
+                .andDo(print());
+
+        resultActions
+                .andExpect(handler().handlerType(ApiV1FriendController.class))
+                .andExpect(handler().methodName("rejectFriend"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value(200))
+                .andExpect(jsonPath("$.message").value("%s님의 친구 요청을 거절하였습니다.".formatted(friend.getNickname())))
+                .andExpect(jsonPath("$.data.friendId").value(friend.getId()))
+                .andExpect(jsonPath("$.data.friendNickname").value(friend.getNickname()))
+                .andExpect(jsonPath("$.data.friendBio").value(friend.getMemberInfo().getBio()))
+                .andExpect(jsonPath("$.data.friendProfileImageUrl").value(friend.getMemberInfo().getProfileImageUrl()))
+                .andExpect(jsonPath("$.data.status").value("REJECTED"));
+    }
+
+    @Test
+    @DisplayName("친구 거절 - 친구 대상이 없는 경우 예외 처리")
+    @WithUserDetails(value = "lyh3@test.com")
+    void trj2() throws Exception {
+        performErrPatchFriend(
+                100L,
+                "reject",
+                "rejectFriend",
+                404,
+                "친구 대상이 존재하지 않습니다."
+        );
+    }
+
+    @Test
+    @DisplayName("친구 거절 - 친구 요청이 없는 경우 예외 처리")
+    @WithUserDetails(value = "lyh3@test.com")
+    void trj3() throws Exception {
+        performErrPatchFriend(
+                2L,
+                "reject",
+                "rejectFriend",
+                404,
+                "친구 요청이 존재하지 않습니다."
+        );
+    }
+
+    @Test
+    @DisplayName("친구 거절 - 받는이가 아닌 요청자가 친구 요청을 거절하는 경우 예외 처리")
+    @WithUserDetails(value = "hgd222@test.com")
+    void trj4() throws Exception {
+        performErrPatchFriend(
+                3L,
+                "reject",
+                "rejectFriend",
+                400,
+                "요청한 사람이 친구 요청을 거절할 수 없습니다. 친구의 요청 수락/거절을 기다리세요."
+        );
+    }
+
+    @Test
+    @DisplayName("친구 거절 - 이미 친구인 경우 예외 처리")
+    @WithUserDetails(value = "cjw5@test.com")
+    void trj5() throws Exception {
+        performErrPatchFriend(
+                1L,
+                "reject",
+                "rejectFriend",
+                400,
+                "이미 친구입니다. 친구 삭제를 이용해 주세요."
+        );
+    }
+
+    @Test
     @DisplayName("친구 삭제")
     @WithUserDetails(value = "hgd222@test.com")
     void td1() throws Exception {
