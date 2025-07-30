@@ -80,4 +80,10 @@ public class Member {
   public String getEmail() {
     return memberInfo != null ? memberInfo.getEmail() : null;
   }
+
+  public void updateInfo(String nickname, String tag, String password) {
+    if (nickname != null) this.nickname = nickname;
+    if (tag != null) this.tag = tag;
+    if (password != null) this.password = password;
+  }
 }

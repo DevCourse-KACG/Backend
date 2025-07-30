@@ -43,10 +43,12 @@ public class GlobalExceptionHandler {
     // NoSuchElementException: 데이터가 존재하지 않을 때 발생하는 예외
     @ExceptionHandler(NoSuchElementException.class)
     public ResponseEntity<RsData<Void>> handle(NoSuchElementException ex) {
+        String errorMessage = ex.getMessage() != null ? ex.getMessage() : "해당 데이터가 존재하지 않습니다.";
+
         return new ResponseEntity<>(
                 RsData.of(
                         404,
-                        "해당 데이터가 존재하지 않습니다."
+                        errorMessage
                 ),
                 NOT_FOUND
         );
