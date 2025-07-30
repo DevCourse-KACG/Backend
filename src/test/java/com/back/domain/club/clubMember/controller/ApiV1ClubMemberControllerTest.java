@@ -42,9 +42,9 @@ class ApiV1ClubMemberControllerTest {
     @Autowired
     private MemberService memberService;
 
-
     @MockitoBean
     private S3Service s3Service; // S3Service는 MockBean으로 주입하여 실제 S3와의 통신을 피합니다.
+
 
     @Test
     @DisplayName("클럽에 멤버 추가")
@@ -154,7 +154,7 @@ class ApiV1ClubMemberControllerTest {
                         },
                         {
                             "email": "%s",
-                            "role": "PARTICIPANT"
+                            "role": "MANAGER"
                         }
                     ]
                 }

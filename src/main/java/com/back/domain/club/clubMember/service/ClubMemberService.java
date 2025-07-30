@@ -40,7 +40,7 @@ public class ClubMemberService {
     public void addMembersToClub(Long clubId, ClubMemberDtos.ClubMemberRegisterRequest reqBody) {
         Club club = clubService.getClubById(clubId).orElseThrow(() -> new ServiceException(404, "클럽이 존재하지 않습니다."));
 
-        // 중복 체크
+        // 클럽 멤버가 이미 존재하는지 확인
         List<String> existingMemberEmails = clubMemberRepository.findAllByClubId(clubId)
                 .stream()
                 .map(clubMember -> clubMember.getMember().getEmail())
@@ -48,7 +48,10 @@ public class ClubMemberService {
 
         List<ClubMemberDtos.ClubMemberRegisterInfo> newMembers = reqBody.members().stream()
                 .filter(memberInfo -> !existingMemberEmails.contains(memberInfo.email()))
+                .distinct()
                 .toList();
+
+
 
         newMembers.forEach(memberInfo -> {
             // 멤버 정보가 존재하는지 확인
