@@ -19,12 +19,19 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+/**
+ * 회원 관련 API를 제공하는 컨트롤러입니다.
+ * - 회원가입 / 로그인 / 로그아웃 / 탈퇴 / 정보 조회 및 수정
+ * - 비회원 등록 / 비회원 로그인
+ * - Access Token 재발급 등 인증 관련 처리 포함
+ */
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("api/v1/members")
 public class ApiV1MemberController {
     final MemberService memberService;
 
+    // ================= 회원용 API =================
     @Operation(summary = "회원가입 API", description = "이메일, 비밀번호 등을 받아 회원가입을 처리합니다.")
     @PostMapping("/auth/register")
     public RsData<MemberAuthResponse> register(@Valid @RequestBody MemberRegisterDto memberRegisterDto, HttpServletResponse response) {
@@ -35,7 +42,7 @@ public class ApiV1MemberController {
         response.addCookie(accessTokenCookie);
 
         return RsData.of(200, "회원가입 성공", memberAuthResponse);
-    };
+    }
 
     @Operation(summary = "로그인 API", description = "이메일과 비밀번호를 받아 로그인을 처리합니다.")
     @PostMapping("/auth/login")
@@ -75,48 +82,8 @@ public class ApiV1MemberController {
                 responseDto);
     }
 
-    @Operation(summary = "비밀번호 유효성 검사 API", description = "비밀번호의 유효성을 인증하는 API 입니다.")
-    @PreAuthorize("isAuthenticated()")
-    @PostMapping("/auth/verify-password")
-    public RsData<MemberPasswordResponse> checkPasswordValidity(@AuthenticationPrincipal SecurityUser user,
-                                                                @Valid @RequestBody PasswordCheckRequestDto dto) {
 
-        if (user == null) {
-            throw new ServiceException(401, "인증이 필요합니다.");
-        }
-
-        MemberPasswordResponse response = memberService.checkPasswordValidity(user.getId(), dto.password());
-
-        return RsData.of(200,
-                "비밀번호 유효성 반환 성공",
-                response);
-    }
-
-    @Operation(summary = "access token 재발급 API", description = "리프레시 토큰으로 access token을 재발급하는 API 입니다.")
-    @PostMapping("/auth/refresh")
-    public RsData<MemberAuthResponse> apiTokenReissue(@RequestBody TokenRefreshRequest requestBody,
-                                                      HttpServletResponse response) {
-
-        String ApiKey = requestBody.refreshToken();
-
-        if (ApiKey == null || ApiKey.isBlank()) {
-            return RsData.of(401, "Refresh Token이 존재하지 않습니다.");
-        }
-
-        // 사용자 정보 추출
-        Member member = memberService.findByApiKey(ApiKey);
-
-        // 새로운 access token 생성
-        String newAccessToken = memberService.generateAccessToken(member);
-
-        // access token 쿠키에 담아서 응답
-        Cookie accessTokenCookie = createAccessTokenCookie(newAccessToken, false);
-        response.addCookie(accessTokenCookie);
-
-        return RsData.of(200, "Access Token 재발급 성공",
-                new MemberAuthResponse(ApiKey, newAccessToken));
-    }
-
+    // ================= 내 정보 관련 API =================
     @Operation(summary = "내 정보 반환 API", description = "현재 로그인한 유저 정보를 반환하는 API 입니다.")
     @PreAuthorize("isAuthenticated()")
     @GetMapping("/me")
@@ -145,6 +112,8 @@ public class ApiV1MemberController {
                 memberDetailInfoResponse);
     }
 
+
+    // ================= 비회원용 API =================
     @Operation(summary = "비회원 모임 등록 API", description = "비회원 모임 등록 API 입니다.")
     @PostMapping("/auth/guest-register")
     public RsData<GuestResponse> registerGuest(HttpServletResponse response,
@@ -164,7 +133,7 @@ public class ApiV1MemberController {
     @Operation(summary = "비회원 임시 로그인 API", description = "비회원 임시 로그인 API 입니다.")
     @PostMapping("/auth/guest-login")
     public RsData<GuestResponse> guestLogin(HttpServletResponse response,
-                                                @Valid @RequestBody GuestLoginDto guestLoginDto) {
+                                            @Valid @RequestBody GuestLoginDto guestLoginDto) {
         GuestResponse guestAuthResponse = memberService.guestLogin(guestLoginDto);
 
         Cookie accessTokenCookie = createAccessTokenCookie(guestAuthResponse.accessToken(), true);
@@ -174,6 +143,8 @@ public class ApiV1MemberController {
         return RsData.of(200, "비회원 로그인 성공", guestAuthResponse);
     }
 
+
+    // ================= 회원, 비회원용 쿠키 생성/삭제 =================
     private Cookie createAccessTokenCookie(String accessToken, boolean isGuest) {
         Cookie cookie = new Cookie("accessToken", accessToken);
         cookie.setHttpOnly(true);
@@ -195,16 +166,48 @@ public class ApiV1MemberController {
         return expiredCookie;
     }
 
-//    private String extractRefreshTokenFromCookie(HttpServletRequest request) {
-//        if (request.getCookies() == null) return null;
-//
-//        for (Cookie cookie : request.getCookies()) {
-//            if ("refreshToken".equals(cookie.getName())) {
-//                return cookie.getValue();
-//            }
-//        }
-//        return null;
-//    }
+    // ================= 기타 API =================
+    @Operation(summary = "비밀번호 유효성 검사 API", description = "비밀번호의 유효성을 인증하는 API 입니다.")
+    @PreAuthorize("isAuthenticated()")
+    @PostMapping("/auth/verify-password")
+    public RsData<MemberPasswordResponse> checkPasswordValidity(@AuthenticationPrincipal SecurityUser user,
+                                                                @Valid @RequestBody PasswordCheckRequestDto dto) {
+
+        if (user == null) {
+            throw new ServiceException(401, "인증이 필요합니다.");
+        }
+
+        MemberPasswordResponse response = memberService.checkPasswordValidity(user.getId(), dto.password());
+
+        return RsData.of(200,
+                "비밀번호 유효성 반환 성공",
+                response);
+    }
+
+    @Operation(summary = "access token 재발급 API", description = "리프레시 토큰으로 access token을 재발급하는 API 입니다.")
+    @PostMapping("/auth/refresh")
+    public RsData<MemberAuthResponse> apiTokenReissue(@RequestBody TokenRefreshRequest requestBody,
+                                                      HttpServletResponse response) {
+
+        String apiKey = requestBody.refreshToken();
+
+        if (apiKey == null || apiKey.isBlank()) {
+            return RsData.of(401, "Refresh Token이 존재하지 않습니다.");
+        }
+
+        // 사용자 정보 추출
+        Member member = memberService.findByApiKey(apiKey);
+
+        // 새로운 access token 생성
+        String newAccessToken = memberService.generateAccessToken(member);
+
+        // access token 쿠키에 담아서 응답
+        Cookie accessTokenCookie = createAccessTokenCookie(newAccessToken, false);
+        response.addCookie(accessTokenCookie);
+
+        return RsData.of(200, "Access Token 재발급 성공",
+                new MemberAuthResponse(apiKey, newAccessToken));
+    }
 }
 
 //@GetMapping("/{scheduleId}")
