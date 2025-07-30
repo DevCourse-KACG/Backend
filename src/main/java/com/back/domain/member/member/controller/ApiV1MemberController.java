@@ -147,10 +147,10 @@ public class ApiV1MemberController {
 
     @Operation(summary = "비회원 모임 등록 API", description = "비회원 모임 등록 API 입니다.")
     @PostMapping("/auth/guest-register")
-    public RsData<GuestResponse> guestRegister(HttpServletResponse response,
+    public RsData<GuestResponse> registerGuest(HttpServletResponse response,
                                                @Valid @RequestBody GuestRegisterDto dto) {
         GuestResponse guestResponse =
-                memberService.guestRegist(dto);
+                memberService.registerGuest(dto);
 
         Cookie accessTokenCookie = createAccessTokenCookie(guestResponse.accessToken());
 
