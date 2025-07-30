@@ -33,6 +33,7 @@ public class ItemAssign {
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "check_list_item_id", nullable = false)
     @Description("할당된 체크리스트 아이템")
+    @Setter
     private CheckListItem checkListItem;
 
     @Description("체크 여부")
