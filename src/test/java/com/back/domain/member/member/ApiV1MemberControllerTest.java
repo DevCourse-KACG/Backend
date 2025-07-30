@@ -13,6 +13,7 @@ import com.back.domain.member.member.service.MemberService;
 import com.back.domain.member.member.support.MemberFixture;
 import com.back.global.exception.ServiceException;
 import com.back.global.security.SecurityUser;
+import com.jayway.jsonpath.JsonPath;
 import io.jsonwebtoken.lang.Collections;
 import jakarta.servlet.http.Cookie;
 import org.junit.jupiter.api.DisplayName;
@@ -26,9 +27,11 @@ import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.nio.charset.StandardCharsets;
+import java.util.Base64;
 import java.util.Optional;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
@@ -607,6 +610,43 @@ public class ApiV1MemberControllerTest {
 
         assertFalse(encoder.matches("wrongPassword", savedHashedPassword));
     }
+
+    @Test
+    @DisplayName("로그인 - 액세스토큰에 tag, memberType 포함 확인")
+    public void accessToken_containsTagAndMemberType() throws Exception {
+        memberFixture.createMember(1);
+
+        String requestBody = """
+        {
+            "email": "test1@example.com",
+            "password": "password123"
+        }
+    """;
+
+        MvcResult result = mockMvc.perform(post("/api/v1/members/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(requestBody))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value(200))
+                .andExpect(jsonPath("$.data.accessToken").isNotEmpty())
+                .andReturn();
+
+        // 액세스토큰 문자열 추출
+        String accessToken = JsonPath.read(result.getResponse().getContentAsString(), "$.data.accessToken");
+
+        // JWT 구조: header.payload.signature -> 우리는 payload만 디코딩
+        String[] parts = accessToken.split("\\.");
+        assertEquals(3, parts.length, "JWT 형식이 아님");
+
+        // payload(base64) 디코딩 후 JSON 문자열로 변환
+        byte[] decodedBytes = Base64.getDecoder().decode(parts[1]);
+        String payloadJson = new String(decodedBytes, StandardCharsets.UTF_8);
+
+        // JSON 파싱 없이 문자열 포함 여부만 확인해도 기본적인 검증 가능
+        assertTrue(payloadJson.contains("\"tag\":\""), "토큰에 tag 포함 안됨");
+        assertTrue(payloadJson.contains("\"memberType\":\"MEMBER\""), "토큰에 memberType 포함 안됨");
+    }
+
 
 
 
