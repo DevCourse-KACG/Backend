@@ -3,6 +3,7 @@ package com.back.domain.club.clubMember.repository;
 import com.back.domain.club.club.entity.Club;
 import com.back.domain.club.clubMember.entity.ClubMember;
 import com.back.domain.member.member.entity.Member;
+import com.back.global.enums.ClubMemberState;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -23,4 +24,8 @@ public interface ClubMemberRepository extends JpaRepository<ClubMember, Long> {
                                     @Param("emails") List<String> emails);
 
     Optional<ClubMember> findByClubAndMember(Club club, Member member);
+
+    List<ClubMember> findByClubAndState(Club club, ClubMemberState clubMemberState);
+
+    List<ClubMember> findByClub(Club club);
 }

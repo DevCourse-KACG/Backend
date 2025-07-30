@@ -2,7 +2,10 @@ package com.back.domain.club.clubMember.controller;
 
 import com.back.domain.club.club.entity.Club;
 import com.back.domain.club.club.service.ClubService;
+import com.back.domain.club.clubMember.entity.ClubMember;
+import com.back.domain.club.clubMember.repository.ClubMemberRepository;
 import com.back.domain.club.clubMember.service.ClubMemberService;
+import com.back.domain.member.member.MemberType;
 import com.back.domain.member.member.entity.Member;
 import com.back.domain.member.member.service.MemberService;
 import com.back.global.aws.S3Service;
@@ -42,6 +45,8 @@ class ApiV1ClubMemberControllerTest {
     private ClubMemberService clubMemberService;
     @Autowired
     private MemberService memberService;
+    @Autowired
+    private ClubMemberRepository clubMemberRepository;
 
     @MockitoBean
     private S3Service s3Service; // S3Service는 MockBean으로 주입하여 실제 S3와의 통신을 피합니다.
@@ -258,7 +263,7 @@ class ApiV1ClubMemberControllerTest {
     }
 
     @Test
-    @DisplayName("클럽에 멤버 추가 - 클럽이 존재하지 않을 때")
+    @DisplayName("클럽에 멤버 추가 - 존재하지 않는 클럽")
     void addMemberToClub_ClubNotFound() throws Exception {
         // given
         String nonExistentClubId = "9999"; // 존재하지 않는 클럽 ID
@@ -393,7 +398,7 @@ class ApiV1ClubMemberControllerTest {
     }
 
     @Test
-    @DisplayName("클럽 멤버 탈퇴 - 클럽이 존재하지 않을 때")
+    @DisplayName("클럽 멤버 탈퇴 - 존재하지 않는 클럽")
     void withdrawMemberFromClub_ClubNotFound() throws Exception {
         // given
         String nonExistentClubId = "9999"; // 존재하지 않는 클럽 ID
@@ -510,7 +515,7 @@ class ApiV1ClubMemberControllerTest {
     }
 
     @Test
-    @DisplayName("참여자 권한 변경 - 클럽이 존재하지 않을 때")
+    @DisplayName("참여자 권한 변경 - 존재하지 않는 클럽")
     void changeMemberRole_ClubNotFound() throws Exception {
         // given
         String nonExistentClubId = "9999"; // 존재하지 않는 클럽 ID
@@ -617,6 +622,242 @@ class ApiV1ClubMemberControllerTest {
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.code").value(400))
                 .andExpect(jsonPath("$.message").value("Unknown Member role: INVALID_ROLE"));
+    }
+
+    @Test
+    @DisplayName("참여자 목록 반환 - state 필터 없음")
+    void getClubMembers() throws Exception {
+        // given
+        // 테스트 클럽 생성
+        Club club = clubService.createClub(
+                Club.builder()
+                        .name("테스트 그룹")
+                        .bio("테스트 그룹 설명")
+                        .category(ClubCategory.STUDY)
+                        .mainSpot("서울")
+                        .maximumCapacity(10)
+                        .eventType(EventType.ONE_TIME)
+                        .startDate(LocalDate.of(2023, 10, 1))
+                        .endDate(LocalDate.of(2023, 10, 31))
+                        .isPublic(true)
+                        .leaderId(1L)
+                        .build()
+        );
+
+        // 추가할 멤버 (testInitData의 멤버 사용)
+        Member member1 = memberService.findById(2L).orElseThrow(
+                () -> new IllegalStateException("멤버가 존재하지 않습니다.")
+        );
+
+        Member member2 = memberService.findById(3L).orElseThrow(
+                () -> new IllegalStateException("멤버가 존재하지 않습니다.")
+        );
+
+        // 비회원 멤버 추가
+        Member nonMember = Member.builder()
+                .id(4L)
+                .nickname("비회원")
+                .password("password")
+                .memberType(MemberType.GUEST)
+                .tag("123456")
+                .build();
+
+        // 클럽에 멤버 추가
+        ClubMember clubMember1 = clubMemberService.addMemberToClub(club.getId(), member1, ClubMemberRole.PARTICIPANT);
+        ClubMember clubMember2 = clubMemberService.addMemberToClub(club.getId(), member2, ClubMemberRole.MANAGER);
+        ClubMember nonMemberClubMember = clubMemberService.addMemberToClub(club.getId(), nonMember, ClubMemberRole.PARTICIPANT);
+
+        assertThat(club.getClubMembers().size()).isEqualTo(3); // 클럽에 멤버가 2명 추가되었는지 확인
+
+        // when
+        ResultActions resultActions = mvc.perform(
+                        get("/api/v1/clubs/" + club.getId() + "/members")
+                                .contentType(MediaType.APPLICATION_JSON)
+                )
+                .andDo(print());
+
+        // then
+        resultActions
+                .andExpect(handler().handlerType(ApiV1ClubMemberController.class))
+                .andExpect(handler().methodName("getClubMembers"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value(200))
+                .andExpect(jsonPath("$.message").value("클럽 멤버 목록이 조회됐습니다."))
+                .andExpect(jsonPath("$.data.members.length()").value(3)) // 멤버가 3명인지 확인
+
+                .andExpect(jsonPath("$.data.members[0].clubMemberId").value(clubMember1.getId()))
+                .andExpect(jsonPath("$.data.members[0].memberId").value(member1.getId()))
+                .andExpect(jsonPath("$.data.members[0].nickname").value(member1.getNickname()))
+                .andExpect(jsonPath("$.data.members[0].tag").value(member1.getTag()))
+                .andExpect(jsonPath("$.data.members[0].role").value(ClubMemberRole.PARTICIPANT.name()))
+                .andExpect(jsonPath("$.data.members[0].email").value(member1.getEmail()))
+                .andExpect(jsonPath("$.data.members[0].memberType").value(member1.getMemberType().name()))
+                .andExpect(jsonPath("$.data.members[0].profileImageUrl").value(""))
+                .andExpect(jsonPath("$.data.members[0].state").value(clubMember1.getState().name()))
+
+                .andExpect(jsonPath("$.data.members[1].clubMemberId").value(clubMember2.getId()))
+                .andExpect(jsonPath("$.data.members[1].memberId").value(member2.getId()))
+                .andExpect(jsonPath("$.data.members[1].nickname").value(member2.getNickname()))
+                .andExpect(jsonPath("$.data.members[1].tag").value(member2.getTag()))
+                .andExpect(jsonPath("$.data.members[1].role").value(ClubMemberRole.MANAGER.name()))
+                .andExpect(jsonPath("$.data.members[1].email").value(member2.getEmail()))
+                .andExpect(jsonPath("$.data.members[1].memberType").value(member2.getMemberType().name()))
+                .andExpect(jsonPath("$.data.members[1].profileImageUrl").value(""))
+                .andExpect(jsonPath("$.data.members[1].state").value(clubMember2.getState().name()))
+
+                .andExpect(jsonPath("$.data.members[2].clubMemberId").value(nonMemberClubMember.getId()))
+                .andExpect(jsonPath("$.data.members[2].memberId").value(nonMember.getId()))
+                .andExpect(jsonPath("$.data.members[2].nickname").value(nonMember.getNickname()))
+                .andExpect(jsonPath("$.data.members[2].tag").value(nonMember.getTag()))
+                .andExpect(jsonPath("$.data.members[2].role").value(ClubMemberRole.PARTICIPANT.name()))
+                .andExpect(jsonPath("$.data.members[2].email").value("")) // 비회원은 이메일이 없으므로 빈 문자열
+                .andExpect(jsonPath("$.data.members[2].memberType").value(nonMember.getMemberType().name()))
+                .andExpect(jsonPath("$.data.members[2].profileImageUrl").value("")) // 비회원은 이미지 URL이 없으므로 빈 문자열
+                .andExpect(jsonPath("$.data.members[2].state").value(nonMemberClubMember.getState().name())); // 비회원의 상태 확인
+    }
+
+    @Test
+    @DisplayName("참여자 목록 반환 - state 필터 (INVITED)")
+    void getClubMembers_stateFiltered() throws Exception {
+        // given
+        // 테스트 클럽 생성
+        Club club = clubService.createClub(
+                Club.builder()
+                        .name("테스트 그룹")
+                        .bio("테스트 그룹 설명")
+                        .category(ClubCategory.STUDY)
+                        .mainSpot("서울")
+                        .maximumCapacity(10)
+                        .eventType(EventType.ONE_TIME)
+                        .startDate(LocalDate.of(2023, 10, 1))
+                        .endDate(LocalDate.of(2023, 10, 31))
+                        .isPublic(true)
+                        .leaderId(1L)
+                        .build()
+        );
+
+        // 추가할 멤버 (testInitData의 멤버 사용)
+        Member member1 = memberService.findById(2L).orElseThrow(
+                () -> new IllegalStateException("멤버가 존재하지 않습니다.")
+        );
+
+        Member member2 = memberService.findById(3L).orElseThrow(
+                () -> new IllegalStateException("멤버가 존재하지 않습니다.")
+        );
+
+        // 비회원 멤버 추가
+        Member nonMember = Member.builder()
+                .id(4L)
+                .nickname("비회원")
+                .password("password")
+                .memberType(MemberType.GUEST)
+                .tag("123456")
+                .build();
+
+        // 클럽에 멤버 추가
+        ClubMember clubMember1 = clubMemberService.addMemberToClub(club.getId(), member1, ClubMemberRole.PARTICIPANT);
+        ClubMember clubMember2 = clubMemberService.addMemberToClub(club.getId(), member2, ClubMemberRole.MANAGER);
+        ClubMember nonMemberClubMember = clubMemberService.addMemberToClub(club.getId(), nonMember, ClubMemberRole.PARTICIPANT);
+
+        assertThat(club.getClubMembers().size()).isEqualTo(3); // 클럽에 멤버가 2명 추가되었는지 확인
+
+        // 클럽 멤버의 상태 변경
+        clubMember2.updateState(ClubMemberState.JOINING); // member2를 JOINING 상태로 변경
+        clubMemberRepository.save(clubMember2); // 상태 변경된 클럽 멤버 저장
+
+        // when
+        ResultActions resultActions = mvc.perform(
+                        get("/api/v1/clubs/" + club.getId() + "/members" + "?state=INVITED")
+                                .contentType(MediaType.APPLICATION_JSON)
+                )
+                .andDo(print());
+
+        // then
+        resultActions
+                .andExpect(handler().handlerType(ApiV1ClubMemberController.class))
+                .andExpect(handler().methodName("getClubMembers"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value(200))
+                .andExpect(jsonPath("$.message").value("클럽 멤버 목록이 조회됐습니다."))
+                .andExpect(jsonPath("$.data.members.length()").value(2)) // 멤버가 2명인지 확인
+
+                .andExpect(jsonPath("$.data.members[0].clubMemberId").value(clubMember1.getId()))
+                .andExpect(jsonPath("$.data.members[0].memberId").value(member1.getId()))
+                .andExpect(jsonPath("$.data.members[0].nickname").value(member1.getNickname()))
+                .andExpect(jsonPath("$.data.members[0].tag").value(member1.getTag()))
+                .andExpect(jsonPath("$.data.members[0].role").value(ClubMemberRole.PARTICIPANT.name()))
+                .andExpect(jsonPath("$.data.members[0].email").value(member1.getEmail()))
+                .andExpect(jsonPath("$.data.members[0].memberType").value(member1.getMemberType().name()))
+                .andExpect(jsonPath("$.data.members[0].profileImageUrl").value(""))
+                .andExpect(jsonPath("$.data.members[0].state").value(clubMember1.getState().name()))
+
+                .andExpect(jsonPath("$.data.members[1].clubMemberId").value(nonMemberClubMember.getId()))
+                .andExpect(jsonPath("$.data.members[1].memberId").value(nonMember.getId()))
+                .andExpect(jsonPath("$.data.members[1].nickname").value(nonMember.getNickname()))
+                .andExpect(jsonPath("$.data.members[1].tag").value(nonMember.getTag()))
+                .andExpect(jsonPath("$.data.members[1].role").value(ClubMemberRole.PARTICIPANT.name()))
+                .andExpect(jsonPath("$.data.members[1].email").value("")) // 비회원은 이메일이 없으므로 빈 문자열
+                .andExpect(jsonPath("$.data.members[1].memberType").value(nonMember.getMemberType().name()))
+                .andExpect(jsonPath("$.data.members[1].profileImageUrl").value("")) // 비회원은 이미지 URL이 없으므로 빈 문자열
+                .andExpect(jsonPath("$.data.members[1].state").value(nonMemberClubMember.getState().name())); // 비회원의 상태 확인
+    }
+
+    @Test
+    @DisplayName("참여자 목록 반환 - 존재하지 않는 클럽")
+    void getClubMembers_InvalidClubId() throws Exception {
+        // given
+        int invalidClubId = 9999; // 잘못된 클럽 ID
+
+        // when
+        ResultActions resultActions = mvc.perform(
+                        get("/api/v1/clubs/" + invalidClubId + "/members")
+                                .contentType(MediaType.APPLICATION_JSON)
+                )
+                .andDo(print());
+
+        // then
+        resultActions
+                .andExpect(handler().handlerType(ApiV1ClubMemberController.class))
+                .andExpect(handler().methodName("getClubMembers"))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.code").value(404))
+                .andExpect(jsonPath("$.message").value("클럽이 존재하지 않습니다."));
+    }
+
+    @Test
+    @DisplayName("참여자 목록 반환 - 잘못된 state 필터")
+    void getClubMembers_InvalidStateFilter() throws Exception {
+        // given
+        // 테스트 클럽 생성
+        Club club = clubService.createClub(
+                Club.builder()
+                        .name("테스트 그룹")
+                        .bio("테스트 그룹 설명")
+                        .category(ClubCategory.STUDY)
+                        .mainSpot("서울")
+                        .maximumCapacity(10)
+                        .eventType(EventType.ONE_TIME)
+                        .startDate(LocalDate.of(2023, 10, 1))
+                        .endDate(LocalDate.of(2023, 10, 31))
+                        .isPublic(true)
+                        .leaderId(1L)
+                        .build()
+        );
+
+        // when
+        ResultActions resultActions = mvc.perform(
+                        get("/api/v1/clubs/" + club.getId() + "/members?state=INVALID_STATE")
+                                .contentType(MediaType.APPLICATION_JSON)
+                )
+                .andDo(print());
+
+        // then
+        resultActions
+                .andExpect(handler().handlerType(ApiV1ClubMemberController.class))
+                .andExpect(handler().methodName("getClubMembers"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value(400))
+                .andExpect(jsonPath("$.message").value("Unknown Member state: INVALID_STATE"));
     }
 }
 
