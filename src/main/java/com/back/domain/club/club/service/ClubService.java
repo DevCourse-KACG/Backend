@@ -4,6 +4,7 @@ import com.back.domain.club.club.dtos.ClubControllerDtos;
 import com.back.domain.club.club.entity.Club;
 import com.back.domain.club.club.repository.ClubRepository;
 import com.back.domain.club.clubMember.entity.ClubMember;
+import com.back.domain.club.clubMember.service.ClubMemberService;
 import com.back.domain.member.member.entity.Member;
 import com.back.domain.member.member.service.MemberService;
 import com.back.global.aws.S3Service;
@@ -31,7 +32,9 @@ import java.util.Optional;
 public class ClubService {
     private final ClubRepository clubRepository;
     private final MemberService memberService;
+    private final ClubMemberService clubMemberService;
     private final S3Service s3Service;
+
 
     /**
      * 마지막으로 생성된 클럽을 반환합니다.

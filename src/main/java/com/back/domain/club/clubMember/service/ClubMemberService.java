@@ -84,7 +84,11 @@ public class ClubMemberService {
     public void addMembersToClub(Long clubId, ClubMemberDtos.ClubMemberRegisterRequest reqBody) {
         Club club = clubService.getClubById(clubId).orElseThrow(() -> new ServiceException(404, "클럽이 존재하지 않습니다."));
 
-        // TODO : 유저 권한 체크
+        // TODO : 권한 설정(로그인한 유저로 변경)
+        Member user = memberService.findById(1L) // 임시로 1L로 설정, 실제로는 현재 로그인한 유저 ID로 변경 필요
+                .orElseThrow(() -> new ServiceException(404, "유저가 존재하지 않습니다."));
+        if(!checkMemberRole(clubId, user.getId(), new ClubMemberRole[]{ClubMemberRole.HOST}))
+            throw new ServiceException(403, "권한이 없습니다.");
 
         // 요청된 이메일 추출
         List<String> requestEmails = reqBody.members().stream()
@@ -122,7 +126,12 @@ public class ClubMemberService {
      */
     @Transactional
     public void withdrawMemberFromClub(Long clubId, Long memberId) {
-        // TODO : 유저 권한 체크 (본인, HOST)
+        // TODO : 유저 권한 체크 (본인, HOST) : 로그인한 유저로 변경해야 됨
+        Member user = memberService.findById(1L) // 임시로 1L로 설정, 실제로는 현재 로그인한 유저 ID로 변경 필요
+                .orElseThrow(() -> new ServiceException(404, "유저가 존재하지 않습니다."));
+        if(!checkMemberRole(clubId, user.getId(), new ClubMemberRole[]{ClubMemberRole.HOST}) && !user.getId().equals(memberId))
+            throw new ServiceException(403, "권한이 없습니다.");
+
 
         Club club = clubService.getClubById(clubId)
                 .orElseThrow(() -> new ServiceException(404, "클럽이 존재하지 않습니다."));
@@ -144,7 +153,11 @@ public class ClubMemberService {
      */
     @Transactional
     public void changeMemberRole(Long clubId, Long memberId, @NotBlank String role) {
-        // TODO : 유저 권한 체크
+        // TODO : 유저 권한 체크 : 로그인한 유저로 변경해야 됨
+        Member user = memberService.findById(1L) // 임시로 1L로 설정, 실제로는 현재 로그인한 유저 ID로 변경 필요
+                .orElseThrow(() -> new ServiceException(404, "유저가 존재하지 않습니다."));
+        if(!checkMemberRole(clubId, user.getId(), new ClubMemberRole[]{ClubMemberRole.HOST}))
+            throw new ServiceException(403, "권한이 없습니다.");
 
         Club club = clubService.getClubById(clubId)
                 .orElseThrow(() -> new ServiceException(404, "클럽이 존재하지 않습니다."));
