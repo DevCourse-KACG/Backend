@@ -47,10 +47,10 @@ public class MemberInfo {
     }
 
     public void updateImageUrl(String imageUrl) {
-        this.profileImageUrl = imageUrl;
+        if (imageUrl != null) this.profileImageUrl = imageUrl;
     }
 
     public void updateBio(String bio) {
-        this.bio = bio;
+        if (bio != null) this.bio = bio;
     }
 }

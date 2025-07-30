@@ -91,7 +91,7 @@ public class MemberService {
     }
 
     //유저 정보 수정 메소드
-    public MemberDetailInfoResponse updateInfo(Long id, UpdateMemberInfoDto dto, MultipartFile image) throws IOException {
+    public MemberDetailInfoResponse updateInfo(Long id, UpdateMemberInfoDto dto, MultipartFile image) {
         Member member = findById(id).orElseThrow(() ->
                 new ServiceException(400, "해당 id의 유저가 없습니다."));
         MemberInfo memberInfo = member.getMemberInfo();
@@ -113,13 +113,22 @@ public class MemberService {
 
         //S3 이미지 업로드
         if (image != null && !image.isEmpty()){
-            String imageUrl = s3Service.upload(image, "member/" + memberInfo.getId() + "/profile");
-            memberInfo.updateImageUrl(imageUrl);
+            //파일 형식 검증
+            String contentType = image.getContentType();
+            if(!contentType.startsWith("image/")){
+                throw new ServiceException(400, "이미지 파일만 업로드 가능합니다.");
+            }
+
+            //Todo: 파일 크기 검증
+
+            try {
+                String imageUrl = s3Service.upload(image, "member/" + memberInfo.getId() + "/profile");
+                memberInfo.updateImageUrl(imageUrl);
+            } catch (IOException e) {
+                throw new ServiceException(400, "이미지 업로드 중 오류가 발생했습니다.");
+            }
         }
 
-        member.setMemberInfo(memberInfo);
-        memberRepository.save(member);
-        memberInfoRepository.save(memberInfo);
 
         return new MemberDetailInfoResponse(member.getNickname(),
                 memberInfo.getEmail(),

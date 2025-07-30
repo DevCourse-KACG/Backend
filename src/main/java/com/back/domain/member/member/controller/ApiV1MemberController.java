@@ -140,8 +140,8 @@ public class ApiV1MemberController {
     @PreAuthorize("isAuthenticated()")
     @PutMapping("/me")
     public RsData<MemberDetailInfoResponse> updateInfo(@AuthenticationPrincipal SecurityUser user,
-                                                       @RequestPart(value = "data") UpdateMemberInfoDto dto,
-                                                       @RequestPart(value = "profileImage", required = false) MultipartFile profileImage) throws IOException, java.io.IOException {
+                                                       @Valid @RequestPart(value = "data") UpdateMemberInfoDto dto,
+                                                       @RequestPart(value = "profileImage", required = false) MultipartFile profileImage) throws IOException {
         MemberDetailInfoResponse memberDetailInfoResponse =
                 memberService.updateInfo(user.getId(), dto, profileImage);
 
