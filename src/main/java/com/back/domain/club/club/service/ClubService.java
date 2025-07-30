@@ -94,7 +94,7 @@ public class ClubService {
         // 클럽 멤버 설정
         Arrays.stream(reqBody.clubMembers()).forEach(memberInfo -> {
             // 멤버 ID로 Member 엔티티 조회
-            Member member = memberService.findById(memberInfo.id())
+            Member member = memberService.findMemberById(memberInfo.id())
               .orElseThrow(() -> new NoSuchElementException("ID " + memberInfo.id() + "에 해당하는 멤버를 찾을 수 없습니다."));
 
             // ClubMember 엔티티 생성
@@ -166,7 +166,7 @@ public class ClubService {
         Club club = clubRepository.findById(clubId)
                 .orElseThrow(() -> new ServiceException(404, "해당 ID의 클럽을 찾을 수 없습니다."));
 
-        Member leader = memberService.findById(club.getLeaderId())
+        Member leader = memberService.findMemberById(club.getLeaderId())
                 .orElseThrow(() -> new ServiceException(404, "해당 ID의 클럽 리더를 찾을 수 없습니다."));
 
         return new ClubControllerDtos.ClubInfoResponse(
@@ -200,7 +200,7 @@ public class ClubService {
                         club.getStartDate().toString(),
                         club.getEndDate().toString(),
                         club.getLeaderId(),
-                        memberService.findById(club.getLeaderId())
+                        memberService.findMemberById(club.getLeaderId())
                                 .map(Member::getNickname)
                                 .orElse("Unknown Leader")
                 ));

@@ -73,11 +73,11 @@ class ApiV1ClubMemberControllerTest {
         );
 
         // 추가할 멤버 (testInitData의 멤버 사용)
-        Member member1 = memberService.findById(2L).orElseThrow(
+        Member member1 = memberService.findMemberById(2L).orElseThrow(
                 () -> new IllegalStateException("멤버가 존재하지 않습니다.")
         );
 
-        Member member2 = memberService.findById(3L).orElseThrow(
+        Member member2 = memberService.findMemberById(3L).orElseThrow(
                 () -> new IllegalStateException("멤버가 존재하지 않습니다.")
         );
 
@@ -146,7 +146,7 @@ class ApiV1ClubMemberControllerTest {
         );
 
         // 추가할 멤버 (testInitData의 멤버 사용)
-        Member member1 = memberService.findById(2L).orElseThrow(
+        Member member1 = memberService.findMemberById(2L).orElseThrow(
                 () -> new IllegalStateException("멤버가 존재하지 않습니다.")
         );
 
@@ -215,7 +215,7 @@ class ApiV1ClubMemberControllerTest {
 
 
         // 추가할 멤버 (testInitData의 멤버 사용)
-        Member member1 = memberService.findById(2L).orElseThrow(
+        Member member1 = memberService.findMemberById(2L).orElseThrow(
                 () -> new IllegalStateException("멤버가 존재하지 않습니다.")
         );
 
@@ -362,7 +362,7 @@ class ApiV1ClubMemberControllerTest {
         );
 
         // 추가할 멤버 (testInitData의 멤버 사용)
-        Member member1 = memberService.findById(2L).orElseThrow(
+        Member member1 = memberService.findMemberById(2L).orElseThrow(
                 () -> new IllegalStateException("멤버가 존재하지 않습니다.")
         );
 
@@ -479,7 +479,7 @@ class ApiV1ClubMemberControllerTest {
         );
 
         // 추가할 멤버 (testInitData의 멤버 사용)
-        Member member1 = memberService.findById(2L).orElseThrow(
+        Member member1 = memberService.findMemberById(2L).orElseThrow(
                 () -> new IllegalStateException("멤버가 존재하지 않습니다.")
         );
 
@@ -598,7 +598,7 @@ class ApiV1ClubMemberControllerTest {
         );
 
         // 추가할 멤버 (testInitData의 멤버 사용)
-        Member member1 = memberService.findById(2L).orElseThrow(
+        Member member1 = memberService.findMemberById(2L).orElseThrow(
                 () -> new IllegalStateException("멤버가 존재하지 않습니다.")
         );
 
@@ -645,11 +645,11 @@ class ApiV1ClubMemberControllerTest {
         );
 
         // 추가할 멤버 (testInitData의 멤버 사용)
-        Member member1 = memberService.findById(2L).orElseThrow(
+        Member member1 = memberService.findMemberById(2L).orElseThrow(
                 () -> new IllegalStateException("멤버가 존재하지 않습니다.")
         );
 
-        Member member2 = memberService.findById(3L).orElseThrow(
+        Member member2 = memberService.findMemberById(3L).orElseThrow(
                 () -> new IllegalStateException("멤버가 존재하지 않습니다.")
         );
 
@@ -737,11 +737,11 @@ class ApiV1ClubMemberControllerTest {
         );
 
         // 추가할 멤버 (testInitData의 멤버 사용)
-        Member member1 = memberService.findById(2L).orElseThrow(
+        Member member1 = memberService.findMemberById(2L).orElseThrow(
                 () -> new IllegalStateException("멤버가 존재하지 않습니다.")
         );
 
-        Member member2 = memberService.findById(3L).orElseThrow(
+        Member member2 = memberService.findMemberById(3L).orElseThrow(
                 () -> new IllegalStateException("멤버가 존재하지 않습니다.")
         );
 

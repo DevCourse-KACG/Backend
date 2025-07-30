@@ -1,5 +1,6 @@
 package com.back.global.security;
 
+import com.back.domain.member.member.MemberType;
 import lombok.Getter;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.User;
@@ -16,11 +17,14 @@ public class SecurityUser extends User {
     private final String nickname;
     @Getter
     private final String tag;
+    @Getter
+    private final MemberType memberType;
 
     public SecurityUser(
             Long id,
             String nickname,
             String tag,
+            MemberType memberType,
             String password,
             Collection<? extends GrantedAuthority> authorities
     ) {
@@ -29,5 +33,6 @@ public class SecurityUser extends User {
         this.nickname = nickname;
         this.tag = tag;
         this.password = password;
+        this.memberType = memberType;
     }
 }

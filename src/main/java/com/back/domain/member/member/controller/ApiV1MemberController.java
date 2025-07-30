@@ -19,28 +19,35 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+/**
+ * 회원 관련 API를 제공하는 컨트롤러입니다.
+ * - 회원가입 / 로그인 / 로그아웃 / 탈퇴 / 정보 조회 및 수정
+ * - 비회원 등록 / 비회원 로그인
+ * - Access Token 재발급 등 인증 관련 처리 포함
+ */
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("api/v1/members")
 public class ApiV1MemberController {
     final MemberService memberService;
 
+    // ================= 회원용 API =================
     @Operation(summary = "회원가입 API", description = "이메일, 비밀번호 등을 받아 회원가입을 처리합니다.")
     @PostMapping("/auth/register")
     public RsData<MemberAuthResponse> register(@Valid @RequestBody MemberRegisterDto memberRegisterDto, HttpServletResponse response) {
-        MemberAuthResponse memberAuthResponse = memberService.register(memberRegisterDto);
+        MemberAuthResponse memberAuthResponse = memberService.registerMember(memberRegisterDto);
 
         Cookie accessTokenCookie = createAccessTokenCookie(memberAuthResponse.accessToken(), false);
 
         response.addCookie(accessTokenCookie);
 
         return RsData.of(200, "회원가입 성공", memberAuthResponse);
-    };
+    }
 
     @Operation(summary = "로그인 API", description = "이메일과 비밀번호를 받아 로그인을 처리합니다.")
     @PostMapping("/auth/login")
     public RsData<MemberAuthResponse> login(@Valid @RequestBody MemberLoginDto memberLoginDto, HttpServletResponse response) {
-        MemberAuthResponse memberAuthResponse = memberService.login(memberLoginDto);
+        MemberAuthResponse memberAuthResponse = memberService.loginMember(memberLoginDto);
 
         Cookie accessTokenCookie = createAccessTokenCookie(memberAuthResponse.accessToken(), false);
 
@@ -66,7 +73,7 @@ public class ApiV1MemberController {
     public RsData<MemberWithdrawMembershipResponse> withdrawMembership(HttpServletResponse response,
                                                                        @AuthenticationPrincipal SecurityUser user) {
         MemberWithdrawMembershipResponse responseDto =
-                memberService.withdrawMembership(user.getNickname(), user.getTag());
+                memberService.withdrawMember(user.getNickname(), user.getTag());
 
         response.addCookie(deleteCookie());
 
@@ -75,6 +82,91 @@ public class ApiV1MemberController {
                 responseDto);
     }
 
+
+    // ================= 내 정보 관련 API =================
+    @Operation(summary = "내 정보 반환 API", description = "현재 로그인한 유저 정보를 반환하는 API 입니다.")
+    @PreAuthorize("isAuthenticated()")
+    @GetMapping("/me")
+    public RsData<MemberDetailInfoResponse> getMyInfo(HttpServletResponse response,
+                                                      @AuthenticationPrincipal SecurityUser user) {
+
+        MemberDetailInfoResponse memberDetailInfoResponse =
+                memberService.getMemberInfo(user.getId());
+
+        return RsData.of(200,
+                "유저 정보 반환 성공",
+                memberDetailInfoResponse);
+    }
+
+    @Operation(summary = "내 정보 수정 API", description = "현재 로그인한 유저 정보를 수정하는 API 입니다.")
+    @PreAuthorize("isAuthenticated()")
+    @PutMapping("/me")
+    public RsData<MemberDetailInfoResponse> updateInfo(@AuthenticationPrincipal SecurityUser user,
+                                                       @Valid @RequestPart(value = "data") UpdateMemberInfoDto dto,
+                                                       @RequestPart(value = "profileImage", required = false) MultipartFile profileImage) throws IOException {
+        MemberDetailInfoResponse memberDetailInfoResponse =
+                memberService.updateMemberInfo(user.getId(), dto, profileImage);
+
+        return RsData.of(200,
+                "유저 정보 수정 성공",
+                memberDetailInfoResponse);
+    }
+
+
+    // ================= 비회원용 API =================
+    @Operation(summary = "비회원 모임 등록 API", description = "비회원 모임 등록 API 입니다.")
+    @PostMapping("/auth/guest-register")
+    public RsData<GuestResponse> registerGuest(HttpServletResponse response,
+                                               @Valid @RequestBody GuestRegisterDto dto) {
+        GuestResponse guestResponse =
+                memberService.registerGuestMember(dto);
+
+        Cookie accessTokenCookie = createAccessTokenCookie(guestResponse.accessToken(), true);
+
+        response.addCookie(accessTokenCookie);
+
+        return RsData.of(200,
+                "비회원 모임 가입 성공",
+                guestResponse);
+    }
+
+    @Operation(summary = "비회원 임시 로그인 API", description = "비회원 임시 로그인 API 입니다.")
+    @PostMapping("/auth/guest-login")
+    public RsData<GuestResponse> guestLogin(HttpServletResponse response,
+                                            @Valid @RequestBody GuestLoginDto guestLoginDto) {
+        GuestResponse guestAuthResponse = memberService.loginGuestMember(guestLoginDto);
+
+        Cookie accessTokenCookie = createAccessTokenCookie(guestAuthResponse.accessToken(), true);
+
+        response.addCookie(accessTokenCookie);
+
+        return RsData.of(200, "비회원 로그인 성공", guestAuthResponse);
+    }
+
+
+    // ================= 회원, 비회원용 쿠키 생성/삭제 =================
+    private Cookie createAccessTokenCookie(String accessToken, boolean isGuest) {
+        Cookie cookie = new Cookie("accessToken", accessToken);
+        cookie.setHttpOnly(true);
+        cookie.setSecure(true);
+        cookie.setPath("/");
+
+        cookie.setMaxAge(isGuest ? 60 * 60 * 24 * 30 : 60 * 60 * 24);
+        cookie.setAttribute("SameSite", "Strict");
+        return cookie;
+    }
+
+    private Cookie deleteCookie() {
+        Cookie expiredCookie = new Cookie("accessToken", "");
+        expiredCookie.setHttpOnly(true);
+        expiredCookie.setSecure(true);
+        expiredCookie.setPath("/");
+        expiredCookie.setMaxAge(0);
+
+        return expiredCookie;
+    }
+
+    // ================= 기타 API =================
     @Operation(summary = "비밀번호 유효성 검사 API", description = "비밀번호의 유효성을 인증하는 API 입니다.")
     @PreAuthorize("isAuthenticated()")
     @PostMapping("/auth/verify-password")
@@ -97,14 +189,14 @@ public class ApiV1MemberController {
     public RsData<MemberAuthResponse> apiTokenReissue(@RequestBody TokenRefreshRequest requestBody,
                                                       HttpServletResponse response) {
 
-        String ApiKey = requestBody.refreshToken();
+        String apiKey = requestBody.refreshToken();
 
-        if (ApiKey == null || ApiKey.isBlank()) {
+        if (apiKey == null || apiKey.isBlank()) {
             return RsData.of(401, "Refresh Token이 존재하지 않습니다.");
         }
 
         // 사용자 정보 추출
-        Member member = memberService.findByApiKey(ApiKey);
+        Member member = memberService.findMemberByApiKey(apiKey);
 
         // 새로운 access token 생성
         String newAccessToken = memberService.generateAccessToken(member);
@@ -114,97 +206,8 @@ public class ApiV1MemberController {
         response.addCookie(accessTokenCookie);
 
         return RsData.of(200, "Access Token 재발급 성공",
-                new MemberAuthResponse(ApiKey, newAccessToken));
+                new MemberAuthResponse(apiKey, newAccessToken));
     }
-
-    @Operation(summary = "내 정보 반환 API", description = "현재 로그인한 유저 정보를 반환하는 API 입니다.")
-    @PreAuthorize("isAuthenticated()")
-    @GetMapping("/me")
-    public RsData<MemberDetailInfoResponse> getMyInfo(HttpServletResponse response,
-                                                      @AuthenticationPrincipal SecurityUser user) {
-
-        MemberDetailInfoResponse memberDetailInfoResponse =
-                memberService.getUserInfo(user.getId());
-
-        return RsData.of(200,
-                "유저 정보 반환 성공",
-                memberDetailInfoResponse);
-    }
-
-    @Operation(summary = "내 정보 수정 API", description = "현재 로그인한 유저 정보를 수정하는 API 입니다.")
-    @PreAuthorize("isAuthenticated()")
-    @PutMapping("/me")
-    public RsData<MemberDetailInfoResponse> updateInfo(@AuthenticationPrincipal SecurityUser user,
-                                                       @Valid @RequestPart(value = "data") UpdateMemberInfoDto dto,
-                                                       @RequestPart(value = "profileImage", required = false) MultipartFile profileImage) throws IOException {
-        MemberDetailInfoResponse memberDetailInfoResponse =
-                memberService.updateInfo(user.getId(), dto, profileImage);
-
-        return RsData.of(200,
-                "유저 정보 수정 성공",
-                memberDetailInfoResponse);
-    }
-
-    @Operation(summary = "비회원 모임 등록 API", description = "비회원 모임 등록 API 입니다.")
-    @PostMapping("/auth/guest-register")
-    public RsData<GuestResponse> registerGuest(HttpServletResponse response,
-                                               @Valid @RequestBody GuestRegisterDto dto) {
-        GuestResponse guestResponse =
-                memberService.registerGuest(dto);
-
-        Cookie accessTokenCookie = createAccessTokenCookie(guestResponse.accessToken(), true);
-
-        response.addCookie(accessTokenCookie);
-
-        return RsData.of(200,
-                "비회원 모임 가입 성공",
-                guestResponse);
-    }
-
-    @Operation(summary = "비회원 임시 로그인 API", description = "비회원 임시 로그인 API 입니다.")
-    @PostMapping("/auth/guest-login")
-    public RsData<GuestResponse> guestLogin(HttpServletResponse response,
-                                                @Valid @RequestBody GuestLoginDto guestLoginDto) {
-        GuestResponse guestAuthResponse = memberService.guestLogin(guestLoginDto);
-
-        Cookie accessTokenCookie = createAccessTokenCookie(guestAuthResponse.accessToken(), true);
-
-        response.addCookie(accessTokenCookie);
-
-        return RsData.of(200, "비회원 로그인 성공", guestAuthResponse);
-    }
-
-    private Cookie createAccessTokenCookie(String accessToken, boolean isGuest) {
-        Cookie cookie = new Cookie("accessToken", accessToken);
-        cookie.setHttpOnly(true);
-        cookie.setSecure(true);
-        cookie.setPath("/");
-
-        cookie.setMaxAge(isGuest ? 60 * 60 * 24 * 30 : 60 * 60 * 24);
-        cookie.setAttribute("SameSite", "Strict");
-        return cookie;
-    }
-
-    private Cookie deleteCookie() {
-        Cookie expiredCookie = new Cookie("accessToken", "");
-        expiredCookie.setHttpOnly(true);
-        expiredCookie.setSecure(true);
-        expiredCookie.setPath("/");
-        expiredCookie.setMaxAge(0);
-
-        return expiredCookie;
-    }
-
-//    private String extractRefreshTokenFromCookie(HttpServletRequest request) {
-//        if (request.getCookies() == null) return null;
-//
-//        for (Cookie cookie : request.getCookies()) {
-//            if ("refreshToken".equals(cookie.getName())) {
-//                return cookie.getValue();
-//            }
-//        }
-//        return null;
-//    }
 }
 
 //@GetMapping("/{scheduleId}")
