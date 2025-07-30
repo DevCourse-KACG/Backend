@@ -23,6 +23,6 @@ public enum ClubMemberRole {
                 return clubMemberRole;
             }
         }
-        throw new ServiceException(400, "Unknown role: " + role);
+        throw new ServiceException(400, "Unknown Member role: " + role);
     }
 }

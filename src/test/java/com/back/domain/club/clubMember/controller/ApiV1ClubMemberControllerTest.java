@@ -616,7 +616,7 @@ class ApiV1ClubMemberControllerTest {
                 .andExpect(handler().methodName("changeMemberRole"))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.code").value(400))
-                .andExpect(jsonPath("$.message").value("Unknown role: INVALID_ROLE"));
+                .andExpect(jsonPath("$.message").value("Unknown Member role: INVALID_ROLE"));
     }
 }
 

@@ -115,6 +115,8 @@ public class ClubMemberService {
      */
     @Transactional
     public void changeMemberRole(Long clubId, Long memberId, @NotBlank String role) {
+        // TODO : 유저 권한 체크
+
         Club club = clubService.getClubById(clubId)
                 .orElseThrow(() -> new ServiceException(404, "클럽이 존재하지 않습니다."));
         Member member = memberService.findById(memberId)
