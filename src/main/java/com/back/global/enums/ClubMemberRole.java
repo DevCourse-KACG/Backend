@@ -1,5 +1,7 @@
 package com.back.global.enums;
 
+import com.back.global.exception.ServiceException;
+
 public enum ClubMemberRole {
     PARTICIPANT("일반 회원"),
     MANAGER("관리자"),
@@ -21,6 +23,6 @@ public enum ClubMemberRole {
                 return clubMemberRole;
             }
         }
-        throw new IllegalArgumentException("Unknown role: " + role);
+        throw new ServiceException(400, "Unknown Member role: " + role);
     }
 }

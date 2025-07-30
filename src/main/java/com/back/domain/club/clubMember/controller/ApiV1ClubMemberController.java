@@ -37,4 +37,16 @@ public class ApiV1ClubMemberController {
 
         return RsData.of(200, "클럽에서 멤버가 탈퇴됐습니다.", null);
     }
+
+    @PutMapping("/{memberId}/role")
+    @Operation(summary = "클럽 멤버 권한 변경")
+    public RsData<Void> changeMemberRole(
+            @PathVariable Long clubId,
+            @PathVariable Long memberId,
+            @RequestBody @Valid ClubMemberDtos.ClubMemberRoleChangeRequest reqBody
+    ) {
+        clubMemberService.changeMemberRole(clubId, memberId, reqBody.role());
+
+        return RsData.of(200, "멤버의 권한이 변경됐습니다.", null);
+    }
 }

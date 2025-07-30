@@ -1,5 +1,7 @@
 package com.back.global.enums;
 
+import com.back.global.exception.ServiceException;
+
 public enum EventType {
     // 일회성, 단기, 장기
     ONE_TIME("일회성"), // 한 번만 열리는 모임
@@ -22,7 +24,7 @@ public enum EventType {
                 return type;
             }
         }
-        throw new IllegalArgumentException("Unknown event type: " + eventType);
+        throw new ServiceException(400, "Unknown event type: " + eventType);
     }
 
 }
