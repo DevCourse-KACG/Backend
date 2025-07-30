@@ -1,14 +1,8 @@
 package com.back.domain.member.member.controller;
 
 import com.back.domain.api.dto.TokenRefreshRequest;
-import com.back.domain.member.member.dto.request.MemberLoginDto;
-import com.back.domain.member.member.dto.request.MemberRegisterDto;
-import com.back.domain.member.member.dto.request.PasswordCheckRequestDto;
-import com.back.domain.member.member.dto.request.UpdateMemberInfoDto;
-import com.back.domain.member.member.dto.response.MemberAuthResponse;
-import com.back.domain.member.member.dto.response.MemberDetailInfoResponse;
-import com.back.domain.member.member.dto.response.MemberPasswordResponse;
-import com.back.domain.member.member.dto.response.MemberWithdrawMembershipResponse;
+import com.back.domain.member.member.dto.request.*;
+import com.back.domain.member.member.dto.response.*;
 import com.back.domain.member.member.entity.Member;
 import com.back.domain.member.member.service.MemberService;
 import com.back.global.exception.ServiceException;
@@ -136,6 +130,7 @@ public class ApiV1MemberController {
                 "유저 정보 반환 성공",
                 memberDetailInfoResponse);
     }
+
     @Operation(summary = "내 정보 수정 API", description = "현재 로그인한 유저 정보를 수정하는 API 입니다.")
     @PreAuthorize("isAuthenticated()")
     @PutMapping("/me")
@@ -148,6 +143,22 @@ public class ApiV1MemberController {
         return RsData.of(200,
                 "유저 정보 수정 성공",
                 memberDetailInfoResponse);
+    }
+
+    @Operation(summary = "비회원 모임 등록 API", description = "비회원 모임 등록 API 입니다.")
+    @PostMapping("/auth/guest-register")
+    public RsData<GuestResponse> guestRegister(HttpServletResponse response,
+                                               @Valid @RequestBody GuestRegisterDto dto) {
+        GuestResponse guestResponse =
+                memberService.guestRegist(dto);
+
+        Cookie accessTokenCookie = createAccessTokenCookie(guestResponse.accessToken());
+
+        response.addCookie(accessTokenCookie);
+
+        return RsData.of(200,
+                "비회원 모임 가입 성공",
+                guestResponse);
     }
 
     private Cookie createAccessTokenCookie(String accessToken) {
