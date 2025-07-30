@@ -51,7 +51,7 @@ public class ApiV1FriendController {
     }
 
     @PatchMapping("/{friendId}/reject")
-    @Operation(summary = "친구 요청 수락")
+    @Operation(summary = "친구 요청 거절")
     public RsData<FriendDto> rejectFriend(
             @AuthenticationPrincipal SecurityUser user,
             @PathVariable Long friendId
