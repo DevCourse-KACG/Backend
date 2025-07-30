@@ -6,11 +6,13 @@ import com.back.domain.schedule.schedule.dto.ScheduleUpdateReqBody;
 import com.back.domain.schedule.schedule.entity.Schedule;
 import com.back.domain.schedule.schedule.service.ScheduleService;
 import com.back.global.rsData.RsData;
+import com.back.global.security.SecurityUser;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
@@ -103,15 +105,11 @@ public class ApiV1ScheduleController {
     @GetMapping("/me")
     @Operation(summary = "나의 일정 목록 조회")
     public RsData<List<ScheduleDto>> getMySchedules(
-            //@AuthenticationPrincipal SecurityUser user,
+            @AuthenticationPrincipal SecurityUser user,
             @RequestParam(value = "startDate", required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate startDate,
             @RequestParam(value = "endDate", required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate endDate
     ) {
-        // 테스팅을 위해 임시로 memberId를 하드코딩 -> 시큐리티 완료 시 삭제 예정
-        List<Schedule> mySchedules = scheduleService.getMySchedules(1L, startDate, endDate);
-
-        // 실제로는 SecurityUser를 통해 현재 로그인한 사용자의 정보를 가져와야 함
-        //List<Schedule> mySchedules = scheduleService.getMySchedules(user.getId(), startDate, endDate);
+        List<Schedule> mySchedules = scheduleService.getMySchedules(user.getId(), startDate, endDate);
         return RsData.of(
                 200,
                 "나의 일정 목록이 조회되었습니다.",

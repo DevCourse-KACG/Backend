@@ -1,15 +1,16 @@
 package com.back.domain.schedule.schedule.controller;
 
+import com.back.domain.member.member.repository.MemberRepository;
 import com.back.domain.schedule.schedule.entity.Schedule;
 import com.back.domain.schedule.schedule.service.ScheduleService;
 import org.hamcrest.Matchers;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.springdoc.core.customizers.ParameterObjectNamingStrategyCustomizer;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
+import org.springframework.security.test.context.support.WithUserDetails;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
@@ -32,9 +33,9 @@ class ApiV1ScheduleControllerTest {
     @Autowired
     private MockMvc mockMvc;
     @Autowired
-    private ScheduleService scheduleService;
+    private MemberRepository memberRepository;
     @Autowired
-    private ParameterObjectNamingStrategyCustomizer parameterObjectNamingStrategyCustomizer;
+    private ScheduleService scheduleService;
 
     @Test
     @DisplayName("일정 목록 조회 - 날짜 파라미터 없는 경우 현재 달 기준")
@@ -324,6 +325,7 @@ class ApiV1ScheduleControllerTest {
 
     @Test
     @DisplayName("나의 일정 목록 조회")
+    @WithUserDetails(value = "hgd222@test.com")
     void trm1() throws Exception {
         String startDateStr = "2025-07-01";
         String endDateStr = "2025-07-31";
