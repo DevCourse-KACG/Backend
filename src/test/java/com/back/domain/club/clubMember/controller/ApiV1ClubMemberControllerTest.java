@@ -25,8 +25,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDate;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
@@ -452,6 +451,172 @@ class ApiV1ClubMemberControllerTest {
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.code").value(404))
                 .andExpect(jsonPath("$.message").value("멤버가 존재하지 않습니다."));
+    }
+
+    @Test
+    @DisplayName("참여자 권한 변경")
+    void changeMemberRole() throws Exception {
+        // given
+        // 테스트 클럽 생성
+        Club club = clubService.createClub(
+                Club.builder()
+                        .name("테스트 그룹")
+                        .bio("테스트 그룹 설명")
+                        .category(ClubCategory.STUDY)
+                        .mainSpot("서울")
+                        .maximumCapacity(10)
+                        .eventType(EventType.ONE_TIME)
+                        .startDate(LocalDate.of(2023, 10, 1))
+                        .endDate(LocalDate.of(2023, 10, 31))
+                        .isPublic(true)
+                        .leaderId(1L)
+                        .build()
+        );
+
+        // 추가할 멤버 (testInitData의 멤버 사용)
+        Member member1 = memberService.findById(2L).orElseThrow(
+                () -> new IllegalStateException("멤버가 존재하지 않습니다.")
+        );
+
+        // 클럽에 멤버 추가
+        clubMemberService.addMemberToClub(club.getId(), member1, ClubMemberRole.PARTICIPANT);
+
+        assertThat(club.getClubMembers().size()).isEqualTo(1); // 클럽에 멤버가 1명 추가되었는지 확인
+
+        // when
+        ResultActions resultActions = mvc.perform(
+                        put("/api/v1/clubs/" + club.getId() + "/members/" + member1.getId() + "/role")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content("{\"role\": \"MANAGER\"}")
+                )
+                .andDo(print());
+
+        // then
+        resultActions
+                .andExpect(handler().handlerType(ApiV1ClubMemberController.class))
+                .andExpect(handler().methodName("changeMemberRole"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value(200))
+                .andExpect(jsonPath("$.message").value("멤버의 권한이 변경됐습니다."));
+
+        // 추가 검증: 클럽에서 멤버의 역할이 실제로 변경되었는지 확인
+        club = clubService.getClubById(club.getId()).orElseThrow(
+                () -> new IllegalStateException("클럽이 존재하지 않습니다.")
+        );
+
+        assertThat(club.getClubMembers().size()).isEqualTo(1);
+        assertThat(club.getClubMembers().get(0).getMember().getEmail()).isEqualTo(member1.getEmail());
+        assertThat(club.getClubMembers().get(0).getRole()).isEqualTo(ClubMemberRole.MANAGER); // 역할이 MANAGER로 변경되었는지 확인
+    }
+
+    @Test
+    @DisplayName("참여자 권한 변경 - 클럽이 존재하지 않을 때")
+    void changeMemberRole_ClubNotFound() throws Exception {
+        // given
+        String nonExistentClubId = "9999"; // 존재하지 않는 클럽 ID
+        Long memberId = 2L; // 임의의 멤버 ID
+
+        // when
+        ResultActions resultActions = mvc.perform(
+                        put("/api/v1/clubs/" + nonExistentClubId + "/members/" + memberId + "/role")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content("{\"role\": \"MANAGER\"}")
+                )
+                .andDo(print());
+
+        // then
+        resultActions
+                .andExpect(handler().handlerType(ApiV1ClubMemberController.class))
+                .andExpect(handler().methodName("changeMemberRole"))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.code").value(404))
+                .andExpect(jsonPath("$.message").value("클럽이 존재하지 않습니다."));
+    }
+
+    @Test
+    @DisplayName("참여자 권한 변경 - 멤버가 클럽에 존재하지 않을 때")
+    void changeMemberRole_MemberNotFound() throws Exception {
+        // given
+        // 테스트 클럽 생성
+        Club club = clubService.createClub(
+                Club.builder()
+                        .name("테스트 그룹")
+                        .bio("테스트 그룹 설명")
+                        .category(ClubCategory.STUDY)
+                        .mainSpot("서울")
+                        .maximumCapacity(10)
+                        .eventType(EventType.ONE_TIME)
+                        .startDate(LocalDate.of(2023, 10, 1))
+                        .endDate(LocalDate.of(2023, 10, 31))
+                        .isPublic(true)
+                        .leaderId(1L)
+                        .build()
+        );
+
+        Long nonExistentMemberId = 9999L; // 존재하지 않는 멤버 ID
+
+        // when
+        ResultActions resultActions = mvc.perform(
+                        put("/api/v1/clubs/" + club.getId() + "/members/" + nonExistentMemberId + "/role")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content("{\"role\": \"MANAGER\"}")
+                )
+                .andDo(print());
+
+        // then
+        resultActions
+                .andExpect(handler().handlerType(ApiV1ClubMemberController.class))
+                .andExpect(handler().methodName("changeMemberRole"))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.code").value(404))
+                .andExpect(jsonPath("$.message").value("멤버가 존재하지 않습니다."));
+    }
+
+    @Test
+    @DisplayName("참여자 권한 변경 - 잘못된 역할 요청")
+    void changeMemberRole_InvalidRole() throws Exception {
+        // given
+        // 테스트 클럽 생성
+        Club club = clubService.createClub(
+                Club.builder()
+                        .name("테스트 그룹")
+                        .bio("테스트 그룹 설명")
+                        .category(ClubCategory.STUDY)
+                        .mainSpot("서울")
+                        .maximumCapacity(10)
+                        .eventType(EventType.ONE_TIME)
+                        .startDate(LocalDate.of(2023, 10, 1))
+                        .endDate(LocalDate.of(2023, 10, 31))
+                        .isPublic(true)
+                        .leaderId(1L)
+                        .build()
+        );
+
+        // 추가할 멤버 (testInitData의 멤버 사용)
+        Member member1 = memberService.findById(2L).orElseThrow(
+                () -> new IllegalStateException("멤버가 존재하지 않습니다.")
+        );
+
+        // 클럽에 멤버 추가
+        clubMemberService.addMemberToClub(club.getId(), member1, ClubMemberRole.PARTICIPANT);
+
+        assertThat(club.getClubMembers().size()).isEqualTo(1); // 클럽에 멤버가 1명 추가되었는지 확인
+
+        // when
+        ResultActions resultActions = mvc.perform(
+                        put("/api/v1/clubs/" + club.getId() + "/members/" + member1.getId() + "/role")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content("{\"role\": \"INVALID_ROLE\"}")
+                )
+                .andDo(print());
+
+        // then
+        resultActions
+                .andExpect(handler().handlerType(ApiV1ClubMemberController.class))
+                .andExpect(handler().methodName("changeMemberRole"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value(400))
+                .andExpect(jsonPath("$.message").value("Unknown role: INVALID_ROLE"));
     }
 }
 

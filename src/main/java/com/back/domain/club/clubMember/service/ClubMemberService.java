@@ -10,6 +10,7 @@ import com.back.domain.member.member.service.MemberService;
 import com.back.global.enums.ClubMemberRole;
 import com.back.global.enums.ClubMemberState;
 import com.back.global.exception.ServiceException;
+import jakarta.validation.constraints.NotBlank;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -103,6 +104,26 @@ public class ClubMemberService {
 
         // 클럽에서 멤버 탈퇴
         clubMember.updateState(ClubMemberState.WITHDRAWN);
+        clubMemberRepository.save(clubMember);
+    }
+
+    /**
+     * 클럽 멤버의 역할을 변경합니다.
+     * @param clubId 클럽 ID
+     * @param memberId 멤버 ID
+     * @param role 변경할 역할
+     */
+    @Transactional
+    public void changeMemberRole(Long clubId, Long memberId, @NotBlank String role) {
+        Club club = clubService.getClubById(clubId)
+                .orElseThrow(() -> new ServiceException(404, "클럽이 존재하지 않습니다."));
+        Member member = memberService.findById(memberId)
+                .orElseThrow(() -> new ServiceException(404, "멤버가 존재하지 않습니다."));
+        ClubMember clubMember = clubMemberRepository.findByClubAndMember(club, member)
+                .orElseThrow(() -> new ServiceException(404, "멤버가 존재하지 않습니다."));
+
+        // 역할 변경
+        clubMember.updateRole(ClubMemberRole.fromString(role.toUpperCase()));
         clubMemberRepository.save(clubMember);
     }
 }

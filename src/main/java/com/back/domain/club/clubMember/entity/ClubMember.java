@@ -54,4 +54,6 @@ public class ClubMember {
     public void updateState(ClubMemberState newState) {
         this.state = newState;
     }
+
+    public void updateRole(ClubMemberRole newRole) { this.role = newRole; }
 }
