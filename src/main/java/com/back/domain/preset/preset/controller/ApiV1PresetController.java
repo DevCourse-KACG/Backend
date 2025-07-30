@@ -25,7 +25,6 @@ public class ApiV1PresetController {
   private final PresetService presetService;
 
   @PostMapping
-  @Transactional
   @Operation(summary = "프리셋 생성")
   public ResponseEntity<RsData<PresetDto>> write(@Valid @RequestBody PresetWriteReqDto presetWriteReqDto) {
     RsData<PresetDto> presetDto = presetService.write(presetWriteReqDto);
@@ -50,7 +49,6 @@ public class ApiV1PresetController {
   }
 
   @DeleteMapping("/{presetId}")
-  @Transactional
   @Operation(summary = "프리셋 삭제")
   public ResponseEntity<RsData<Void>> deletePreset(@PathVariable Long presetId) {
     RsData<Void> deleteResult = presetService.deletePreset(presetId);
@@ -59,7 +57,6 @@ public class ApiV1PresetController {
   }
 
   @PutMapping("/{presetId}")
-  @Transactional
   @Operation(summary = "프리셋 수정")
   public ResponseEntity<RsData<PresetDto>> updatePreset(@PathVariable Long presetId, @Valid @RequestBody PresetWriteReqDto presetWriteReqDto) {
     RsData<PresetDto> updatedPreset = presetService.updatePreset(presetId, presetWriteReqDto);

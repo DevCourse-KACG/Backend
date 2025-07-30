@@ -1,5 +1,7 @@
 package com.back.global.enums;
 
+import com.back.global.exception.ServiceException;
+
 public enum CheckListItemCategory {
     // 준비물
     // 예약
@@ -18,5 +20,14 @@ public enum CheckListItemCategory {
 
     public String getDescription() {
         return description;
+    }
+
+    public static CheckListItemCategory fromString(String category) {
+        for (CheckListItemCategory checkListItemCategory : CheckListItemCategory.values()) {
+            if (checkListItemCategory.name().equalsIgnoreCase(category)) {
+                return checkListItemCategory;
+            }
+        }
+        throw new ServiceException(400, "Unknown Item category: " + category);
     }
 }

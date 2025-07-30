@@ -50,6 +50,21 @@ public class ApiV1FriendController {
         );
     }
 
+    @PatchMapping("/{friendId}/reject")
+    @Operation(summary = "친구 요청 거절")
+    public RsData<FriendDto> rejectFriend(
+            @AuthenticationPrincipal SecurityUser user,
+            @PathVariable Long friendId
+    ) {
+        FriendDto friendDto = friendService.rejectFriend(user.getId(), friendId);
+
+        return RsData.of(
+                200,
+                "%s님의 친구 요청을 거절하였습니다.".formatted(friendDto.friendNickname()),
+                friendDto
+        );
+    }
+
     @DeleteMapping("/{friendId}")
     @Operation(summary = "친구 삭제")
     public RsData<FriendDelDto> deleteFriend(

@@ -1,5 +1,7 @@
 package com.back.global.enums;
 
+import com.back.global.exception.ServiceException;
+
 public enum ClubMemberState {
     INVITED("초대됨"),
     JOINING("가입 중"),
@@ -12,5 +14,14 @@ public enum ClubMemberState {
     }
     public String getDescription() {
         return description;
+    }
+
+    public static ClubMemberState fromString(String state) {
+        for (ClubMemberState clubMemberState : ClubMemberState.values()) {
+            if (clubMemberState.name().equalsIgnoreCase(state)) {
+                return clubMemberState;
+            }
+        }
+        throw new ServiceException(400, "Unknown Member state: " + state);
     }
 }

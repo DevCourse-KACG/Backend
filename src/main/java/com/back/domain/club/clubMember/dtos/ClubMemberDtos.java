@@ -35,4 +35,9 @@ public class ClubMemberDtos {
             @NotEmpty
             List<ClubMemberRegisterInfo> members
     ){}
+
+    public static record ClubMemberRoleChangeRequest (
+            @NotBlank
+            String role
+    ){}
 }
