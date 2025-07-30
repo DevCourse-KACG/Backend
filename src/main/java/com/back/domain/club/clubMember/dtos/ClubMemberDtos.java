@@ -44,7 +44,7 @@ public class ClubMemberDtos {
             String role
     ){}
 
-    public static record ClubMemberResponse(
+    public static record ClubMemberInfo(
             Long clubMemberid,
             Long memberId,
             String nickname,
@@ -54,5 +54,9 @@ public class ClubMemberDtos {
             MemberType memberType,
             String profileImageUrl,
             ClubMemberState state
+    ) {}
+
+    public static record ClubMemberResponse(
+            List<ClubMemberInfo> clubMembers
     ) {}
 }
