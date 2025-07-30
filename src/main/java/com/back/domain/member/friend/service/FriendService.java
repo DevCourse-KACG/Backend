@@ -1,5 +1,6 @@
 package com.back.domain.member.friend.service;
 
+import com.back.domain.member.friend.dto.FriendDelDto;
 import com.back.domain.member.friend.dto.FriendDto;
 import com.back.domain.member.friend.entity.Friend;
 import com.back.domain.member.friend.entity.FriendStatus;
@@ -11,6 +12,7 @@ import com.back.domain.member.member.repository.MemberRepository;
 import com.back.global.exception.ServiceException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.NoSuchElementException;
 
@@ -27,6 +29,7 @@ public class FriendService {
      * @param friendEmail
      * @return FriendDto
      */
+    @Transactional
     public FriendDto addFriend(Long memberId, String friendEmail) {
         // 친구 요청을 보낼 회원과 받는 회원 조회
         Member requester = memberRepository.findById(memberId)
@@ -79,5 +82,28 @@ public class FriendService {
         friendRepository.save(friend);
 
         return new FriendDto(friend, responder, responderInfo);
+    }
+
+    @Transactional
+    public FriendDelDto deleteFriend(Long id, Long friendId) {
+        // 친구 요청을 보낸 회원과 받는 회원 조회
+        Member requester = memberRepository.findById(id)
+                .orElseThrow(() -> new NoSuchElementException("회원이 존재하지 않습니다."));
+
+        Member friendMember = memberRepository.findById(friendId)
+                .orElseThrow(() -> new NoSuchElementException("친구 대상이 존재하지 않습니다."));
+
+        Friend friend = friendRepository.findByMembers(requester, friendMember)
+                .orElseThrow(() -> new NoSuchElementException("친구 요청이 존재하지 않습니다."));
+
+        // 친구 요청의 상태가 ACCEPTED가 아닌 경우 예외 처리
+        if (friend.getStatus() != FriendStatus.ACCEPTED) {
+            throw new ServiceException(400, "친구 요청이 수락되지 않았습니다.");
+        }
+
+        // 친구 삭제
+        friendRepository.delete(friend);
+
+        return new FriendDelDto(friendMember);
     }
 }
