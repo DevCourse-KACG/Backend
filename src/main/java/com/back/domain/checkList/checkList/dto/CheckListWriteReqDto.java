@@ -10,7 +10,6 @@ import java.util.List;
 public record CheckListWriteReqDto(
     @NotNull(message = "일정 ID는 필수입니다.")
     Long scheduleId,
-    boolean isActive,
     @Valid
     List<CheckListItemWriteReqDto> checkListItems
 ) {

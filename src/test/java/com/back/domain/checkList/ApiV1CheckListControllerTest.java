@@ -122,11 +122,10 @@ public class ApiV1CheckListControllerTest {
     schedule = scheduleRepository.save(scheduleBuilder);
   }
 
-  Long checkListCreate() throws Exception {
+  JsonNode checkListCreate() throws Exception {
     String requestBody = """
           {
             "scheduleId": %d,
-            "isActive": true,
             "checkListItems": [
               {
                 "content": "체크리스트 아이템 1",
@@ -158,8 +157,7 @@ public class ApiV1CheckListControllerTest {
     String responseContent = result.getResponse().getContentAsString();
     ObjectMapper objectMapper = new ObjectMapper();
     JsonNode jsonNode = objectMapper.readTree(responseContent);
-    Long checkListId = jsonNode.get("data").get("id").asLong();
-    return checkListId;
+    return jsonNode;
   }
 
   @Test
@@ -168,7 +166,6 @@ public class ApiV1CheckListControllerTest {
     String requestBody = """
           {
             "scheduleId": %d,
-            "isActive": true,
             "checkListItems": [
               {
                 "content": "체크리스트 아이템 1",
@@ -208,7 +205,6 @@ public class ApiV1CheckListControllerTest {
     String requestBody = """
           {
             "scheduleId": 9999,
-            "isActive": true,
             "checkListItems": [
               {
                 "content": "체크리스트 아이템 1",
@@ -248,7 +244,6 @@ public class ApiV1CheckListControllerTest {
     String requestBody = """
           {
             "scheduleId": %d,
-            "isActive": true,
             "checkListItems": [
               {
                 "content": "체크리스트 아이템 1",
@@ -302,7 +297,6 @@ public class ApiV1CheckListControllerTest {
     String requestBody = """
           {
             "scheduleId": %d,
-            "isActive": true,
             "checkListItems": [
               {
                 "content": "체크리스트 아이템 1",
@@ -334,7 +328,6 @@ public class ApiV1CheckListControllerTest {
     String requestBody = """
           {
             "scheduleId": %d,
-            "isActive": true,
             "checkListItems": [
               {
                 "content": "체크리스트 아이템 1",
@@ -367,7 +360,6 @@ public class ApiV1CheckListControllerTest {
     String requestBody = """
           {
             "scheduleId": %d,
-            "isActive": true,
             "checkListItems": [
               {
                 "content": "체크리스트 아이템 1",
@@ -405,7 +397,6 @@ public class ApiV1CheckListControllerTest {
     String requestBody = """
           {
             "scheduleId": %d,
-            "isActive": true,
             "checkListItems": [
               {
                 "content": "체크리스트 아이템 1",
@@ -436,13 +427,12 @@ public class ApiV1CheckListControllerTest {
   @DisplayName("체크리스트 생성 실패 - 일정에 체크리스트가 이미 존재하는 경우")
   void t8() throws Exception {
     // 먼저 체크리스트를 생성
-    Long checkListId = checkListCreate();
-
+    JsonNode jsonNode = checkListCreate();
+    Long checkListId = jsonNode.get("data").get("id").asLong();
     // 동일한 일정에 다시 체크리스트를 생성하려고 시도
     String requestBody = """
           {
             "scheduleId": %d,
-            "isActive": true,
             "checkListItems": [
               {
                 "content": "체크리스트 아이템 1",
@@ -473,7 +463,8 @@ public class ApiV1CheckListControllerTest {
   @DisplayName("체크리스트 조회")
   void t9() throws Exception {
     // 먼저 체크리스트를 생성
-    Long checkListId = checkListCreate();
+    JsonNode jsonNode = checkListCreate();
+    Long checkListId = jsonNode.get("data").get("id").asLong();
 
     mockMvc.perform(
             get("/api/v1/checklists/" + checkListId)
@@ -502,7 +493,8 @@ public class ApiV1CheckListControllerTest {
   @Test
   @DisplayName("체크리스트 조회 실패 - JWT가 유효하지 않은 경우")
   void t11() throws Exception {
-    Long checkListId = checkListCreate();
+    JsonNode jsonNode = checkListCreate();
+    Long checkListId = jsonNode.get("data").get("id").asLong();
 
     mockMvc.perform(
             get("/api/v1/checklists/" + checkListId)
@@ -516,7 +508,8 @@ public class ApiV1CheckListControllerTest {
   @Test
   @DisplayName("체크리스트 조회 실패 - JWT가 없는 경우")
   void t12() throws Exception {
-    Long checkListId = checkListCreate();
+    JsonNode jsonNode = checkListCreate();
+    Long checkListId = jsonNode.get("data").get("id").asLong();
 
     mockMvc.perform(
             get("/api/v1/checklists/" + checkListId))
@@ -535,7 +528,8 @@ public class ApiV1CheckListControllerTest {
         "nickname", member.getNickname());
     String expiredJwtToken = Ut.jwt.toString(secretKey, -1, expiredClaims); // 만료 시간을 -1로 설정
 
-    Long checkListId = checkListCreate();
+    JsonNode jsonNode = checkListCreate();
+    Long checkListId = jsonNode.get("data").get("id").asLong();
 
     mockMvc.perform(
             get("/api/v1/checklists/" + checkListId)
@@ -562,7 +556,8 @@ public class ApiV1CheckListControllerTest {
         "nickname", anotherMember.getNickname());
     String anotherJwtToken = Ut.jwt.toString(secretKey, expirationSeconds, anotherClaims);
 
-    Long checkListId = checkListCreate();
+    JsonNode jsonNode = checkListCreate();
+    Long checkListId = jsonNode.get("data").get("id").asLong();
 
     mockMvc.perform(
             get("/api/v1/checklists/" + checkListId)
@@ -572,4 +567,300 @@ public class ApiV1CheckListControllerTest {
         .andExpect(jsonPath("$.message").value("클럽 멤버가 아닙니다"))
         .andDo(print());
   }
+
+  @Test
+  @DisplayName("체크리스트 수정")
+  void t15() throws Exception {
+    // 먼저 체크리스트를 생성
+    JsonNode jsonNode = checkListCreate();
+    Long checkListId = jsonNode.get("data").get("id").asLong();
+    Long firstItemId = jsonNode.get("data").get("checkListItems").get(0).get("id").asLong();
+    Long secondItemId = jsonNode.get("data").get("checkListItems").get(1).get("id").asLong();
+    // 다른 클럽 멤버 생성
+    Member anotherMember = Member.builder()
+        .nickname("다른 유저")
+        .password("password")
+        .build();
+    memberRepository.save(anotherMember);
+    // 다른 클럽 멤버를 클럽에 추가
+    ClubMember anotherClubMember = ClubMember.builder()
+        .member(anotherMember)
+        .role(ClubMemberRole.PARTICIPANT)
+        .state(ClubMemberState.JOINING)
+        .build();
+    club.addClubMember(anotherClubMember);
+    clubMemberRepository.save(anotherClubMember);
+
+    String requestBody = """
+          {
+            "checkListItems": [
+              {
+                "id": %d,
+                "content": "수정된 체크리스트 아이템 1",
+                "category": "%s",
+                "isChecked": true,
+                "sequence": 1,
+                "itemAssigns": [
+                  {
+                    "clubMemberId": %d,
+                    "isChecked": true
+                  }
+                ]
+              },
+              {
+                "id": %d,
+                "content": "수정된 체크리스트 아이템 2",
+                "category": "%s",
+                "sequence": 2,
+                "itemAssigns": []
+              }
+            ]
+          }
+        """.formatted(firstItemId, CheckListItemCategory.PREPARATION.name(), anotherClubMember.getId(), secondItemId, CheckListItemCategory.ETC.name());
+
+    mockMvc.perform(
+            put("/api/v1/checklists/" + checkListId)
+                .header("Authorization", "Bearer " + jwtToken)
+                .contentType("application/json")
+                .content(requestBody))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.code").value(200))
+        .andExpect(jsonPath("$.message").value("체크리스트 수정 성공"))
+        .andDo(print());
+  }
+
+  @Test
+  @DisplayName("체크리스트 수정 실패 - 체크리스트가 존재하지 않는 경우")
+  void t16() throws Exception {
+    Long nonExistentCheckListId = 9999L; // 존재하지 않는 체크리스트 ID
+
+    String requestBody = """
+          {
+            "checkListItems": [
+              {
+                "id": 1,
+                "content": "수정된 체크리스트 아이템 1",
+                "category": "%s",
+                "isChecked": true,
+                "sequence": 1,
+                "itemAssigns": []
+              }
+            ]
+          }
+        """.formatted(CheckListItemCategory.PREPARATION.name());
+
+    mockMvc.perform(
+            put("/api/v1/checklists/" + nonExistentCheckListId)
+                .header("Authorization", "Bearer " + jwtToken)
+                .contentType("application/json")
+                .content(requestBody))
+        .andExpect(status().isNotFound())
+        .andExpect(jsonPath("$.code").value(404))
+        .andExpect(jsonPath("$.message").value("체크리스트를 찾을 수 없습니다"))
+        .andDo(print());
+  }
+
+  @Test
+  @DisplayName("체크리스트 수정 실패 - 클럽 멤버가 아닌 경우")
+  void t17() throws Exception {
+    // 다른 멤버를 생성하고 클럽에 추가하지 않음
+    Member anotherMember = Member.builder()
+        .nickname("다른 유저")
+        .password("password")
+        .build();
+    memberRepository.save(anotherMember);
+
+    // 먼저 체크리스트를 생성
+    JsonNode jsonNode = checkListCreate();
+    Long checkListId = jsonNode.get("data").get("id").asLong();
+
+    String requestBody = """
+          {
+            "checkListItems": [
+              {
+                "id": 1,
+                "content": "수정된 체크리스트 아이템 1",
+                "category": "%s",
+                "isChecked": true,
+                "sequence": 1,
+                "itemAssigns": [
+                  {
+                    "clubMemberId": %d
+                  }
+                ]
+              }
+            ]
+          }
+        """.formatted(CheckListItemCategory.PREPARATION.name(), anotherMember.getId());
+
+    mockMvc.perform(
+            put("/api/v1/checklists/" + checkListId)
+                .header("Authorization", "Bearer " + jwtToken)
+                .contentType("application/json")
+                .content(requestBody))
+        .andExpect(status().isForbidden())
+        .andExpect(jsonPath("$.code").value(403))
+        .andExpect(jsonPath("$.message").value("클럽 멤버를 찾을 수 없습니다"))
+        .andDo(print());
+  }
+
+  @Test
+  @DisplayName("체크리스트 수정 실패 - 호스트 또는 관리자만 체크리스트를 수정할 수 있는 경우")
+  void t18() throws Exception {
+    // 새로운 클럽 멤버 생성
+    Member anotherMember = Member.builder()
+        .nickname("다른 유저")
+        .password("password")
+        .build();
+    memberRepository.save(anotherMember);
+
+    // anotherMember JWT 토큰 생성
+    Map<String, Object> anotherClaims = Map.of(
+        "id", anotherMember.getId(),
+        "nickname", anotherMember.getNickname());
+    String anotherJwtToken = Ut.jwt.toString(secretKey, expirationSeconds, anotherClaims);
+
+    ClubMember anotherClubMember = ClubMember.builder()
+        .member(anotherMember)
+        .role(ClubMemberRole.PARTICIPANT) // 호스트 또는 관리자가 아닌 경우
+        .state(ClubMemberState.JOINING)
+        .build();
+
+    club.addClubMember(anotherClubMember);
+    clubRepository.save(club);
+
+    // 먼저 체크리스트를 생성
+    JsonNode jsonNode = checkListCreate();
+    Long checkListId = jsonNode.get("data").get("id").asLong();
+
+    String requestBody = """
+          {
+            "checkListItems": [
+              {
+                "id": 1,
+                "content": "수정된 체크리스트 아이템 1",
+                "category": "%s",
+                "isChecked": true,
+                "sequence": 1,
+                "itemAssigns": []
+              }
+            ]
+          }
+        """.formatted(CheckListItemCategory.PREPARATION.name());
+
+    mockMvc.perform(
+            put("/api/v1/checklists/" + checkListId)
+                .header("Authorization", "Bearer " + anotherJwtToken)
+                .contentType("application/json")
+                .content(requestBody))
+        .andExpect(status().isForbidden())
+        .andExpect(jsonPath("$.code").value(403))
+        .andExpect(jsonPath("$.message").value("호스트 또는 관리자만 체크리스트를 수정할 수 있습니다"))
+        .andDo(print());
+  }
+
+  @Test
+  @DisplayName("체크리스트 수정 실패 - JWT가 유효하지 않은 경우")
+  void t19() throws Exception {
+    // 먼저 체크리스트를 생성
+    JsonNode jsonNode = checkListCreate();
+    Long checkListId = jsonNode.get("data").get("id").asLong();
+
+    String requestBody = """
+          {
+            "checkListItems": [
+              {
+                "id": 1,
+                "content": "수정된 체크리스트 아이템 1",
+                "category": "%s",
+                "isChecked": true,
+                "sequence": 1,
+                "itemAssigns": []
+              }
+            ]
+          }
+        """.formatted(CheckListItemCategory.PREPARATION.name());
+
+    mockMvc.perform(
+            put("/api/v1/checklists/" + checkListId)
+                .header("Authorization", "Bearer invalid_token")
+                .contentType("application/json")
+                .content(requestBody))
+        .andExpect(status().is(499))
+        .andExpect(jsonPath("$.code").value(499))
+        .andExpect(jsonPath("$.message").value("AccessToken 만료"))
+        .andDo(print());
+  }
+
+  @Test
+  @DisplayName("체크리스트 수정 실패 - JWT가 없는 경우")
+  void t20() throws Exception {
+    // 먼저 체크리스트를 생성
+    JsonNode jsonNode = checkListCreate();
+    Long checkListId = jsonNode.get("data").get("id").asLong();
+
+    String requestBody = """
+          {
+            "checkListItems": [
+              {
+                "id": 1,
+                "content": "수정된 체크리스트 아이템 1",
+                "category": "%s",
+                "isChecked": true,
+                "sequence": 1,
+                "itemAssigns": []
+              }
+            ]
+          }
+        """.formatted(CheckListItemCategory.PREPARATION.name());
+
+    mockMvc.perform(
+            put("/api/v1/checklists/" + checkListId)
+                .contentType("application/json")
+                .content(requestBody))
+        .andExpect(status().isNotFound())
+        .andExpect(jsonPath("$.code").value(404))
+        .andExpect(jsonPath("$.message").value("AccessToken을 찾을 수 없습니다"))
+        .andDo(print());
+  }
+
+  @Test
+  @DisplayName("체크리스트 수정 실패 - JWT 토큰 만료")
+  void t21() throws Exception {
+    // 먼저 체크리스트를 생성
+    JsonNode jsonNode = checkListCreate();
+    Long checkListId = jsonNode.get("data").get("id").asLong();
+
+    // 만료된 JWT 토큰 생성
+    Map<String, Object> expiredClaims = Map.of(
+        "id", member.getId(),
+        "nickname", member.getNickname());
+    String expiredJwtToken = Ut.jwt.toString(secretKey, -1, expiredClaims); // 만료 시간을 -1로 설정
+
+    String requestBody = """
+          {
+            "checkListItems": [
+              {
+                "id": 1,
+                "content": "수정된 체크리스트 아이템 1",
+                "category": "%s",
+                "isChecked": true,
+                "sequence": 1,
+                "itemAssigns": []
+              }
+            ]
+          }
+        """.formatted(CheckListItemCategory.PREPARATION.name());
+
+    mockMvc.perform(
+            put("/api/v1/checklists/" + checkListId)
+                .header("Authorization", "Bearer " + expiredJwtToken)
+                .contentType("application/json")
+                .content(requestBody))
+        .andExpect(status().is(499))
+        .andExpect(jsonPath("$.code").value(499))
+        .andExpect(jsonPath("$.message").value("AccessToken 만료"))
+        .andDo(print());
+  }
+
 }

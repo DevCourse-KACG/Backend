@@ -29,7 +29,7 @@ public class CheckList {
     @JoinColumn(name = "schedule_id", nullable = false)
     private Schedule schedule;
 
-    @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL, mappedBy = "checkList")
+    @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL, mappedBy = "checkList", orphanRemoval = true)
     @Description("체크리스트 아이템들")
     private List<CheckListItem> checkListItems;
 
@@ -57,4 +57,16 @@ public class CheckList {
         }
     }
 
+    public void updateIsActive(boolean isActive) {
+        this.isActive = isActive;
+    }
+
+    public void updateCheckListItems(List<CheckListItem> checkListItems) {
+        this.checkListItems = checkListItems;
+
+        // 양방향 연관관계 설정
+        if (checkListItems != null) {
+            checkListItems.forEach(item -> item.setCheckList(this));
+        }
+    }
 }

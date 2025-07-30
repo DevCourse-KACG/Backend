@@ -1,6 +1,7 @@
 package com.back.domain.checkList.checkList.controller;
 
 import com.back.domain.checkList.checkList.dto.CheckListDto;
+import com.back.domain.checkList.checkList.dto.CheckListUpdateReqDto;
 import com.back.domain.checkList.checkList.dto.CheckListWriteReqDto;
 import com.back.domain.checkList.checkList.service.CheckListService;
 import com.back.global.rsData.RsData;
@@ -31,6 +32,14 @@ public class ApiV1CheckListController {
   @Operation(summary = "체크리스트 조회")
   public ResponseEntity<RsData<CheckListDto>> getCheckList(@PathVariable Long checkListId) {
     RsData<CheckListDto> checkListDto = checkListService.getCheckList(checkListId);
+
+    return ResponseEntity.status(checkListDto.code()).body(checkListDto);
+  }
+
+  @PutMapping("/{checkListId}")
+  @Operation(summary = "체크리스트 수정")
+  public ResponseEntity<RsData<CheckListDto>> updateCheckList(@PathVariable Long checkListId, @Valid @RequestBody CheckListUpdateReqDto checkListUpdateReqDto) {
+    RsData<CheckListDto> checkListDto = checkListService.updateCheckList(checkListId, checkListUpdateReqDto);
 
     return ResponseEntity.status(checkListDto.code()).body(checkListDto);
   }

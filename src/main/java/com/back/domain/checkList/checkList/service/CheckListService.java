@@ -1,6 +1,7 @@
 package com.back.domain.checkList.checkList.service;
 
 import com.back.domain.checkList.checkList.dto.CheckListDto;
+import com.back.domain.checkList.checkList.dto.CheckListUpdateReqDto;
 import com.back.domain.checkList.checkList.dto.CheckListWriteReqDto;
 import com.back.domain.checkList.checkList.entity.CheckList;
 import com.back.domain.checkList.checkList.entity.CheckListItem;
@@ -18,6 +19,7 @@ import com.back.global.enums.ClubMemberState;
 import com.back.global.rq.Rq;
 import com.back.global.rsData.RsData;
 import com.back.standard.util.Ut;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -102,8 +104,8 @@ public class CheckListService {
     }
     // CheckList 엔티티 생성
     CheckList checkListBuilder = CheckList.builder()
+        .isActive(true)
         .schedule(schedule)
-        .isActive(checkListWriteReqDto.isActive())
         .checkListItems(checkListItems)
         .build();
 
@@ -151,6 +153,78 @@ public class CheckListService {
     return RsData.of(200, "체크리스트 조회 성공", checkListDto);
   }
 
+  @Transactional
+  public RsData<CheckListDto> updateCheckList(Long checkListId, CheckListUpdateReqDto checkListUpdateReqDto) {
+    RsData<Map<String, Object>> jwtRsData = getJwtData();
+
+    // JWT 데이터가 유효하지 않은 경우 RsData 반환
+    if (jwtRsData.code() != 200) {
+      return RsData.of(jwtRsData.code(), jwtRsData.message());
+    }
+    // JWT에서 멤버 ID 추출
+    Map<String, Object> jwtData = jwtRsData.data();
+    long memberId = ((Number) jwtData.get("id")).longValue();
+    Optional<Member> otnMember = memberRepository.findById(memberId);
+    if (otnMember.isEmpty()) return RsData.of(404, "멤버를 찾을 수 없습니다");
+    Member member = otnMember.get();
+
+    // 체크리스트 ID로 체크리스트 조회
+    Optional<CheckList> otnCheckList = checkListRepository.findById(checkListId);
+
+    // 체크리스트가 존재하지 않는 경우 RsData 반환
+    if (otnCheckList.isEmpty()) return RsData.of(404, "체크리스트를 찾을 수 없습니다");
+    CheckList checkList = otnCheckList.get();
+
+    // 체크리스트의 연동된 일정이 존재하지 않는 경우 RsData 반환
+    if (checkList.getSchedule() == null) return RsData.of(404, "체크리스트에 연동된 일정이 없습니다");
+
+    // 체크리스트의 연동된 일정의 클럽 멤버 조회
+    Optional<ClubMember> otnClubMember = checkList.getSchedule().getClub().getClubMembers().stream()
+        .filter(clubMember -> clubMember.getMember().getId().equals(member.getId())).findFirst();
+
+    // 클럽 멤버가 아닌 경우 RsData 반환
+    if (otnClubMember.isEmpty() || !otnClubMember.get().getState().equals(ClubMemberState.JOINING)) return RsData.of(403, "클럽 멤버가 아닙니다");
+
+    // 클럽 멤버의 역할이 PARTICIPANT인 경우 RsData 반환
+    if (otnClubMember.get().getRole().equals(ClubMemberRole.PARTICIPANT)) return RsData.of(403, "호스트 또는 관리자만 체크리스트를 수정할 수 있습니다");
+    List<CheckListItem> checkListItems;
+    try {
+      checkListItems = checkListUpdateReqDto.checkListItems().stream()
+          .map(req -> CheckListItem.builder()
+              .content(req.content())
+              .category(req.category())
+              .sequence(req.sequence())
+              .isChecked(req.isChecked())
+              .checkList(checkList)
+              .itemAssigns(Optional.ofNullable(req.itemAssigns())
+                  .orElse(Collections.emptyList())
+                  .stream()
+                  .map(itemAssignReq -> {
+                    // 클럽 멤버 조회 (Optional 안전 처리)
+                    ClubMember clubMember = checkList.getSchedule().getClub().getClubMembers().stream().filter(
+                            cm -> cm.getId().equals(itemAssignReq.clubMemberId()))
+                        .findFirst()
+                        .orElseThrow(() -> new IllegalArgumentException("클럽 멤버를 찾을 수 없습니다"));
+
+                    return ItemAssign.builder()
+                        .clubMember(clubMember)
+                        .isChecked(itemAssignReq.isChecked())
+                        .build();
+                  }).collect(Collectors.toList()))
+              .build())
+          .collect(Collectors.toList());
+    } catch (IllegalArgumentException e) {
+      return RsData.of(403, e.getMessage());
+    }
+    // CheckList의 아이템 업데이트
+    checkList.updateCheckListItems(checkListItems);
+
+    // CheckList 엔티티 저장
+    CheckList updatedCheckList = checkListRepository.save(checkList);
+    // CheckListDto로 변환
+    CheckListDto checkListDto = new CheckListDto(updatedCheckList);
+    return RsData.of(200, "체크리스트 수정 성공", checkListDto);
+  }
 
 
 
@@ -200,6 +274,5 @@ public class CheckListService {
     return RsData.of(200, "토큰 검증 성공", jwtData);
 
   }
-
 
 }
