@@ -478,6 +478,31 @@ public class ApiV1MemberControllerTest {
         assertThat(updated.getMemberInfo().getProfileImageUrl()).isNotBlank();
     }
 
+    @Test
+    @DisplayName("비회원 모임 등록 - 성공")
+    public void GuestRegister_success() throws Exception {
+        memberFixture.createMember(1);
+
+        String requestBody = """
+            {
+                "nickname": "guestUser",
+                "password": "guestPassword123",
+                "clubId": 42
+            }
+            """;
+
+        mockMvc.perform(post("/api/v1/members/auth/guest-register")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(requestBody))
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value(200))
+                .andExpect(jsonPath("$.message").value("비회원 모임 가입 성공"))
+                .andExpect(jsonPath("$.data.nickname").value("guestUser"))
+                .andExpect(jsonPath("$.data.clubId").value(42))
+                .andExpect(cookie().exists("accessToken"));
+    }
+
 
     private Cookie loginAndGetAccessTokenCookie(String email, String password) throws Exception {
         String loginRequestBody = String.format("""

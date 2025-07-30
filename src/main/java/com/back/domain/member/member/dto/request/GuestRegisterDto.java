@@ -1,10 +1,11 @@
 package com.back.domain.member.member.dto.request;
 
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 
 public record GuestRegisterDto(
         @NotBlank String nickname,
         @NotBlank String password,
-        @NotBlank Long clubId
+        @NotNull Long clubId
 ) {
 }

@@ -16,18 +16,25 @@ public class AuthService {
     private int accessTokenExpirationSeconds;
 
     public String generateAccessToken(Member member) {
-        if (member == null || member.getMemberInfo() == null) {
+        if (member == null) {
             throw new IllegalArgumentException("Member 정보가 없습니다.");
         }
 
         long id = member.getId();
-        String email = member.getMemberInfo().getEmail();
+        String email = null;
+        if (member.getMemberInfo() != null) {
+            email = member.getMemberInfo().getEmail();
+        }
         String name = member.getNickname();
 
         return Ut.jwt.toString(
                 jwtSecretKey,
                 accessTokenExpirationSeconds,
-                Map.of("id", id, "email", email, "name", name)
+                Map.of(
+                        "id", id,
+                        "email", email == null ? "" : email,  // null 대신 빈 문자열로 처리하거나,
+                        "name", name
+                )
         );
     }
 
