@@ -17,6 +17,8 @@ public class SecurityUser extends User {
     private final String nickname;
     @Getter
     private final String tag;
+    @Getter
+    private final MemberType memberType;
 
     public SecurityUser(
             Long id,
@@ -31,5 +33,6 @@ public class SecurityUser extends User {
         this.nickname = nickname;
         this.tag = tag;
         this.password = password;
+        this.memberType = memberType;
     }
 }
