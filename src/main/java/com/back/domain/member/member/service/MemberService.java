@@ -5,6 +5,7 @@ import com.back.domain.auth.service.AuthService;
 import com.back.domain.member.member.MemberType;
 import com.back.domain.member.member.dto.request.MemberLoginDto;
 import com.back.domain.member.member.dto.request.MemberRegisterDto;
+import com.back.domain.member.member.dto.request.UpdateMemberInfoDto;
 import com.back.domain.member.member.dto.response.MemberAuthResponse;
 import com.back.domain.member.member.dto.response.MemberDetailInfoResponse;
 import com.back.domain.member.member.dto.response.MemberPasswordResponse;
@@ -13,6 +14,7 @@ import com.back.domain.member.member.entity.Member;
 import com.back.domain.member.member.entity.MemberInfo;
 import com.back.domain.member.member.repository.MemberInfoRepository;
 import com.back.domain.member.member.repository.MemberRepository;
+import com.back.global.aws.S3Service;
 import com.back.global.exception.ServiceException;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -20,7 +22,9 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
@@ -33,11 +37,12 @@ public class MemberService {
     private final MemberInfoRepository memberInfoRepository;
     private final ApiKeyService apiKeyService;
     private final AuthService authService;
+    private final S3Service s3Service;
 
     //회원가입 메인 메소드
     public MemberAuthResponse register(MemberRegisterDto dto) {
         validateDuplicate(dto);
-        String tag = createTag(dto);
+        String tag = createTag(dto.nickname());
         Member member = createAndSaveMember(dto, tag);
         String apiKey = apiKeyService.generateApiKey();
         createAndSaveMemberInfo(dto, member, apiKey);
@@ -71,20 +76,65 @@ public class MemberService {
 
     //유저 정보 반환 메소드
     public MemberDetailInfoResponse getUserInfo(Long id) {
-        Optional<Member> member = findById(id);
-        if (member.isEmpty()) {
-            throw new ServiceException(400, "해당 id의 유저가 없습니다.");
-        }
-        MemberInfo memberInfo = member.get().getMemberInfo();
+        Member member = findById(id)
+                .orElseThrow(() -> new ServiceException(400, "해당 id의 유저가 없습니다."));
+        MemberInfo memberInfo = member.getMemberInfo();
 
-        String nickname = member.get().getNickname();
-        String tag = member.get().getTag();
+        String nickname = member.getNickname();
+        String tag = member.getTag();
         String email = memberInfo.getEmail();
         String bio = memberInfo.getBio();
         String profileImage = memberInfo.getProfileImageUrl();
 
 
         return new MemberDetailInfoResponse(nickname, email, bio, profileImage, tag);
+    }
+
+    //유저 정보 수정 메소드
+    public MemberDetailInfoResponse updateInfo(Long id, UpdateMemberInfoDto dto, MultipartFile image) {
+        Member member = findById(id).orElseThrow(() ->
+                new ServiceException(400, "해당 id의 유저가 없습니다."));
+        MemberInfo memberInfo = member.getMemberInfo();
+
+        BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
+        String password = member.getPassword();
+        if (dto.password() != null && !dto.password().isBlank()) {
+            password = encoder.encode(dto.password());
+        }
+
+        String nickname = (dto.nickname() != null) ? dto.nickname() : member.getNickname();
+        String tag = (dto.nickname() != null) ? createTag(dto.nickname()) : member.getTag();
+        String bio = (dto.bio() != null) ? dto.bio() : memberInfo.getBio();
+
+        //프로필 이미지 없는 버전의 멤버, 멤버인포 생성
+        member.updateInfo(nickname, tag, password);
+        memberInfo.updateBio(bio);
+
+
+        //S3 이미지 업로드
+        if (image != null && !image.isEmpty()){
+            //파일 형식 검증
+            String contentType = image.getContentType();
+            if(!contentType.startsWith("image/")){
+                throw new ServiceException(400, "이미지 파일만 업로드 가능합니다.");
+            }
+
+            //Todo: 파일 크기 검증
+
+            try {
+                String imageUrl = s3Service.upload(image, "member/" + memberInfo.getId() + "/profile");
+                memberInfo.updateImageUrl(imageUrl);
+            } catch (IOException e) {
+                throw new ServiceException(400, "이미지 업로드 중 오류가 발생했습니다.");
+            }
+        }
+
+
+        return new MemberDetailInfoResponse(member.getNickname(),
+                memberInfo.getEmail(),
+                memberInfo.getBio(),
+                memberInfo.getProfileImageUrl(),
+                member.getTag());
     }
 
     private void validateDuplicate(MemberRegisterDto dto) {
@@ -95,17 +145,14 @@ public class MemberService {
         }
     }
 
-    private String createTag(MemberRegisterDto dto) {
+    private String createTag(String nickname) {
         //태그 생성
-        if (memberRepository.findByNickname(dto.nickname()).isPresent()) {
-            String tag;
+        String tag;
             do {
                 tag = UUID.randomUUID().toString().substring(0, 6);
-            } while (memberRepository.existsByNicknameAndTag(dto.nickname(), tag));
-            return tag;
-        }
-        return null;
+            } while (memberRepository.existsByNicknameAndTag(nickname, tag));
 
+            return tag;
     }
 
     private Member createAndSaveMember(MemberRegisterDto dto, String tag) {
