@@ -74,7 +74,7 @@ public class ClubMemberService {
                 .distinct() // 중복 제거
                 .filter(memberInfo -> !existingEmails.contains(memberInfo.email()))
                 .forEach(memberInfo -> {
-                    Member member = memberService.findByEmail(memberInfo.email());
+                    Member member = memberService.findMemberByEmail(memberInfo.email());
 
                     ClubMember clubMember = ClubMember.builder()
                             .member(member)
@@ -99,7 +99,7 @@ public class ClubMemberService {
 
         Club club = clubService.getClubById(clubId)
                 .orElseThrow(() -> new ServiceException(404, "클럽이 존재하지 않습니다."));
-        Member member = memberService.findById(memberId)
+        Member member = memberService.findMemberById(memberId)
                 .orElseThrow(() -> new ServiceException(404, "멤버가 존재하지 않습니다."));
         ClubMember clubMember = clubMemberRepository.findByClubAndMember(club, member)
                 .orElseThrow(() -> new ServiceException(404, "멤버가 존재하지 않습니다."));
@@ -121,7 +121,7 @@ public class ClubMemberService {
 
         Club club = clubService.getClubById(clubId)
                 .orElseThrow(() -> new ServiceException(404, "클럽이 존재하지 않습니다."));
-        Member member = memberService.findById(memberId)
+        Member member = memberService.findMemberById(memberId)
                 .orElseThrow(() -> new ServiceException(404, "멤버가 존재하지 않습니다."));
         ClubMember clubMember = clubMemberRepository.findByClubAndMember(club, member)
                 .orElseThrow(() -> new ServiceException(404, "멤버가 존재하지 않습니다."));

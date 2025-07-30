@@ -567,9 +567,9 @@ class ApiV1ClubControllerTest {
                 "testLeader",
                 "I'm a test leader"
         );
-        memberService.register(dto);
+        memberService.registerMember(dto);
 
-        Member member = memberService.findByEmail(dto.email());
+        Member member = memberService.findMemberByEmail(dto.email());
 
         // 클럽 생성
         Club club = clubService.createClub(

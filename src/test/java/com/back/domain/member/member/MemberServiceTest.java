@@ -30,10 +30,10 @@ public class MemberServiceTest {
         MemberRegisterDto memberRegisterDto1 = new MemberRegisterDto("1", "pw1", "user1", "안녕하세요");
         MemberRegisterDto memberRegisterDto2 = new MemberRegisterDto("1", "pw1", "user2", "안녕하세요");
 
-        memberService.register(memberRegisterDto1);
+        memberService.registerMember(memberRegisterDto1);
 
         assertThatThrownBy(() -> {
-            memberService.register(memberRegisterDto2);
+            memberService.registerMember(memberRegisterDto2);
         }).isInstanceOf(ServiceException.class);
     }
 
@@ -44,7 +44,7 @@ public class MemberServiceTest {
 
         String rawPassword = "pw1";
 
-        memberService.register(new MemberRegisterDto("1", rawPassword, "user1", "<>"));
+        memberService.registerMember(new MemberRegisterDto("1", rawPassword, "user1", "<>"));
         Member savedMember = memberRepository.findByNickname("user1").get();
 
         String savedHashedPassword = savedMember.getPassword();

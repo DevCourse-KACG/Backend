@@ -35,7 +35,7 @@ public class ApiV1MemberController {
     @Operation(summary = "회원가입 API", description = "이메일, 비밀번호 등을 받아 회원가입을 처리합니다.")
     @PostMapping("/auth/register")
     public RsData<MemberAuthResponse> register(@Valid @RequestBody MemberRegisterDto memberRegisterDto, HttpServletResponse response) {
-        MemberAuthResponse memberAuthResponse = memberService.register(memberRegisterDto);
+        MemberAuthResponse memberAuthResponse = memberService.registerMember(memberRegisterDto);
 
         Cookie accessTokenCookie = createAccessTokenCookie(memberAuthResponse.accessToken(), false);
 
@@ -47,7 +47,7 @@ public class ApiV1MemberController {
     @Operation(summary = "로그인 API", description = "이메일과 비밀번호를 받아 로그인을 처리합니다.")
     @PostMapping("/auth/login")
     public RsData<MemberAuthResponse> login(@Valid @RequestBody MemberLoginDto memberLoginDto, HttpServletResponse response) {
-        MemberAuthResponse memberAuthResponse = memberService.login(memberLoginDto);
+        MemberAuthResponse memberAuthResponse = memberService.loginMember(memberLoginDto);
 
         Cookie accessTokenCookie = createAccessTokenCookie(memberAuthResponse.accessToken(), false);
 
@@ -73,7 +73,7 @@ public class ApiV1MemberController {
     public RsData<MemberWithdrawMembershipResponse> withdrawMembership(HttpServletResponse response,
                                                                        @AuthenticationPrincipal SecurityUser user) {
         MemberWithdrawMembershipResponse responseDto =
-                memberService.withdrawMembership(user.getNickname(), user.getTag());
+                memberService.withdrawMember(user.getNickname(), user.getTag());
 
         response.addCookie(deleteCookie());
 
@@ -91,7 +91,7 @@ public class ApiV1MemberController {
                                                       @AuthenticationPrincipal SecurityUser user) {
 
         MemberDetailInfoResponse memberDetailInfoResponse =
-                memberService.getUserInfo(user.getId());
+                memberService.getMemberInfo(user.getId());
 
         return RsData.of(200,
                 "유저 정보 반환 성공",
@@ -105,7 +105,7 @@ public class ApiV1MemberController {
                                                        @Valid @RequestPart(value = "data") UpdateMemberInfoDto dto,
                                                        @RequestPart(value = "profileImage", required = false) MultipartFile profileImage) throws IOException {
         MemberDetailInfoResponse memberDetailInfoResponse =
-                memberService.updateInfo(user.getId(), dto, profileImage);
+                memberService.updateMemberInfo(user.getId(), dto, profileImage);
 
         return RsData.of(200,
                 "유저 정보 수정 성공",
@@ -119,7 +119,7 @@ public class ApiV1MemberController {
     public RsData<GuestResponse> registerGuest(HttpServletResponse response,
                                                @Valid @RequestBody GuestRegisterDto dto) {
         GuestResponse guestResponse =
-                memberService.registerGuest(dto);
+                memberService.registerGuestMember(dto);
 
         Cookie accessTokenCookie = createAccessTokenCookie(guestResponse.accessToken(), true);
 
@@ -134,7 +134,7 @@ public class ApiV1MemberController {
     @PostMapping("/auth/guest-login")
     public RsData<GuestResponse> guestLogin(HttpServletResponse response,
                                             @Valid @RequestBody GuestLoginDto guestLoginDto) {
-        GuestResponse guestAuthResponse = memberService.guestLogin(guestLoginDto);
+        GuestResponse guestAuthResponse = memberService.loginGuestMember(guestLoginDto);
 
         Cookie accessTokenCookie = createAccessTokenCookie(guestAuthResponse.accessToken(), true);
 
@@ -196,7 +196,7 @@ public class ApiV1MemberController {
         }
 
         // 사용자 정보 추출
-        Member member = memberService.findByApiKey(apiKey);
+        Member member = memberService.findMemberByApiKey(apiKey);
 
         // 새로운 access token 생성
         String newAccessToken = memberService.generateAccessToken(member);

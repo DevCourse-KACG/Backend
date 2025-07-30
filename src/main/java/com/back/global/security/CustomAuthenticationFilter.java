@@ -103,7 +103,7 @@ public class CustomAuthenticationFilter extends OncePerRequestFilter {
                 }
 
                 if (email != null) {
-                    Member DbMember = memberService.findByEmail(email);
+                    Member DbMember = memberService.findMemberByEmail(email);
 
                     if (DbMember != null) {
                         member = DbMember;

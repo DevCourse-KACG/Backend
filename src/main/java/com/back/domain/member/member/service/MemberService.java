@@ -42,12 +42,12 @@ public class MemberService {
     // ============================== [회원] 회원가입 ==============================
 
     //[회원] 회원가입 메인 메소드
-    public MemberAuthResponse register(MemberRegisterDto dto) {
+    public MemberAuthResponse registerMember(MemberRegisterDto dto) {
         // 1. 이메일 중복 확인
-        validateDuplicateForMember(dto);
+        validateDuplicateMember(dto);
 
         // 2. 태그 및 API 키 생성
-        String tag = createTag(dto.nickname());
+        String tag = generateMemberTag(dto.nickname());
         String apiKey = apiKeyService.generateApiKey();
 
         // 3. 멤버 및 멤버인포 DB 저장
@@ -62,13 +62,13 @@ public class MemberService {
     // ============================== [비회원] 모임 등록 ==============================
 
     //[비회원] 모임 가입 메인 메소드
-    public GuestResponse registerGuest(@Valid GuestRegisterDto dto) {
+    public GuestResponse registerGuestMember(@Valid GuestRegisterDto dto) {
         // 1. 해당 그룹 내 비회원 닉네임 중복 확인
-        validateDuplicateForGuest(dto);
+        validateDuplicateGuest(dto);
 
         // 2. 태그 생성 및 비회원 DB 저장
-        String tag = createTag(dto.nickname());
-        Member guest = createAndSaveGuest(dto, tag);
+        String tag = generateMemberTag(dto.nickname());
+        Member guest = createAndSaveGuestMember(dto, tag);
 
         // 3. Access Token 생성 및 응답
         String accessToken = generateAccessToken(guest);
@@ -78,13 +78,13 @@ public class MemberService {
     // ============================== [회원] 로그인 ==============================
 
     //[회원] 로그인 메인 메소드
-    public MemberAuthResponse login(@Valid MemberLoginDto memberLoginDto) {
+    public MemberAuthResponse loginMember(@Valid MemberLoginDto memberLoginDto) {
         // 1. 이메일로 회원 정보 조회 및 검증
         Optional<MemberInfo> memberInfo = memberInfoRepository.findByEmail(memberLoginDto.email());
-        Member member = validateUserLogin(memberInfo);
+        Member member = validateMemberLogin(memberInfo);
 
         // 2. 비밀번호 검증
-        validateRightPassword(memberLoginDto.password(), member);
+        validatePassword(memberLoginDto.password(), member);
 
         // 3. API 키 및 Access Token 생성
         String apiKey = member.getMemberInfo().getApiKey();
@@ -97,13 +97,13 @@ public class MemberService {
     // ============================== [비회원] 임시 로그인 ==============================
 
     //비회원 임시 로그인 메인 메소드
-    public GuestResponse guestLogin(@Valid GuestLoginDto guestLoginDto) {
+    public GuestResponse loginGuestMember(@Valid GuestLoginDto guestLoginDto) {
         // 1. 닉네임과 클럽 ID로 비회원 조회 및 검증
         Optional<Member> optionalMember = memberRepository.findByGuestNicknameInClub(guestLoginDto.nickname(), guestLoginDto.clubId());
         Member member = validateGuestLogin(optionalMember);
 
         // 2. 비밀번호 검증
-        validateRightPassword(guestLoginDto.password(), member);
+        validatePassword(guestLoginDto.password(), member);
 
         // 3. Access Token 생성 및 응답
         String accessToken = authService.generateAccessToken(member);
@@ -116,9 +116,9 @@ public class MemberService {
     // ============================== [회원] 탈퇴 ==============================
 
     //회원 탈퇴 메인 메소드
-    public MemberWithdrawMembershipResponse withdrawMembership(String nickname, String tag) {
+    public MemberWithdrawMembershipResponse withdrawMember(String nickname, String tag) {
         // 1. 닉네임과 태그로 회원 조회
-        Member member = findByNicknameAndTag(nickname, tag);
+        Member member = findMemberByNicknameAndTag(nickname, tag);
         MemberInfo memberInfo = member.getMemberInfo();
 
         // 2. 회원 삭제 처리
@@ -131,9 +131,9 @@ public class MemberService {
     // ============================== [회원] 정보 조회/수정 ==============================
 
     //유저 정보 반환 메소드
-    public MemberDetailInfoResponse getUserInfo(Long id) {
+    public MemberDetailInfoResponse getMemberInfo(Long id) {
         // 1. 회원 조회
-        Member member = findById(id)
+        Member member = findMemberById(id)
                 .orElseThrow(() -> new ServiceException(400, "해당 id의 유저가 없습니다."));
         MemberInfo memberInfo = member.getMemberInfo();
 
@@ -148,9 +148,9 @@ public class MemberService {
     }
 
     //유저 정보 수정 메소드
-    public MemberDetailInfoResponse updateInfo(Long id, UpdateMemberInfoDto dto, MultipartFile image) {
+    public MemberDetailInfoResponse updateMemberInfo(Long id, UpdateMemberInfoDto dto, MultipartFile image) {
         // 1. 회원 조회
-        Member member = findById(id).orElseThrow(() ->
+        Member member = findMemberById(id).orElseThrow(() ->
                 new ServiceException(400, "해당 id의 유저가 없습니다."));
         MemberInfo memberInfo = member.getMemberInfo();
 
@@ -163,7 +163,7 @@ public class MemberService {
 
         // 3. 닉네임, 태그, 바이오 등 변경 정보 설정 (기본값 유지 포함)
         String nickname = (dto.nickname() != null) ? dto.nickname() : member.getNickname();
-        String tag = (dto.nickname() != null) ? createTag(dto.nickname()) : member.getTag();
+        String tag = (dto.nickname() != null) ? generateMemberTag(dto.nickname()) : member.getTag();
         String bio = (dto.bio() != null) ? dto.bio() : memberInfo.getBio();
 
         // 4. 멤버 및 멤버인포 정보 업데이트
@@ -198,7 +198,7 @@ public class MemberService {
 
     // ============================== [검증 메소드] ==============================
 
-    private void validateDuplicateForMember(MemberRegisterDto dto) {
+    private void validateDuplicateMember(MemberRegisterDto dto) {
         // 1. 이메일 중복 확인 (소문자 변환 후)
         String email = dto.email().toLowerCase();
         if (memberInfoRepository.findByEmail(email).isPresent()) {
@@ -206,7 +206,7 @@ public class MemberService {
         }
     }
 
-    private void validateDuplicateForGuest(@Valid GuestRegisterDto dto) {
+    private void validateDuplicateGuest(@Valid GuestRegisterDto dto) {
         // 1. 비회원용 닉네임 중복 확인
         String nickname = dto.nickname();
         if (memberRepository.existsGuestNicknameInClub(nickname, dto.clubId())) {
@@ -214,7 +214,7 @@ public class MemberService {
         }
     }
 
-    private void validateRightPassword(String password, Member member) {
+    private void validatePassword(String password, Member member) {
         // 1. 비밀번호 일치 여부 확인
         PasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
 
@@ -223,7 +223,7 @@ public class MemberService {
         }
     }
 
-    private Member validateUserLogin(Optional<MemberInfo> memberInfo) {
+    private Member validateMemberLogin(Optional<MemberInfo> memberInfo) {
         // 1. 이메일 기반 회원 조회 여부 확인
         if (memberInfo.isEmpty()) {
             throw new ServiceException(400, "해당 사용자를 찾을 수 없습니다.");
@@ -243,7 +243,7 @@ public class MemberService {
 
     // ============================== [생성 메소드] ==============================
 
-    private String createTag(String nickname) {
+    private String generateMemberTag(String nickname) {
         // 1. 태그 생성 (6자리 UUID 서브스트링, 중복 체크 반복)
         String tag;
         do {
@@ -263,7 +263,7 @@ public class MemberService {
         return memberRepository.save(member);
     }
 
-    private Member createAndSaveGuest(@Valid GuestRegisterDto dto, String tag) {
+    private Member createAndSaveGuestMember(@Valid GuestRegisterDto dto, String tag) {
         // 1. 비밀번호 암호화
         BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
         String hashedPassword = encoder.encode(dto.password());
@@ -295,12 +295,12 @@ public class MemberService {
 
     public MemberPasswordResponse checkPasswordValidity(Long memberId, String password) {
         // 1. 회원 조회
-        Member member = findById(memberId)
+        Member member = findMemberById(memberId)
                 .orElseThrow(() -> new ServiceException(400, "해당 id로 유저를 찾을 수 없습니다."));
 
         // 2. 비밀번호 검증 결과 반환
         try {
-            validateRightPassword(password, member);
+            validatePassword(password, member);
             return new MemberPasswordResponse(true);
         } catch (ServiceException e) {
             return new MemberPasswordResponse(false);
@@ -312,7 +312,7 @@ public class MemberService {
         return authService.payload(accessToken);
     }
 
-    public Member findByEmail(String email) {
+    public Member findMemberByEmail(String email) {
         // 1. 이메일로 MemberInfo 조회
         Optional<MemberInfo> memberInfo = memberInfoRepository.findByEmail(email);
 
@@ -329,7 +329,7 @@ public class MemberService {
         memberRepository.delete(member);
     }
 
-    public Member findByNicknameAndTag(String nickname, String tag) {
+    public Member findMemberByNicknameAndTag(String nickname, String tag) {
         // 1. 닉네임과 태그로 회원 조회
         Optional<Member> optionalMember = memberRepository.findByNicknameAndTag(nickname, tag);
 
@@ -341,7 +341,7 @@ public class MemberService {
         return optionalMember.get();
     }
 
-    public Optional<Member> findById(Long id) {
+    public Optional<Member> findMemberById(Long id) {
         return memberRepository.findById(id);
     }
 
@@ -349,7 +349,7 @@ public class MemberService {
         return authService.generateAccessToken(member);
     }
 
-    public Member findByApiKey(String apiKey) {
+    public Member findMemberByApiKey(String apiKey) {
         // 1. API 키로 MemberInfo 조회
         Optional<MemberInfo> optionalMemberInfo = memberInfoRepository.findByApiKey(apiKey);
 
