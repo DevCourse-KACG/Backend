@@ -1,11 +1,20 @@
 package com.back.domain.member.member.controller;
 
-import com.back.domain.member.member.dto.*;
+import com.back.domain.api.dto.TokenRefreshRequest;
+import com.back.domain.member.member.dto.request.MemberLoginDto;
+import com.back.domain.member.member.dto.request.MemberRegisterDto;
+import com.back.domain.member.member.dto.request.PasswordCheckRequestDto;
+import com.back.domain.member.member.dto.request.UpdateMemberInfoDto;
+import com.back.domain.member.member.dto.response.MemberAuthResponse;
+import com.back.domain.member.member.dto.response.MemberDetailInfoResponse;
+import com.back.domain.member.member.dto.response.MemberPasswordResponse;
+import com.back.domain.member.member.dto.response.MemberWithdrawMembershipResponse;
 import com.back.domain.member.member.entity.Member;
 import com.back.domain.member.member.service.MemberService;
+import com.back.global.exception.ServiceException;
 import com.back.global.rsData.RsData;
 import com.back.global.security.SecurityUser;
-import com.back.domain.api.dto.TokenRefreshRequest;
+import io.jsonwebtoken.io.IOException;
 import io.swagger.v3.oas.annotations.Operation;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
@@ -14,6 +23,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 @RestController
 @RequiredArgsConstructor
@@ -23,8 +33,8 @@ public class ApiV1MemberController {
 
     @Operation(summary = "회원가입 API", description = "이메일, 비밀번호 등을 받아 회원가입을 처리합니다.")
     @PostMapping("/auth/register")
-    public RsData<MemberAuthResponse> register(@Valid @RequestBody MemberDto memberDto, HttpServletResponse response) {
-        MemberAuthResponse memberAuthResponse = memberService.register(memberDto);
+    public RsData<MemberAuthResponse> register(@Valid @RequestBody MemberRegisterDto memberRegisterDto, HttpServletResponse response) {
+        MemberAuthResponse memberAuthResponse = memberService.register(memberRegisterDto);
 
         Cookie accessTokenCookie = createAccessTokenCookie(memberAuthResponse.accessToken());
 
@@ -56,7 +66,7 @@ public class ApiV1MemberController {
         return RsData.of(200, "로그아웃 성공");
     }
 
-    @Operation(summary = "회원탈퇴 API", description = "회원탈퇴 처리 API입니다.")
+    @Operation(summary = "회원탈퇴 API", description = "회원탈퇴 처리 API 입니다.")
     @PreAuthorize("isAuthenticated()")
     @DeleteMapping("/me")
     public RsData<MemberWithdrawMembershipResponse> withdrawMembership(HttpServletResponse response,
@@ -71,7 +81,24 @@ public class ApiV1MemberController {
                 responseDto);
     }
 
-    @Operation(summary = "access token 재발급 API", description = "리프레시 토큰으로 access token을 재발급하는 API입니다.")
+    @Operation(summary = "비밀번호 유효성 검사 API", description = "비밀번호의 유효성을 인증하는 API 입니다.")
+    @PreAuthorize("isAuthenticated()")
+    @PostMapping("/auth/verify-password")
+    public RsData<MemberPasswordResponse> checkPasswordValidity(@AuthenticationPrincipal SecurityUser user,
+                                                                @Valid @RequestBody PasswordCheckRequestDto dto) {
+
+        if (user == null) {
+            throw new ServiceException(401, "인증이 필요합니다.");
+        }
+
+        MemberPasswordResponse response = memberService.checkPasswordValidity(user.getId(), dto.password());
+
+        return RsData.of(200,
+                "비밀번호 유효성 반환 성공",
+                response);
+    }
+
+    @Operation(summary = "access token 재발급 API", description = "리프레시 토큰으로 access token을 재발급하는 API 입니다.")
     @PostMapping("/auth/refresh")
     public RsData<MemberAuthResponse> apiTokenReissue(@RequestBody TokenRefreshRequest requestBody,
                                                       HttpServletResponse response) {
@@ -94,6 +121,33 @@ public class ApiV1MemberController {
 
         return RsData.of(200, "Access Token 재발급 성공",
                 new MemberAuthResponse(ApiKey, newAccessToken));
+    }
+
+    @Operation(summary = "내 정보 반환 API", description = "현재 로그인한 유저 정보를 반환하는 API 입니다.")
+    @PreAuthorize("isAuthenticated()")
+    @GetMapping("/me")
+    public RsData<MemberDetailInfoResponse> getMyInfo(HttpServletResponse response,
+                                                      @AuthenticationPrincipal SecurityUser user) {
+
+        MemberDetailInfoResponse memberDetailInfoResponse =
+                memberService.getUserInfo(user.getId());
+
+        return RsData.of(200,
+                "유저 정보 반환 성공",
+                memberDetailInfoResponse);
+    }
+    @Operation(summary = "내 정보 수정 API", description = "현재 로그인한 유저 정보를 수정하는 API 입니다.")
+    @PreAuthorize("isAuthenticated()")
+    @PutMapping("/me")
+    public RsData<MemberDetailInfoResponse> updateInfo(@AuthenticationPrincipal SecurityUser user,
+                                                       @Valid @RequestPart(value = "data") UpdateMemberInfoDto dto,
+                                                       @RequestPart(value = "profileImage", required = false) MultipartFile profileImage) throws IOException {
+        MemberDetailInfoResponse memberDetailInfoResponse =
+                memberService.updateInfo(user.getId(), dto, profileImage);
+
+        return RsData.of(200,
+                "유저 정보 수정 성공",
+                memberDetailInfoResponse);
     }
 
     private Cookie createAccessTokenCookie(String accessToken) {

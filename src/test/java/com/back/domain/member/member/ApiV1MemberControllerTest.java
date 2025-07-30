@@ -2,9 +2,11 @@ package com.back.domain.member.member;
 
 import com.back.domain.api.service.ApiKeyService;
 import com.back.domain.auth.service.AuthService;
+import com.back.domain.member.member.dto.response.MemberDetailInfoResponse;
 import com.back.domain.member.member.entity.Member;
 import com.back.domain.member.member.entity.MemberInfo;
 import com.back.domain.member.member.repository.MemberRepository;
+import com.back.domain.member.member.service.MemberService;
 import com.back.domain.member.member.support.MemberFixture;
 import com.back.global.security.SecurityUser;
 import io.jsonwebtoken.lang.Collections;
@@ -14,17 +16,19 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
+import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.nio.charset.StandardCharsets;
 import java.util.Optional;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
@@ -46,6 +50,9 @@ public class ApiV1MemberControllerTest {
 
     @Autowired
     private AuthService authService;
+
+    @Autowired
+    private MemberService memberService;
 
     @Test
     @DisplayName("회원가입 - 정상 기입 / 객체 정상 생성")
@@ -282,6 +289,195 @@ public class ApiV1MemberControllerTest {
                 .andExpect(cookie().exists("accessToken"))
                 .andDo(print());
     }
+
+    @Test
+    @DisplayName("내 정보 조회 - 정상")
+    public void getMyInfo_success() throws Exception {
+        Member member = memberFixture.createMember(1);
+        MemberInfo memberInfo = member.getMemberInfo();
+
+        SecurityUser securityUser = new SecurityUser(
+                member.getId(),
+                member.getNickname(),
+                member.getTag(),
+                member.getPassword(),
+                Collections.emptyList()
+        );
+
+        mockMvc.perform(get("/api/v1/members/me")
+                        .with(user(securityUser))
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value(200))
+                .andExpect(jsonPath("$.message").value("유저 정보 반환 성공"))
+                .andExpect(jsonPath("$.data.nickname").value(member.getNickname()))
+                .andExpect(jsonPath("$.data.email").value(memberInfo.getEmail()))
+                .andExpect(jsonPath("$.data.profileImage").value(memberInfo.getProfileImageUrl()))
+                .andExpect(jsonPath("$.data.bio").value(memberInfo.getBio()));
+    }
+
+    @Test
+    @DisplayName("비밀번호 유효성 검사 - 정상")
+    public void checkPasswordValidity_success() throws Exception {
+        Member member = memberFixture.createMember(1);
+        MemberInfo memberInfo = member.getMemberInfo();
+        String rawPassword = "password123"; //평문 비밀번호
+
+        String requestBody = String.format("""
+        {
+            "password": "%s"
+        }
+        """, rawPassword);
+
+        SecurityUser securityUser = new SecurityUser(
+                member.getId(),
+                member.getNickname(),
+                member.getTag(),
+                member.getPassword(),
+                Collections.emptyList()
+        );
+
+        mockMvc.perform(post("/api/v1/members/auth/verify-password")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(requestBody)
+                    .cookie(loginAndGetAccessTokenCookie(memberInfo.getEmail(), rawPassword))
+                    .with(user(securityUser)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value(200))
+                .andExpect(jsonPath("$.message").value("비밀번호 유효성 반환 성공"))
+                .andExpect(jsonPath("$.data.verified").value(true))    ;
+
+    }
+
+    @Test
+    @DisplayName("비밀번호 유효성 검사 - 잘못된 비밀번호")
+    public void checkPasswordValidity_wrongPassword() throws Exception {
+        Member member = memberFixture.createMember(1);
+        MemberInfo memberInfo = member.getMemberInfo();
+        String wrongPassword = "wrongPassword!"; // 틀린 비밀번호
+
+        String requestBody = String.format("""
+    {
+        "password": "%s"
+    }
+    """, wrongPassword);
+
+        SecurityUser securityUser = new SecurityUser(
+                member.getId(),
+                member.getNickname(),
+                member.getTag(),
+                member.getPassword(),
+                Collections.emptyList()
+        );
+
+        mockMvc.perform(post("/api/v1/members/auth/verify-password")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(requestBody)
+                        .cookie(loginAndGetAccessTokenCookie(memberInfo.getEmail(), "password123")) // 실제 맞는 비밀번호로 로그인
+                        .with(user(securityUser)))
+                .andExpect(jsonPath("$.code").value(200))
+                .andExpect(jsonPath("$.data.verified").value(false));
+    }
+
+    @Test
+    @DisplayName("비밀번호 유효성 검사 - 인증되지 않은 사용자")
+    public void checkPasswordValidity_unauthorized() throws Exception {
+        String requestBody = """
+    {
+        "password": "password123"
+    }
+    """;
+
+        mockMvc.perform(post("/api/v1/members/auth/verify-password")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(requestBody))
+                .andExpect(status().isUnauthorized()); // 인증 없으면 401
+    }
+
+    @Test
+    @DisplayName("비밀번호 유효성 검사 - 빈 비밀번호")
+    public void checkPasswordValidity_blankPassword() throws Exception {
+        Member member = memberFixture.createMember(1);
+        MemberInfo memberInfo = member.getMemberInfo();
+
+        String requestBody = """
+    {
+        "password": ""
+    }
+    """;
+
+        SecurityUser securityUser = new SecurityUser(
+                member.getId(),
+                member.getNickname(),
+                member.getTag(),
+                member.getPassword(),
+                Collections.emptyList()
+        );
+
+        mockMvc.perform(post("/api/v1/members/auth/verify-password")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(requestBody)
+                        .cookie(loginAndGetAccessTokenCookie(memberInfo.getEmail(), "password123"))
+                        .with(user(securityUser)))
+                .andExpect(status().isBadRequest())  // @NotBlank 검증 실패 예상
+                .andExpect(jsonPath("$.code").value(400)); // 상세 메시지는 DTO의 @NotBlank 메시지에 따라 다름
+    }
+
+    @Test
+    @DisplayName("유저 정보 수정 - 성공")
+    public void updateUserInfoTest_green() throws Exception {
+        Member member = memberFixture.createMember(1);
+
+        SecurityUser securityUser = new SecurityUser(
+                member.getId(),
+                member.getNickname(),
+                member.getTag(),
+                member.getPassword(),
+                Collections.emptyList()
+        );
+
+        MemberDetailInfoResponse response = new MemberDetailInfoResponse(
+                "개나리", "test1@example.com", "노란색 개나리", "http://s3.com/profile.jpg", "newTag");
+
+
+        String requestBody = """
+                {
+                    "nickname": "개나리",
+                    "password": "newPassword",
+                    "bio": "노란색 개나리"
+                }
+                """;
+
+        MockMultipartFile dataPart = new MockMultipartFile(
+                "data", "data",
+                MediaType.APPLICATION_JSON_VALUE,
+                requestBody.getBytes(StandardCharsets.UTF_8)
+        );
+
+        MockMultipartFile imagePart = new MockMultipartFile(
+                "profileImage", "profileImage",
+                MediaType.IMAGE_JPEG_VALUE,
+                "fake-image-content".getBytes(StandardCharsets.UTF_8)
+        );
+
+        mockMvc.perform(multipart(HttpMethod.PUT, "/api/v1/members/me")
+                        .file(dataPart)
+                        .file(imagePart)
+                        .with(user(securityUser))
+                        .contentType(MediaType.MULTIPART_FORM_DATA))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.nickname").value("개나리"))
+                .andExpect(jsonPath("$.data.bio").value("노란색 개나리"))
+                .andExpect(jsonPath("$.data.profileImage").isNotEmpty());
+
+        Member updated = memberRepository.findById(member.getId()).orElseThrow();
+        assertThat(updated.getNickname()).isEqualTo("개나리");
+        assertThat(updated.getTag()).isNotNull();
+        assertThat(updated.getPassword()).isNotEqualTo("newPassword");
+        assertThat(updated.getMemberInfo().getBio()).isEqualTo("노란색 개나리");
+        assertThat(updated.getMemberInfo().getProfileImageUrl()).isNotBlank();
+    }
+
 
     private Cookie loginAndGetAccessTokenCookie(String email, String password) throws Exception {
         String loginRequestBody = String.format("""
