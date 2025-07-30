@@ -1,5 +1,7 @@
 package com.back.domain.checkList.checkList.entity;
 
+import com.back.domain.member.member.entity.Member;
+import com.back.domain.preset.preset.entity.PresetItem;
 import com.back.domain.schedule.schedule.entity.Schedule;
 import jakarta.persistence.*;
 import jdk.jfr.Description;
@@ -10,7 +12,6 @@ import java.util.List;
 @Entity
 @NoArgsConstructor
 @AllArgsConstructor
-@Builder
 @Getter
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
 public class CheckList {
@@ -32,6 +33,17 @@ public class CheckList {
     @Description("체크리스트 아이템들")
     private List<CheckListItem> checkListItems;
 
+    @Builder
+    public CheckList(boolean isActive, Schedule schedule, List<CheckListItem> checkListItems) {
+        this.isActive = isActive;
+        this.schedule = schedule;
+        if (checkListItems != null) {
+            this.checkListItems = checkListItems;
+            // 양방향 연관관계 설정
+            checkListItems.forEach(item -> item.setCheckList(this));
+        }
+    }
+
     public void deactivate() {
         this.isActive = false;
     }
@@ -44,4 +56,5 @@ public class CheckList {
             schedule.setCheckList(this);
         }
     }
+
 }

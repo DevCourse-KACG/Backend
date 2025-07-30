@@ -50,6 +50,10 @@ public class Schedule {
     @JsonIgnore
     private CheckList checkList;
 
+    public void updateCheckList(CheckList checkList) {
+        this.checkList = checkList;
+    }
+
     // 일정 수정
     public void modify(String title, String content, LocalDateTime startDate, LocalDateTime endDate, String spot) {
         this.title = title;
