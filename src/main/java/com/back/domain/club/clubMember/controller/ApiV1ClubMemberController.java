@@ -21,7 +21,7 @@ public class ApiV1ClubMemberController {
             @PathVariable Long clubId,
             @RequestBody ClubMemberDtos.ClubMemberRegisterRequest reqBody
     ) {
-        clubMemberService.addMemberToClub(clubId, reqBody);
+        clubMemberService.addMembersToClub(clubId, reqBody);
 
         return RsData.of(201, "클럽에 멤버가 추가됐습니다.", null);
     }

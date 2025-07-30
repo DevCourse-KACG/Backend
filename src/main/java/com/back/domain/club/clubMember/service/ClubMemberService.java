@@ -9,6 +9,7 @@ import com.back.domain.member.member.entity.Member;
 import com.back.domain.member.member.service.MemberService;
 import com.back.global.enums.ClubMemberRole;
 import com.back.global.enums.ClubMemberState;
+import com.back.global.exception.ServiceException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -21,8 +22,23 @@ public class ClubMemberService {
     private final ClubService clubService;
     private final MemberService memberService;
 
-    public void addMemberToClub(Long clubId, ClubMemberDtos.ClubMemberRegisterRequest reqBody) {
-        Club club = clubService.getClubById(clubId).orElseThrow(() -> new IllegalArgumentException("클럽이 존재하지 않습니다."));
+    public void addMemberToClub(Long clubId, Member member, ClubMemberRole role) {
+        Club club = clubService.getClubById(clubId)
+                .orElseThrow(() -> new ServiceException(404, "클럽이 존재하지 않습니다."));
+
+        ClubMember clubMember = ClubMember.builder()
+                .member(member)
+                .role(role) // 기본 역할은 MEMBER
+                .state(ClubMemberState.INVITED) // 기본 상태는 JOINED
+                .build();
+
+        club.addClubMember(clubMember);
+
+        clubMemberRepository.save(clubMember);
+    }
+
+    public void addMembersToClub(Long clubId, ClubMemberDtos.ClubMemberRegisterRequest reqBody) {
+        Club club = clubService.getClubById(clubId).orElseThrow(() -> new ServiceException(404, "클럽이 존재하지 않습니다."));
 
         // 중복 체크
         List<String> existingMemberEmails = clubMemberRepository.findAllByClubId(clubId)
