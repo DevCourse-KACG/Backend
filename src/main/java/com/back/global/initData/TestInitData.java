@@ -438,7 +438,7 @@ public class TestInitData {
             Long clubId = item.getCheckList().getSchedule().getClub().getId();
 
             // 모임의 맴버들만 할당 대상
-            List<ClubMember> clubMembers = clubMemberRepository.findByClubId(clubId);
+            List<ClubMember> clubMembers = clubMemberRepository.findAllByClubId(clubId);
             if (clubMembers.isEmpty()) {
                 continue;
             }

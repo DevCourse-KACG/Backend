@@ -7,8 +7,6 @@ import java.util.List;
 
 public class ClubMemberDtos {
 
-
-
     /**
      * 클럽 멤버 정보를 등록하기 위한 DTO 클래스
      */

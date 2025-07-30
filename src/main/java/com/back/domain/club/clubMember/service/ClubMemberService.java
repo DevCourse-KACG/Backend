@@ -12,6 +12,8 @@ import com.back.global.enums.ClubMemberState;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+
 @Service
 @RequiredArgsConstructor
 public class ClubMemberService {
@@ -22,10 +24,19 @@ public class ClubMemberService {
     public void addMemberToClub(Long clubId, ClubMemberDtos.ClubMemberRegisterRequest reqBody) {
         Club club = clubService.getClubById(clubId).orElseThrow(() -> new IllegalArgumentException("클럽이 존재하지 않습니다."));
 
-        reqBody.members().forEach(memberInfo -> {
+        // 중복 체크
+        List<String> existingMemberEmails = clubMemberRepository.findAllByClubId(clubId)
+                .stream()
+                .map(clubMember -> clubMember.getMember().getEmail())
+                .toList();
+
+        List<ClubMemberDtos.ClubMemberRegisterInfo> newMembers = reqBody.members().stream()
+                .filter(memberInfo -> !existingMemberEmails.contains(memberInfo.email()))
+                .toList();
+
+        newMembers.forEach(memberInfo -> {
             // 멤버 정보가 존재하는지 확인
-            Member member = memberService.getMemberByEmail(memberInfo.email())
-                    .orElseThrow(() -> new IllegalArgumentException("해당 이메일의 멤버가 존재하지 않습니다: " + memberInfo.email()));
+            Member member = memberService.findByEmail(memberInfo.email());
 
             // 클럽 멤버 생성
             ClubMember clubMember = ClubMember.builder()
