@@ -29,6 +29,31 @@ public class ClubMemberService {
     private final MemberService memberService;
 
     /**
+     * 클럽 멤버의 역할을 확인합니다.
+     * @param clubId 클럽 ID
+     * @param memberId 멤버 ID
+     * @param roles 요청된 역할 배열
+     * @return 요청된 역할 중 하나라도 일치하면 true, 아니면 false
+     */
+    @Transactional(readOnly = true)
+    public boolean checkMemberRole(Long clubId, Long memberId, ClubMemberRole[] roles) {
+        Club club = clubService.getClubById(clubId)
+                .orElseThrow(() -> new ServiceException(404, "클럽이 존재하지 않습니다."));
+        Member member = memberService.findById(memberId)
+                .orElseThrow(() -> new ServiceException(404, "멤버가 존재하지 않습니다."));
+        ClubMember clubMember = clubMemberRepository.findByClubAndMember(club, member)
+                .orElseThrow(() -> new ServiceException(404, "클럽 멤버가 존재하지 않습니다."));
+
+        // 요청된 역할이 클럽 멤버의 역할 중 하나인지 확인
+        for (ClubMemberRole role : roles) {
+            if (clubMember.getRole() == role) {
+                return true; // 역할이 일치하면 true 반환
+            }
+        }
+        return false; // 일치하는 역할이 없으면 false 반환
+    }
+
+    /**
      * 클럽에 멤버를 추가합니다.
      * @param clubId 클럽 ID
      * @param member 추가할 멤버
