@@ -10,6 +10,9 @@ import com.back.domain.club.club.entity.Club;
 import com.back.domain.club.club.repository.ClubRepository;
 import com.back.domain.club.clubMember.entity.ClubMember;
 import com.back.domain.club.clubMember.repository.ClubMemberRepository;
+import com.back.domain.member.friend.entity.Friend;
+import com.back.domain.member.friend.entity.FriendStatus;
+import com.back.domain.member.friend.repository.FriendRepository;
 import com.back.domain.member.member.entity.Member;
 import com.back.domain.member.member.entity.MemberInfo;
 import com.back.domain.member.member.repository.MemberInfoRepository;
@@ -42,6 +45,7 @@ import java.util.*;
 public class TestInitData {
     private final MemberRepository memberRepository;
     private final MemberInfoRepository memberInfoRepository;
+    private final FriendRepository friendRepository;
     private final ClubRepository clubRepository;
     private final ClubMemberRepository clubMemberRepository;
     private final ScheduleRepository scheduleRepository;
@@ -59,10 +63,18 @@ public class TestInitData {
     @Bean
     ApplicationRunner testInitDataApplicationRunner() {
         return args -> {
+            // 회원 관련 데이터 초기화
             self.initMemberTestData();
+            self.initFriendTestData();
+
+            // 모임 관련 데이터 초기화
             self.initGroupTestData();
             self.initGroupMemberTestData();
+
+            // 일정 관련 데이터 초기화
             self.initScheduleTestData();
+
+            // 체크리스트 관련 데이터 초기화
             self.initCheckListTestData();
             self.initCheckListItemTestData();
             self.initItemAssignTestData();
@@ -98,6 +110,44 @@ public class TestInitData {
 
         Member guest2 = createMember("레베카", "password12", null, null);
         members.put(guest2.getNickname(), guest2);
+    }
+
+    /**
+     * 친구 초기 데이터 설정
+     */
+    @Transactional
+    public void initFriendTestData() {
+        Member requester = members.get("홍길동");
+
+        // 친구 요청을 보낸 회원
+        Member responder1 = members.get("이영희");
+        Friend friend1 = Friend.builder()
+                .requestedBy(requester)
+                .member1(requester)
+                .member2(responder1)
+                .status(FriendStatus.PENDING)
+                .build();
+        friendRepository.save(friend1);
+
+        // 친구 요청을 수락한 회원
+        Member responder2 = members.get("최지우");
+        Friend friend2 = Friend.builder()
+                .requestedBy(requester)
+                .member1(requester)
+                .member2(responder2)
+                .status(FriendStatus.ACCEPTED)
+                .build();
+        friendRepository.save(friend2);
+
+        // 친구 요청을 거절한 회원
+        Member responder3 = members.get("박민수");
+        Friend friend3 = Friend.builder()
+                .requestedBy(requester)
+                .member1(requester)
+                .member2(responder3)
+                .status(FriendStatus.REJECTED)
+                .build();
+        friendRepository.save(friend3);
     }
 
     /**
