@@ -86,4 +86,22 @@ public class Member {
     if (tag != null) this.tag = tag;
     if (password != null) this.password = password;
   }
+
+  public static Member createGuest(String nickname, String password, String tag) {
+    return Member.builder()
+            .nickname(nickname)
+            .password(password)
+            .tag(tag)
+            .memberType(MemberType.GUEST)
+            .build();
+  }
+
+  public static Member createMember(String nickname, String password, String tag) {
+    return Member.builder()
+            .nickname(nickname)
+            .password(password)
+            .tag(tag)
+            .memberType(MemberType.MEMBER)
+            .build();
+  }
 }

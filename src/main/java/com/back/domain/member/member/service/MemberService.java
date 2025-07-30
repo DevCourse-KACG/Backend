@@ -2,14 +2,11 @@ package com.back.domain.member.member.service;
 
 import com.back.domain.api.service.ApiKeyService;
 import com.back.domain.auth.service.AuthService;
-import com.back.domain.member.member.MemberType;
+import com.back.domain.member.member.dto.request.GuestRegisterDto;
 import com.back.domain.member.member.dto.request.MemberLoginDto;
 import com.back.domain.member.member.dto.request.MemberRegisterDto;
 import com.back.domain.member.member.dto.request.UpdateMemberInfoDto;
-import com.back.domain.member.member.dto.response.MemberAuthResponse;
-import com.back.domain.member.member.dto.response.MemberDetailInfoResponse;
-import com.back.domain.member.member.dto.response.MemberPasswordResponse;
-import com.back.domain.member.member.dto.response.MemberWithdrawMembershipResponse;
+import com.back.domain.member.member.dto.response.*;
 import com.back.domain.member.member.entity.Member;
 import com.back.domain.member.member.entity.MemberInfo;
 import com.back.domain.member.member.repository.MemberInfoRepository;
@@ -41,7 +38,7 @@ public class MemberService {
 
     //회원가입 메인 메소드
     public MemberAuthResponse register(MemberRegisterDto dto) {
-        validateDuplicate(dto);
+        validateDuplicateForMember(dto);
         String tag = createTag(dto.nickname());
         Member member = createAndSaveMember(dto, tag);
         String apiKey = apiKeyService.generateApiKey();
@@ -50,6 +47,18 @@ public class MemberService {
         String accessToken = generateAccessToken(member);
 
         return new MemberAuthResponse(apiKey, accessToken);
+    }
+
+    //비회원 회원가입 메인 메소드
+    public GuestResponse registerGuest(@Valid GuestRegisterDto dto) {
+        validateDuplicateForGuest(dto);
+        String tag = createTag(dto.nickname());
+
+        Member guest = createAndSaveGuest(dto, tag);
+
+        String accessToken = generateAccessToken(guest);
+
+        return new GuestResponse(dto.nickname(), accessToken, dto.clubId());
     }
 
     //로그인 메인 메소드
@@ -137,11 +146,19 @@ public class MemberService {
                 member.getTag());
     }
 
-    private void validateDuplicate(MemberRegisterDto dto) {
+    private void validateDuplicateForMember(MemberRegisterDto dto) {
         //이메일 중복 확인
         String email = dto.email().toLowerCase();
         if (memberInfoRepository.findByEmail(email).isPresent()) {
             throw new ServiceException(400, "이미 사용 중인 이메일입니다.");
+        }
+    }
+
+    private void validateDuplicateForGuest(@Valid GuestRegisterDto dto) {
+        //비회원용 - 닉네임 중복 확인
+        String nickname = dto.nickname();
+        if (memberRepository.existsGuestNicknameInClub(nickname, dto.clubId())) {
+            throw new ServiceException(400, "이미 사용 중인 닉네임입니다.");
         }
     }
 
@@ -160,14 +177,19 @@ public class MemberService {
         BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
         String hashedPassword = encoder.encode(dto.password());
 
-        Member member = Member.builder()
-                .nickname(dto.nickname())
-                .password(hashedPassword)
-                .tag(tag)
-                .memberType(MemberType.MEMBER)
-                .build();
+        Member member = Member.createMember(dto.nickname(), hashedPassword, tag);
 
         return memberRepository.save(member);
+    }
+
+    private Member createAndSaveGuest(@Valid GuestRegisterDto dto, String tag) {
+        //비회원 db 저장
+        BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
+        String hashedPassword = encoder.encode(dto.password());
+
+        Member guest = Member.createGuest(dto.nickname(), hashedPassword, tag);
+
+        return memberRepository.save(guest);
     }
 
     private MemberInfo createAndSaveMemberInfo(MemberRegisterDto dto, Member member, String apiKey) {
