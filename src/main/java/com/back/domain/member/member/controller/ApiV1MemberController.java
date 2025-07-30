@@ -161,6 +161,19 @@ public class ApiV1MemberController {
                 guestResponse);
     }
 
+    @Operation(summary = "비회원 임시 로그인 API", description = "비회원 임시 로그인 API 입니다.")
+    @PutMapping("/auth/guest-login")
+    public RsData<GuestResponse> guestLogin(HttpServletResponse response,
+                                                @Valid @RequestBody GuestLoginDto guestLoginDto) {
+        GuestResponse guestAuthResponse = memberService.GuestLogin(guestLoginDto);
+
+        Cookie accessTokenCookie = createAccessTokenCookie(guestAuthResponse.accessToken(), true);
+
+        response.addCookie(accessTokenCookie);
+
+        return RsData.of(200, "비회원 로그인 성공", guestAuthResponse);
+    }
+
     private Cookie createAccessTokenCookie(String accessToken) {
         Cookie cookie = new Cookie("accessToken", accessToken);
         cookie.setHttpOnly(true);
