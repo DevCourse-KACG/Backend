@@ -141,7 +141,7 @@ public class ApiV1MemberController {
     @PutMapping("/me")
     public RsData<MemberDetailInfoResponse> updateInfo(@AuthenticationPrincipal SecurityUser user,
                                                        @RequestPart(value = "data") UpdateMemberInfoDto dto,
-                                                       @RequestPart(value = "profileImage", required = false) MultipartFile profileImage) throws IOException {
+                                                       @RequestPart(value = "profileImage", required = false) MultipartFile profileImage) throws IOException, java.io.IOException {
         MemberDetailInfoResponse memberDetailInfoResponse =
                 memberService.updateInfo(user.getId(), dto, profileImage);
 
