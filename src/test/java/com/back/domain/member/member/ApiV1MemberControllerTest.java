@@ -6,7 +6,7 @@ import com.back.domain.club.club.entity.Club;
 import com.back.domain.club.club.repository.ClubRepository;
 import com.back.domain.club.clubMember.entity.ClubMember;
 import com.back.domain.club.clubMember.repository.ClubMemberRepository;
-import com.back.domain.member.member.dto.request.GuestRegisterDto;
+import com.back.domain.member.member.dto.request.GuestDto;
 import com.back.domain.member.member.dto.request.MemberRegisterDto;
 import com.back.domain.member.member.dto.response.MemberDetailInfoResponse;
 import com.back.domain.member.member.entity.Member;
@@ -28,7 +28,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
@@ -74,6 +74,9 @@ public class ApiV1MemberControllerTest {
 
     @Autowired
     private ClubMemberRepository clubMemberRepository;
+
+    @Autowired
+    private PasswordEncoder passwordEncoder;
 
     @Test
     @DisplayName("회원가입 - 정상 기입 / 객체 정상 생성")
@@ -840,9 +843,9 @@ public class ApiV1MemberControllerTest {
     @DisplayName("비회원 닉네임 중복 확인 - 중복된 경우")
     void guestNicknameDuplicate_shouldReturnTrue() throws Exception {
         // given
-        GuestRegisterDto guestRegisterDto = new GuestRegisterDto("중복회원", "password", 5L);
+        GuestDto guestDto = new GuestDto("중복회원", "password", 5L);
 
-        memberService.registerGuestMember(guestRegisterDto);
+        memberService.registerGuestMember(guestDto);
 
         String duplicateNickname = "중복회원";
 
@@ -881,8 +884,6 @@ public class ApiV1MemberControllerTest {
     @Test
     @DisplayName("회원가입 - 비밀번호 해싱 성공")
     public void registerPasswordHashingAndMatching() {
-        BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
-
         String rawPassword = "pw1";
 
         memberService.registerMember(new MemberRegisterDto("1", rawPassword, "user1", "<>"));
@@ -892,9 +893,9 @@ public class ApiV1MemberControllerTest {
 
         assertNotEquals(rawPassword, savedHashedPassword);
 
-        assertTrue(encoder.matches(rawPassword, savedHashedPassword));
+        assertTrue(passwordEncoder.matches(rawPassword, savedHashedPassword));
 
-        assertFalse(encoder.matches("wrongPassword", savedHashedPassword));
+        assertFalse(passwordEncoder.matches("wrongPassword", savedHashedPassword));
     }
 
     @Test

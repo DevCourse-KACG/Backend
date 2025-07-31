@@ -1,20 +1,20 @@
 package com.back.domain.auth.service;
 
-import com.back.global.enums.MemberType;
 import com.back.domain.member.member.entity.Member;
+import com.back.global.config.jwt.JwtProperties;
+import com.back.global.enums.MemberType;
 import com.back.standard.util.Ut;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.util.Map;
 
 @Service
 public class AuthService {
-    @Value("${custom.jwt.secretKey}")
-    private String jwtSecretKey;
+    private final JwtProperties jwtProperties;
 
-    @Value("${custom.accessToken.expirationSeconds}")
-    private int accessTokenExpirationSeconds;
+    public AuthService(JwtProperties jwtProperties) {
+        this.jwtProperties = jwtProperties;
+    }
 
     public String generateAccessToken(Member member) {
         //1. 회원, 비회원 공통 검증
@@ -34,8 +34,8 @@ public class AuthService {
         }
 
         return Ut.jwt.toString(
-                jwtSecretKey,
-                accessTokenExpirationSeconds,
+                jwtProperties.getJwt().getSecretKey(),
+                (int) jwtProperties.getExpirationSecondsAsLong(),
                 Map.of(
                         "id", id,
                         "email", email == null ? "" : email,
@@ -47,7 +47,7 @@ public class AuthService {
     }
 
     public Map<String, Object> payload(String accessToken) {
-        Map<String, Object> parsedPayload = Ut.jwt.payload(jwtSecretKey, accessToken);
+        Map<String, Object> parsedPayload = Ut.jwt.payload(jwtProperties.getJwt().getSecretKey(), accessToken);
 
         if (parsedPayload == null) return null;
 

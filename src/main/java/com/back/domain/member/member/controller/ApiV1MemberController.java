@@ -1,6 +1,6 @@
 package com.back.domain.member.member.controller;
 
-import com.back.domain.api.dto.TokenRefreshRequest;
+import com.back.domain.api.request.TokenRefreshRequest;
 import com.back.domain.member.member.dto.request.*;
 import com.back.domain.member.member.dto.response.*;
 import com.back.domain.member.member.entity.Member;
@@ -110,7 +110,7 @@ public class ApiV1MemberController {
     @Operation(summary = "내 정보 수정 API", description = "현재 로그인한 유저 정보를 수정하는 API 입니다.")
     @PreAuthorize("isAuthenticated()")
     @PutMapping("/me")
-    public RsData<MemberDetailInfoResponse> updateInfo(@Valid @RequestPart(value = "data") UpdateMemberInfoDto dto,
+    public RsData<MemberDetailInfoResponse> updateInfo(@RequestPart(value = "data") UpdateMemberInfoDto dto,
                                                        @RequestPart(value = "profileImage", required = false) MultipartFile profileImage) throws IOException {
         Member user = rq.getActor();
         if (user == null) {
@@ -130,7 +130,7 @@ public class ApiV1MemberController {
     @Operation(summary = "비회원 모임 등록 API", description = "비회원 모임 등록 API 입니다.")
     @PostMapping("/auth/guest-register")
     public RsData<GuestResponse> registerGuest(HttpServletResponse response,
-                                               @Valid @RequestBody GuestRegisterDto dto) {
+                                               @Valid @RequestBody GuestDto dto) {
         GuestResponse guestResponse =
                 memberService.registerGuestMember(dto);
 
@@ -146,8 +146,8 @@ public class ApiV1MemberController {
     @Operation(summary = "비회원 임시 로그인 API", description = "비회원 임시 로그인 API 입니다.")
     @PostMapping("/auth/guest-login")
     public RsData<GuestResponse> guestLogin(HttpServletResponse response,
-                                            @Valid @RequestBody GuestLoginDto guestLoginDto) {
-        GuestResponse guestAuthResponse = memberService.loginGuestMember(guestLoginDto);
+                                            @Valid @RequestBody GuestDto guestDto) {
+        GuestResponse guestAuthResponse = memberService.loginGuestMember(guestDto);
 
         Cookie accessTokenCookie = createAccessTokenCookie(guestAuthResponse.accessToken(), true);
 
