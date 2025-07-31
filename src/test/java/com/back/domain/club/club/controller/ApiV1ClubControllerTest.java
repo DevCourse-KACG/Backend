@@ -510,6 +510,87 @@ class ApiV1ClubControllerTest {
     }
 
     @Test
+    @DisplayName("클럽 수정 - 권한 없는 유저")
+    @WithUserDetails(value = "chs4s@test.com") //2번 유저로 로그인
+    void updateClubWithoutPermission() throws Exception {
+        // given
+        // 클럽 생성
+        Club club = clubService.createClub(
+                Club.builder()
+                        .name("테스트 그룹")
+                        .bio("테스트 그룹 설명")
+                        .category(ClubCategory.STUDY)
+                        .mainSpot("서울")
+                        .maximumCapacity(10)
+                        .eventType(EventType.ONE_TIME)
+                        .startDate(LocalDate.of(2023, 10, 1))
+                        .endDate(LocalDate.of(2023, 10, 31))
+                        .isPublic(true)
+                        .leaderId(1L)
+                        .build()
+        );
+
+        // 클럽에 호스트 멤버 추가
+        Member hostMember = memberService.findMemberById(1L)
+                .orElseThrow(() -> new IllegalStateException("호스트 멤버가 존재하지 않습니다."));
+        clubMemberService.addMemberToClub(
+                club.getId(),
+                hostMember,
+                ClubMemberRole.HOST
+        );
+
+        // 클럽에 2번 유저를 멤버로 추가
+        Member member = memberService.findMemberById(2L)
+                .orElseThrow(() -> new IllegalStateException("멤버가 존재하지 않습니다."));
+        clubMemberService.addMemberToClub(
+                club.getId(),
+                member,
+                ClubMemberRole.PARTICIPANT // 2번 유저는 PARTICIPANT 역할
+        );
+
+        // 1. 가짜 이미지 파일(MockMultipartFile) 생성
+        MockMultipartFile imagePart = new MockMultipartFile(
+                "image", // @RequestPart("image") 이름과 일치
+                "image.jpg",
+                MediaType.IMAGE_JPEG_VALUE,
+                "test image".getBytes()
+        );
+
+        // 2. JSON 데이터 파트 생성
+        String jsonData = """
+                {
+                    "name": "수정된 테스트 그룹",
+                    "bio": "수정된 테스트 그룹 설명",
+                    "category" : "HOBBY",
+                    "mainSpot" : "수정된 서울",
+                    "maximumCapacity" : 11,
+                    "eventType" : "LONG_TERM",
+                    "startDate" : "2024-10-01",
+                    "endDate" : "2024-10-31",
+                    "isPublic": true
+                }
+                """;
+        MockMultipartFile dataPart = new MockMultipartFile("data", "", "application/json", jsonData.getBytes(StandardCharsets.UTF_8));
+
+        // when
+        ResultActions resultActions = mvc.perform(
+                        multipart("/api/v1/clubs/" + club.getId()) // 클럽 ID를 URL에 포함
+                                .file(dataPart)
+                                .file(imagePart) // 'image' 파트 추가
+                                .with(request -> {
+                                    request.setMethod("PATCH"); // PATCH 메소드로 요청
+                                    return request;
+                                })
+                )
+                .andDo(print());
+        // then
+        resultActions
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.code").value(403))
+                .andExpect(jsonPath("$.message").value("권한이 없습니다."));
+    }
+
+    @Test
     @DisplayName("클럽 정보 삭제")
     @WithUserDetails(value = "hgd222@test.com") //1번 유저로 로그인
     void deleteClub() throws Exception {
@@ -583,6 +664,61 @@ class ApiV1ClubControllerTest {
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.code").value(404))
                 .andExpect(jsonPath("$.message").value("클럽이 존재하지 않습니다."));
+    }
+
+    @Test
+    @DisplayName("클럽 정보 삭제 - 권한 없는 유저")
+    @WithUserDetails(value = "chs4s@test.com") //2번 유저로 로그인
+    void deleteClubWithoutPermission() throws Exception {
+        // given
+        // 클럽 생성
+        Club club = clubService.createClub(
+                Club.builder()
+                        .name("테스트 그룹")
+                        .bio("테스트 그룹 설명")
+                        .category(ClubCategory.STUDY)
+                        .mainSpot("서울")
+                        .maximumCapacity(10)
+                        .eventType(EventType.ONE_TIME)
+                        .startDate(LocalDate.of(2023, 10, 1))
+                        .endDate(LocalDate.of(2023, 10, 31))
+                        .isPublic(true)
+                        .leaderId(1L)
+                        .build()
+        );
+
+        // 클럽에 호스트 멤버 추가
+        Member hostMember = memberService.findMemberById(1L)
+                .orElseThrow(() -> new IllegalStateException("호스트 멤버가 존재하지 않습니다."));
+        clubMemberService.addMemberToClub(
+                club.getId(),
+                hostMember,
+                ClubMemberRole.HOST
+        );
+
+        // 클럽에 2번 유저를 멤버로 추가
+        Member member = memberService.findMemberById(2L)
+                .orElseThrow(() -> new IllegalStateException("멤버가 존재하지 않습니다."));
+        clubMemberService.addMemberToClub(
+                club.getId(),
+                member,
+                ClubMemberRole.PARTICIPANT // 2번 유저는 PARTICIPANT 역할
+        );
+
+        // when
+        ResultActions resultActions = mvc.perform(
+                multipart("/api/v1/clubs/" + club.getId())
+                        .with(request -> {
+                            request.setMethod("DELETE"); // DELETE 메소드로 요청
+                            return request;
+                        })
+        ).andDo(print());
+
+        // then
+        resultActions
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.code").value(403))
+                .andExpect(jsonPath("$.message").value("권한이 없습니다."));
     }
 
     @Test
