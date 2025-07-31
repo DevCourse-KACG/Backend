@@ -58,6 +58,8 @@ public class Member {
   @OneToMany(mappedBy = "member", cascade = CascadeType.ALL, orphanRemoval = true)
   private List<ClubMember> clubMembers; // 소속 그룹 목록
 
+
+  //==========================빌더, 빌더 메소드==========================
   @Builder
   public Member(String nickname, String password, MemberType memberType, String tag, MemberInfo memberInfo) {
     this.nickname = nickname;
@@ -65,27 +67,6 @@ public class Member {
     this.memberType = memberType;
     this.tag = tag;
     this.memberInfo = memberInfo;
-  }
-
-  public void setMemberInfo(MemberInfo memberInfo) {
-    this.memberInfo = memberInfo;
-    if (memberInfo != null && memberInfo.getMember() != this) {
-      memberInfo.setMember(this);
-    }
-  }
-
-  public Collection<? extends GrantedAuthority> getAuthorities() {
-    return List.of(new SimpleGrantedAuthority("ROLE_USER"));
-  }
-
-  public String getEmail() {
-    return memberInfo != null ? memberInfo.getEmail() : null;
-  }
-
-  public void updateInfo(String nickname, String tag, String password) {
-    if (nickname != null) this.nickname = nickname;
-    if (tag != null) this.tag = tag;
-    if (password != null) this.password = password;
   }
 
   public static Member createGuest(String nickname, String password, String tag) {
@@ -104,5 +85,28 @@ public class Member {
             .tag(tag)
             .memberType(MemberType.MEMBER)
             .build();
+  }
+
+
+//===========================기타 Getter, Setter=======================
+  public void setMemberInfo(MemberInfo memberInfo) {
+    this.memberInfo = memberInfo;
+    if (memberInfo != null && memberInfo.getMember() != this) {
+      memberInfo.setMember(this);
+    }
+  }
+
+  public void updateInfo(String nickname, String tag, String password) {
+    if (nickname != null) this.nickname = nickname;
+    if (tag != null) this.tag = tag;
+    if (password != null) this.password = password;
+  }
+
+  public Collection<? extends GrantedAuthority> getAuthorities() {
+    return List.of(new SimpleGrantedAuthority("ROLE_USER"));
+  }
+
+  public String getEmail() {
+    return memberInfo != null ? memberInfo.getEmail() : null;
   }
 }
