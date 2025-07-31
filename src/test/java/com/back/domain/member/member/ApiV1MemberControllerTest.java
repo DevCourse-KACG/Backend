@@ -151,6 +151,68 @@ public class ApiV1MemberControllerTest {
     }
 
     @Test
+    @DisplayName("회원가입 - 이메일 형식 오류로 실패")
+    public void registerWithInvalidEmailFormat() throws Exception {
+        String requestBody = """
+        {
+            "email": "invalid-email-format",
+            "password": "password123",
+            "nickname": "userInvalidEmail",
+            "bio": "bio"
+        }
+        """;
+
+        mockMvc.perform(post("/api/v1/members/auth/register")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(requestBody))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value(400))
+                .andExpect(jsonPath("$.message").value("email-Email-이메일 형식이 올바르지 않습니다."));
+    }
+
+    @Test
+    @DisplayName("회원가입 - 비밀번호 미입력(빈값)으로 실패")
+    public void registerWithBlankPassword() throws Exception {
+        String requestBody = """
+        {
+            "email": "user@example.com",
+            "password": "",
+            "nickname": "userNoPassword",
+            "bio": "bio"
+        }
+        """;
+
+        mockMvc.perform(post("/api/v1/members/auth/register")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(requestBody))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value(400))
+                .andExpect(jsonPath("$.message").value("password-NotBlank-비밀번호는 필수 입력값입니다."));
+    }
+
+    @Test
+    @DisplayName("회원가입 - 닉네임 누락으로 실패")
+    public void registerWithMissingNickname() throws Exception {
+        String requestBody = """
+        {
+            "email": "user@example.com",
+            "password": "password123",
+            "bio": "bio"
+        }
+        """;
+
+        mockMvc.perform(post("/api/v1/members/auth/register")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(requestBody))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value(400))
+                .andExpect(jsonPath("$.message").value("nickname-NotBlank-닉네임은 필수 입력값입니다."));
+    }
+
+
+
+
+    @Test
     @DisplayName("API key 발급 - 정상")
     public void generateApiKey_success() throws Exception {
         String apiKey = apiKeyService.generateApiKey();
