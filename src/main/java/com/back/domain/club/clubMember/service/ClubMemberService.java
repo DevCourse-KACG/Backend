@@ -174,6 +174,8 @@ public class ClubMemberService {
 
         // 클럽 멤버 정보를 DTO로 변환
         List<ClubMemberDtos.ClubMemberInfo> memberInfos = clubMembers.stream()
+                .filter(clubMember -> clubMember.getMember() != null) // 멤버가 존재하는 경우만 필터링
+                .filter(clubMember -> clubMember.getState() != ClubMemberState.WITHDRAWN) // 탈퇴한 멤버 제외
                 .map(clubMember -> {
                     Member m = clubMember.getMember();
 
