@@ -9,6 +9,10 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
+/**
+ * 클럽 멤버 관련 API를 제공하는 컨트롤러
+ * 클럽장 입장에서 멤버를 관리하는 기능을 포함한다
+ */
 @RestController
 @RequestMapping("/api/v1/clubs/{clubId}/members")
 @RequiredArgsConstructor
