@@ -114,6 +114,11 @@ public class ClubMemberService {
         if(!clubMemberValidService.checkMemberRole(clubId, user.getId(), new ClubMemberRole[]{ClubMemberRole.HOST}) && !user.getId().equals(memberId))
             throw new ServiceException(403, "권한이 없습니다.");
 
+        // 호스트 본인이 탈퇴하려는 경우 예외 처리
+        if (user.getId().equals(memberId)) {
+            throw new ServiceException(400, "호스트는 탈퇴할 수 없습니다.");
+        }
+
         Club club = clubService.getClubById(clubId)
                 .orElseThrow(() -> new ServiceException(404, "클럽이 존재하지 않습니다."));
         Member member = memberService.findMemberById(memberId)
@@ -143,6 +148,17 @@ public class ClubMemberService {
                 .orElseThrow(() -> new ServiceException(404, "멤버가 존재하지 않습니다."));
         ClubMember clubMember = clubMemberRepository.findByClubAndMember(club, member)
                 .orElseThrow(() -> new ServiceException(404, "멤버가 존재하지 않습니다."));
+
+        // 호스트 본인이 역할을 변경하려는 경우 예외 처리
+        if (member.getId().equals(rq.getActor().getId())) {
+            throw new ServiceException(400, "호스트는 본인의 역할을 변경할 수 없습니다.");
+        }
+
+        // 호스트 권한 부여 금지
+        if (role.equalsIgnoreCase(ClubMemberRole.HOST.name())) {
+            throw new ServiceException(400, "호스트 권한은 직접 부여할 수 없습니다.");
+        }
+
 
         // 역할 변경
         clubMember.updateRole(ClubMemberRole.fromString(role.toUpperCase()));
