@@ -2,6 +2,7 @@ package com.back.domain.member.friend.controller;
 
 import com.back.domain.member.friend.dto.FriendDto;
 import com.back.domain.member.friend.entity.Friend;
+import com.back.domain.member.friend.entity.FriendStatus;
 import com.back.domain.member.friend.error.FriendErrorCode;
 import com.back.domain.member.friend.repository.FriendRepository;
 import com.back.domain.member.friend.service.FriendService;
@@ -119,11 +120,11 @@ class ApiV1FriendControllerTest {
 
         ResultActions resultActions = mockMvc
                 .perform(get("/api/v1/members/me/friends")
-                        .contentType(MediaType.APPLICATION_JSON)
+                        .param("status", "ACCEPTED")
                 )
                 .andDo(print());
 
-        List<FriendDto> friends = friendService.getFriends(memberId);
+        List<FriendDto> friends = friendService.getFriends(memberId, FriendStatus.ACCEPTED);
 
         resultActions
                 .andExpect(handler().handlerType(ApiV1FriendController.class))

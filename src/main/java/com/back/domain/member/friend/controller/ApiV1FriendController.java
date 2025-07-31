@@ -1,9 +1,10 @@
 package com.back.domain.member.friend.controller;
 
 import com.back.domain.member.friend.dto.FriendAddReqBody;
+import com.back.domain.member.friend.dto.FriendDto;
 import com.back.domain.member.friend.dto.FriendMemberDto;
 import com.back.domain.member.friend.dto.FriendWithBioDto;
-import com.back.domain.member.friend.dto.FriendDto;
+import com.back.domain.member.friend.entity.FriendStatus;
 import com.back.domain.member.friend.service.FriendService;
 import com.back.global.rsData.RsData;
 import com.back.global.security.SecurityUser;
@@ -26,9 +27,10 @@ public class ApiV1FriendController {
     @GetMapping
     @Operation(summary = "내 친구 목록 조회")
     public RsData<List<FriendDto>> getFriends(
-            @AuthenticationPrincipal SecurityUser user
+            @AuthenticationPrincipal SecurityUser user,
+            @RequestParam(required = false) FriendStatus status
     ) {
-        List<FriendDto> friendDtoList = friendService.getFriends(user.getId());
+        List<FriendDto> friendDtoList = friendService.getFriends(user.getId(), status);
 
         return RsData.of(
                 200,

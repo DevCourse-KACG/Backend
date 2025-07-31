@@ -36,18 +36,20 @@ public class FriendService {
      * @param memberId 로그인 회원 아이디
      * @return List<FriendsResDto>
      */
-    public List<FriendDto> getFriends(Long memberId) {
+    public List<FriendDto> getFriends(Long memberId, FriendStatus statusFilter) {
         // 로그인 회원
         Member member = memberRepository.findWithFriendsById(memberId)
                 .orElseThrow(() -> new NoSuchElementException(MemberErrorCode.MEMBER_NOT_FOUND.getMessage()));
 
         // 친구 목록 조회 - 우선 친구만 조회
-        // TODO: 필터, 정렬, 페이징 추가 예정
+        // TODO: 정렬, 페이징 추가 예정
         return Stream.concat(
                         member.getFriendshipsAsMember1().stream(), // member1로 등록된 친구 관계
                         member.getFriendshipsAsMember2().stream()  // member2로 등록된 친구 관계
                 )
-                .filter(friend -> friend.getStatus() == FriendStatus.ACCEPTED)     // 친구만
+                .filter(friend ->
+                        statusFilter == null || friend.getStatus() == statusFilter
+                ) // 상태 필터링 (없을 시 전체 조회)
                 .map(friend -> new FriendDto(friend, friend.getOther(member))) // DTO 변환
                 .sorted(Comparator.comparing(FriendDto::friendNickname))             // 이름 오름차순
                 .collect(Collectors.toList());
