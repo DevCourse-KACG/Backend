@@ -94,6 +94,10 @@ public class ClubMemberService {
                     clubMemberRepository.save(clubMember);
                 });
 
+        // 클럽 멤버가 정원 초과인지 확인
+        if (club.getClubMembers().size() > club.getMaximumCapacity()) {
+            throw new ServiceException(400, "클럽의 최대 멤버 수를 초과했습니다.");
+        }
     }
 
     /**
