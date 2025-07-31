@@ -7,6 +7,7 @@ import com.back.domain.checkList.checkList.entity.CheckList;
 import com.back.domain.checkList.checkList.entity.CheckListItem;
 import com.back.domain.checkList.checkList.repository.CheckListRepository;
 import com.back.domain.checkList.itemAssign.entity.ItemAssign;
+import com.back.domain.club.club.entity.Club;
 import com.back.domain.club.club.repository.ClubRepository;
 import com.back.domain.club.clubMember.entity.ClubMember;
 import com.back.domain.club.clubMember.repository.ClubMemberRepository;
@@ -16,6 +17,7 @@ import com.back.domain.schedule.schedule.entity.Schedule;
 import com.back.domain.schedule.schedule.repository.ScheduleRepository;
 import com.back.global.enums.ClubMemberRole;
 import com.back.global.enums.ClubMemberState;
+import com.back.global.exception.ServiceException;
 import com.back.global.rq.Rq;
 import com.back.global.rsData.RsData;
 import com.back.standard.util.Ut;
@@ -36,6 +38,7 @@ import java.util.stream.Collectors;
 public class CheckListService {
   private final CheckListRepository checkListRepository;
   private final ScheduleRepository scheduleRepository;
+  private final ClubRepository clubRepository;
   private final MemberRepository memberRepository;
   private final Rq rq;
 
@@ -267,28 +270,49 @@ public class CheckListService {
     return RsData.of(200, "체크리스트 삭제 성공", new CheckListDto(checkList));
   }
 
+  public RsData<List<CheckListDto>> getCheckListByGroupId(Long groupId) {
+    RsData<Map<String, Object>> jwtRsData = getJwtData();
 
+    // JWT 데이터가 유효하지 않은 경우 RsData 반환
+    if (jwtRsData.code() != 200) {
+      return RsData.of(jwtRsData.code(), jwtRsData.message());
+    }
+    // JWT에서 멤버 ID 추출
+    Map<String, Object> jwtData = jwtRsData.data();
+    long memberId = ((Number) jwtData.get("id")).longValue();
+    Optional<Member> otnMember = memberRepository.findById(memberId);
+    if (otnMember.isEmpty()) return RsData.of(404, "멤버를 찾을 수 없습니다");
+    Member member = otnMember.get();
 
+    // 클럽 ID로 클럽 조회
+    Optional<Club> otnClub = clubRepository.findById(groupId);
+    if (otnClub.isEmpty()) return RsData.of(404, "클럽을 찾을 수 없습니다");
+    Club club = otnClub.get();
 
+    // 클럽 멤버 조회
+    Optional<ClubMember> otnClubMember = club.getClubMembers().stream()
+        .filter(clubMember -> clubMember.getMember().getId().equals(member.getId())).findFirst();
 
+    // 클럽 멤버가 아닌 경우 RsData 반환
+    if (otnClubMember.isEmpty() || !otnClubMember.get().getState().equals(ClubMemberState.JOINING)) {
+      return RsData.of(403, "클럽 멤버가 아닙니다");
+    }
 
+    // 클럽의 체크리스트 조회
+    List<CheckList> checkLists = otnClubMember.get().getClub().getClubSchedules().stream()
+        .map(Schedule::getCheckList)
+        .filter(checkList -> checkList != null && checkList.isActive())
+        .toList();
 
+    otnClubMember.get().getClub().getClubSchedules().forEach(schedule -> {
+      System.out.println("Schedule ID: " + schedule.getId() + ", CheckList: " + schedule.getCheckList());
+    });
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+    List<CheckListDto> checkListDtos = checkLists.stream()
+        .map(CheckListDto::new)
+        .collect(Collectors.toList());
+    return RsData.of(200, "체크리스트 목록 조회 성공", checkListDtos);
+  }
 
   RsData<Map<String, Object>> getJwtData() {
     // JWT 토큰을 헤더에서 가져오기
