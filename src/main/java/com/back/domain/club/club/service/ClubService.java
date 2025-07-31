@@ -4,6 +4,7 @@ import com.back.domain.club.club.dtos.ClubControllerDtos;
 import com.back.domain.club.club.entity.Club;
 import com.back.domain.club.club.repository.ClubRepository;
 import com.back.domain.club.clubMember.entity.ClubMember;
+import com.back.domain.club.clubMember.repository.ClubMemberRepository;
 import com.back.domain.member.member.entity.Member;
 import com.back.domain.member.member.service.MemberService;
 import com.back.global.aws.S3Service;
@@ -12,6 +13,7 @@ import com.back.global.enums.ClubMemberRole;
 import com.back.global.enums.ClubMemberState;
 import com.back.global.enums.EventType;
 import com.back.global.exception.ServiceException;
+import com.back.global.rq.Rq;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -30,8 +32,10 @@ import java.util.Optional;
 @RequiredArgsConstructor
 public class ClubService {
     private final ClubRepository clubRepository;
+    private final ClubMemberRepository clubMemberRepository;
     private final MemberService memberService;
     private final S3Service s3Service;
+    private final Rq rq;
 
 
     /**
@@ -53,7 +57,7 @@ public class ClubService {
     }
 
     /**
-     * 클럽을 생성합니다.
+     * 클럽을 생성합니다. (테스트용. controller에서 사용하지 않음)
      * @param club 클럽 정보
      * @return 생성된 클럽
      */
@@ -127,6 +131,9 @@ public class ClubService {
                 .orElseThrow(() -> new ServiceException(404, "해당 ID의 클럽을 찾을 수 없습니다."));
 
         // TODO : 유저 권한 체크
+        Member user = memberService.findMemberById(rq.getActor().getId())
+                .orElseThrow(() -> new ServiceException(404, "해당 ID의 유저를 찾을 수 없습니다."));
+
 
         // 클럽 정보 업데이트
         String name = dto.name() != null ? dto.name() : club.getName();

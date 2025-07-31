@@ -28,47 +28,9 @@ public class ClubMemberService {
     private final ClubMemberRepository clubMemberRepository;
     private final ClubService clubService;
     private final MemberService memberService;
+    private final ClubMemberValidService clubMemberValidService;
     private final Rq rq;
 
-    /**
-     * 클럽 멤버의 역할을 확인합니다.
-     * @param clubId 클럽 ID
-     * @param memberId 멤버 ID
-     * @param roles 요청된 역할 배열
-     * @return 요청된 역할 중 하나라도 일치하면 true, 아니면 false
-     */
-    @Transactional(readOnly = true)
-    public boolean checkMemberRole(Long clubId, Long memberId, ClubMemberRole[] roles) {
-        Club club = clubService.getClubById(clubId)
-                .orElseThrow(() -> new ServiceException(404, "클럽이 존재하지 않습니다."));
-        Member member = memberService.findMemberById(memberId)
-                .orElseThrow(() -> new ServiceException(404, "멤버가 존재하지 않습니다."));
-        ClubMember clubMember = clubMemberRepository.findByClubAndMember(club, member)
-                .orElseThrow(() -> new ServiceException(404, "클럽 멤버가 존재하지 않습니다."));
-
-        // 요청된 역할이 클럽 멤버의 역할 중 하나인지 확인
-        for (ClubMemberRole role : roles) {
-            if (clubMember.getRole() == role) {
-                return true; // 역할이 일치하면 true 반환
-            }
-        }
-        return false; // 일치하는 역할이 없으면 false 반환
-    }
-
-    /**
-     * 클럽 멤버인지 확인합니다.
-     * @param clubId 클럽 ID
-     * @param memberId 멤버 ID
-     * @return 클럽 멤버 여부
-     */
-    @Transactional(readOnly = true)
-    public boolean isClubMember(Long clubId, Long memberId) {
-        Club club = clubService.getClubById(clubId)
-                .orElseThrow(() -> new ServiceException(404, "클럽이 존재하지 않습니다."));
-        Member member = memberService.findMemberById(memberId)
-                .orElseThrow(() -> new ServiceException(404, "멤버가 존재하지 않습니다."));
-        return clubMemberRepository.existsByClubAndMember(club, member);
-    }
 
 
     /**
@@ -105,7 +67,7 @@ public class ClubMemberService {
         // 권한 확인 : 현재 로그인한 유저가 클럽 호스트인지 확인
         Member user = memberService.findMemberById(rq.getActor().getId())
                 .orElseThrow(() -> new ServiceException(404, "유저가 존재하지 않습니다."));
-        if(!checkMemberRole(clubId, user.getId(), new ClubMemberRole[]{ClubMemberRole.HOST}))
+        if(!clubMemberValidService.checkMemberRole(clubId, user.getId(), new ClubMemberRole[]{ClubMemberRole.HOST}))
             throw new ServiceException(403, "권한이 없습니다.");
 
         // 요청된 이메일 추출
@@ -147,7 +109,7 @@ public class ClubMemberService {
         // 권한 확인 : 현재 로그인한 유저가 클럽 호스트인지 확인
         Member user = memberService.findMemberById(rq.getActor().getId())
                 .orElseThrow(() -> new ServiceException(404, "유저가 존재하지 않습니다."));
-        if(!checkMemberRole(clubId, user.getId(), new ClubMemberRole[]{ClubMemberRole.HOST}) && !user.getId().equals(memberId))
+        if(!clubMemberValidService.checkMemberRole(clubId, user.getId(), new ClubMemberRole[]{ClubMemberRole.HOST}) && !user.getId().equals(memberId))
             throw new ServiceException(403, "권한이 없습니다.");
 
         Club club = clubService.getClubById(clubId)
@@ -173,7 +135,7 @@ public class ClubMemberService {
         // 권한 확인 : 현재 로그인한 유저가 클럽 호스트인지 확인
         Member user = memberService.findMemberById(rq.getActor().getId())
                 .orElseThrow(() -> new ServiceException(404, "유저가 존재하지 않습니다."));
-        if(!checkMemberRole(clubId, user.getId(), new ClubMemberRole[]{ClubMemberRole.HOST}))
+        if(!clubMemberValidService.checkMemberRole(clubId, user.getId(), new ClubMemberRole[]{ClubMemberRole.HOST}))
             throw new ServiceException(403, "권한이 없습니다.");
 
         Club club = clubService.getClubById(clubId)
@@ -202,7 +164,7 @@ public class ClubMemberService {
 
         // 권한 확인 : 현재 로그인한 유저가 클럽 멤버인지 확인
         Member user = rq.getActor();
-        if(!isClubMember(clubId, user.getId()))
+        if(!clubMemberValidService.isClubMember(clubId, user.getId()))
             throw new ServiceException(403, "권한이 없습니다.");
 
 
