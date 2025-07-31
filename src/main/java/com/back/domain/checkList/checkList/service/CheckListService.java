@@ -226,6 +226,7 @@ public class CheckListService {
     return RsData.of(200, "체크리스트 수정 성공", checkListDto);
   }
 
+  @Transactional
   public RsData<CheckListDto> deleteCheckList(Long checkListId) {
     RsData<Map<String, Object>> jwtRsData = getJwtData();
 
