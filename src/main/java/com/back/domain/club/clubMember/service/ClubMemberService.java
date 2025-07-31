@@ -77,27 +77,30 @@ public class ClubMemberService {
                 clubMemberRepository.findExistingEmails(clubId, requestEmails)
         );
 
-        // 중복 제외한 새로운 멤버만 추가
-        reqBody.members().stream()
-                .distinct() // 중복 제거
+        // 1. 실제로 추가될 새로운 멤버 목록을 먼저 필터링합니다.
+        List<ClubMemberDtos.ClubMemberRegisterInfo> newMembersToAdd = reqBody.members().stream()
+                .distinct()
                 .filter(memberInfo -> !existingEmails.contains(memberInfo.email()))
-                .forEach(memberInfo -> {
-                    Member member = memberService.findMemberByEmail(memberInfo.email());
+                .toList();
 
-                    ClubMember clubMember = ClubMember.builder()
-                            .member(member)
-                            .role(ClubMemberRole.fromString(memberInfo.role().toUpperCase()))
-                            .state(ClubMemberState.INVITED)
-                            .build();
-
-                    club.addClubMember(clubMember);
-                    clubMemberRepository.save(clubMember);
-                });
-
-        // 클럽 멤버가 정원 초과인지 확인
-        if (club.getClubMembers().size() > club.getMaximumCapacity()) {
+        // 2. 멤버를 추가하기 전에 정원 초과 여부를 먼저 확인합니다.
+        if (club.getClubMembers().size() + newMembersToAdd.size() > club.getMaximumCapacity()) {
             throw new ServiceException(400, "클럽의 최대 멤버 수를 초과했습니다.");
         }
+
+        // 3. 유효성 검사를 통과한 경우에만 멤버를 추가합니다.
+        newMembersToAdd.forEach(memberInfo -> {
+            Member member = memberService.findMemberByEmail(memberInfo.email());
+
+            ClubMember clubMember = ClubMember.builder()
+                    .member(member)
+                    .role(ClubMemberRole.fromString(memberInfo.role().toUpperCase()))
+                    .state(ClubMemberState.INVITED)
+                    .build();
+
+            club.addClubMember(clubMember);
+            clubMemberRepository.save(clubMember);
+        });
     }
 
     /**
