@@ -68,6 +68,10 @@ public class ClubService {
         return clubRepository.findById(clubId);
     }
 
+    public Optional<Club> getValidAndActiveClub(Long clubId) {
+        return clubRepository.findValidAndActiveClub(clubId);
+    }
+
     /**
      * 클럽을 생성합니다. (테스트용. controller에서 사용하지 않음)
      * @param club 클럽 정보
