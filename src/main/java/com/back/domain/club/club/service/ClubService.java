@@ -95,8 +95,15 @@ public class ClubService {
             clubRepository.save(club); // 이미지 URL 업데이트 후 클럽 정보 저장
         }
 
-
-        // TODO : 클럽 생성 시 유저를 리더로 설정하고 멤버에 추가
+        // 클럽 생성 시 유저를 리더로 설정하고 멤버에 추가
+        Member leader = memberService.findMemberById(rq.getActor().getId())
+                .orElseThrow(() -> new NoSuchElementException("ID " + reqBody.leaderId() + "에 해당하는 리더를 찾을 수 없습니다."));
+        ClubMember clubLeader = ClubMember.builder()
+                .member(leader)
+                .role(ClubMemberRole.HOST) // 클럽 생성자는 HOST 역할
+                .state(ClubMemberState.JOINING) // 초기 상태는 JOINING으로 설정
+                .build();
+        club.addClubMember(clubLeader); // 연관관계 편의 메서드를 사용하여 Club에 ClubMember 추가
 
         // 클럽 멤버 설정
         Arrays.stream(reqBody.clubMembers()).forEach(memberInfo -> {
