@@ -17,7 +17,6 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithUserDetails;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
@@ -91,17 +90,9 @@ class ApiV1MyClubControllerTest {
                 ClubMemberRole.PARTICIPANT
         );
 
-        String jsonData = """
-                {
-                    "accept": true
-                }
-                """.stripIndent();
-
         // when
         ResultActions resultActions = mvc.perform(
                         post("/api/v1/my-clubs/" + club.getId() + "/join")
-                                .contentType(MediaType.APPLICATION_JSON)
-                                .content(jsonData)
                 )
                 .andDo(print());
 
@@ -160,17 +151,10 @@ class ApiV1MyClubControllerTest {
                 ClubMemberRole.PARTICIPANT
         );
 
-        String jsonData = """
-                {
-                    "accept": false
-                }
-                """.stripIndent();
 
         // when
         ResultActions resultActions = mvc.perform(
                         delete("/api/v1/my-clubs/" + club.getId() + "/invitation")
-                                .contentType(MediaType.APPLICATION_JSON)
-                                .content(jsonData)
                 )
                 .andDo(print());
 
@@ -218,17 +202,10 @@ class ApiV1MyClubControllerTest {
                 ClubMemberRole.HOST
         );
 
-        String jsonData = """
-                {
-                    "accept": true
-                }
-                """.stripIndent();
 
         // when
         ResultActions resultActions = mvc.perform(
                         post("/api/v1/my-clubs/" + club.getId() + "/join")
-                                .contentType(MediaType.APPLICATION_JSON)
-                                .content(jsonData)
                 )
                 .andDo(print());
 
@@ -281,20 +258,10 @@ class ApiV1MyClubControllerTest {
         );
 
         alreadyClubMember.updateState(ClubMemberState.JOINING); // 이미 가입 상태로 업데이트
-        clubMemberRepository.save(alreadyClubMember);
-
-
-        String jsonData = """
-                {
-                    "accept": true
-                }
-                """.stripIndent();
 
         // when
         ResultActions resultActions = mvc.perform(
                         post("/api/v1/my-clubs/" + club.getId() + "/join")
-                                .contentType(MediaType.APPLICATION_JSON)
-                                .content(jsonData)
                 )
                 .andDo(print());
 
@@ -349,17 +316,10 @@ class ApiV1MyClubControllerTest {
         applyingClubMember.updateState(ClubMemberState.APPLYING); // 가입 신청 상태로 업데이트
         clubMemberRepository.save(applyingClubMember);
 
-        String jsonData = """
-                {
-                    "accept": true
-                }
-                """.stripIndent();
 
         // when
         ResultActions resultActions = mvc.perform(
                         post("/api/v1/my-clubs/" + club.getId() + "/join")
-                                .contentType(MediaType.APPLICATION_JSON)
-                                .content(jsonData)
                 )
                 .andDo(print());
 
@@ -377,18 +337,9 @@ class ApiV1MyClubControllerTest {
     @DisplayName("잘못된 클럽 ID로 모임 초대 수락 시도")
     @WithUserDetails(value = "hgd222@test.com") // 1번 멤버로 로그인
     public void acceptClubInvitation_InvalidClubId() throws Exception {
-        // given
-        String jsonData = """
-                {
-                    "accept": true
-                }
-                """.stripIndent();
-
         // when
         ResultActions resultActions = mvc.perform(
                         post("/api/v1/my-clubs/999/join") // 존재하지 않는 클럽 ID
-                                .contentType(MediaType.APPLICATION_JSON)
-                                .content(jsonData)
                 )
                 .andDo(print());
 

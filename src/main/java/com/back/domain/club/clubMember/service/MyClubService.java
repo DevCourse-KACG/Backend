@@ -36,9 +36,9 @@ public class MyClubService {
                 .orElseThrow(() -> new ServiceException(400, "클럽 초대 상태가 아닙니다."));
 
         // 클럽 멤버 상태 확인
-        if (clubMember.getState() == ClubMemberState.JOINING) // 가입 신청 중인 경우
+        if (clubMember.getState() == ClubMemberState.JOINING) // 가입 중인 경우
             throw new ServiceException(400, "이미 가입 상태입니다.");
-        else if (clubMember.getState() != ClubMemberState.INVITED) // 가입 신청 중이거나, 탈퇴인 경우
+        else if (clubMember.getState() != ClubMemberState.INVITED) // 초대 상태가 아닌 경우 (가입 신청, 탈퇴)
             throw new ServiceException(400, "클럽 초대 상태가 아닙니다.");
 
         // 클럽 멤버 상태 업데이트
