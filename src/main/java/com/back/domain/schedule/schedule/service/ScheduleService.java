@@ -75,7 +75,19 @@ public class ScheduleService {
                 .findById(scheduleId)
                 .orElseThrow(() -> new NoSuchElementException("%d번 일정은 존재하지 않습니다.".formatted(scheduleId)));
     }
-    
+
+    /**
+     * 활성화된 일정 조회
+     * @param scheduleId
+     * @return
+     */
+    @Transactional(readOnly = true)
+    public Schedule getActiveScheduleById(Long scheduleId) {
+        return scheduleRepository
+                .findActiveScheduleById(scheduleId)
+                .orElseThrow(() -> new NoSuchElementException("%d번 일정은 존재하지 않습니다.".formatted(scheduleId)));
+    }
+
     /**
      * 특정 모임의 최신 일정 조회
      * @param clubId
@@ -88,6 +100,11 @@ public class ScheduleService {
                 .orElseThrow(() -> new NoSuchElementException("%d번 모임의 일정은 존재하지 않습니다.".formatted(clubId)));
     }
 
+    /**
+     * 특정 모임의 일정 개수 조회
+     * @param clubId
+     * @return
+     */
     @Transactional(readOnly = true)
     public long countClubSchedules(Long clubId) {
         return scheduleRepository.countByClubId(clubId);

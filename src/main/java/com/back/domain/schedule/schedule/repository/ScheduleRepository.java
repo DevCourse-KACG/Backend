@@ -43,6 +43,14 @@ public interface ScheduleRepository extends JpaRepository<Schedule, Long> {
             @Param("endDateTime") LocalDateTime endDateTime
     );
 
+    // 활성화된 일정 ID로 조회
+    @Query("""
+            SELECT s FROM Schedule s
+            JOIN FETCH s.club
+            WHERE s.id = :scheduleId 
+            AND s.isActive = true
+            """)
+    Optional<Schedule> findActiveScheduleById(Long scheduleId);
 
     // 특정 모임의 최신 일정을 ID 기준으로 내림차순 정렬하여 조회
     Optional<Schedule> findFirstByClubIdOrderByIdDesc(Long clubId);
