@@ -750,6 +750,52 @@ class ApiV1ClubMemberControllerTest {
     }
 
     @Test
+    @DisplayName("클럽 멤버 탈퇴 - 호스트가 클럽에서 탈퇴")
+    @WithUserDetails(value = "hgd222@test.com") // 1번 멤버로 로그인
+    void withdrawHostFromClub() throws Exception {
+        // given
+        // 테스트 클럽 생성
+        Club club = clubService.createClub(
+                Club.builder()
+                        .name("테스트 그룹")
+                        .bio("테스트 그룹 설명")
+                        .category(ClubCategory.STUDY)
+                        .mainSpot("서울")
+                        .maximumCapacity(10)
+                        .eventType(EventType.ONE_TIME)
+                        .startDate(LocalDate.of(2023, 10, 1))
+                        .endDate(LocalDate.of(2023, 10, 31))
+                        .isPublic(true)
+                        .leaderId(1L)
+                        .build()
+        );
+
+        // 클럽에 호스트 멤버 추가
+        Member hostMember = memberService.findMemberById(1L)
+                .orElseThrow(() -> new IllegalStateException("호스트 멤버가 존재하지 않습니다."));
+        clubMemberService.addMemberToClub(
+                club.getId(),
+                hostMember,
+                ClubMemberRole.HOST
+        );
+
+        // when
+        ResultActions resultActions = mvc.perform(
+                        delete("/api/v1/clubs/" + club.getId() + "/members/" + hostMember.getId())
+                                .contentType(MediaType.APPLICATION_JSON)
+                )
+                .andDo(print());
+
+        // then
+        resultActions
+                .andExpect(handler().handlerType(ApiV1ClubMemberController.class))
+                .andExpect(handler().methodName("withdrawMemberFromClub"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value(400))
+                .andExpect(jsonPath("$.message").value("호스트는 탈퇴할 수 없습니다."));
+    }
+
+    @Test
     @DisplayName("참여자 권한 변경")
     @WithUserDetails(value = "hgd222@test.com") // 1번 멤버로 로그인
     void changeMemberRole() throws Exception {
@@ -1011,6 +1057,110 @@ class ApiV1ClubMemberControllerTest {
                 .andExpect(status().isForbidden())
                 .andExpect(jsonPath("$.code").value(403))
                 .andExpect(jsonPath("$.message").value("권한이 없습니다."));
+    }
+
+    @Test
+    @DisplayName("참여자 권한 변경 - 호스트 본인의 권한 변경 시도")
+    @WithUserDetails(value = "hgd222@test.com") // 1번 멤버로 로그인
+    void changeHostRole() throws Exception {
+        // given
+        // 테스트 클럽 생성
+        Club club = clubService.createClub(
+                Club.builder()
+                        .name("테스트 그룹")
+                        .bio("테스트 그룹 설명")
+                        .category(ClubCategory.STUDY)
+                        .mainSpot("서울")
+                        .maximumCapacity(10)
+                        .eventType(EventType.ONE_TIME)
+                        .startDate(LocalDate.of(2023, 10, 1))
+                        .endDate(LocalDate.of(2023, 10, 31))
+                        .isPublic(true)
+                        .leaderId(1L)
+                        .build()
+        );
+
+        // 클럽에 호스트 멤버 추가
+        Member hostMember = memberService.findMemberById(1L)
+                .orElseThrow(() -> new IllegalStateException("호스트 멤버가 존재하지 않습니다."));
+        clubMemberService.addMemberToClub(
+                club.getId(),
+                hostMember,
+                ClubMemberRole.HOST
+        );
+
+        // when
+        ResultActions resultActions = mvc.perform(
+                        put("/api/v1/clubs/" + club.getId() + "/members/" + hostMember.getId() + "/role")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content("{\"role\": \"MANAGER\"}")
+                )
+                .andDo(print());
+
+        // then
+        resultActions
+                .andExpect(handler().handlerType(ApiV1ClubMemberController.class))
+                .andExpect(handler().methodName("changeMemberRole"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value(400))
+                .andExpect(jsonPath("$.message").value("호스트는 본인의 역할을 변경할 수 없습니다."));
+    }
+
+    @Test
+    @DisplayName("참여자 권한 변경 - 호스트 권한을 주려고 시도")
+    @WithUserDetails(value = "hgd222@test.com") // 1번 멤버로 로그인
+    void changeMemberRole_ToHost() throws Exception {
+        // given
+        // 테스트 클럽 생성
+        Club club = clubService.createClub(
+                Club.builder()
+                        .name("테스트 그룹")
+                        .bio("테스트 그룹 설명")
+                        .category(ClubCategory.STUDY)
+                        .mainSpot("서울")
+                        .maximumCapacity(10)
+                        .eventType(EventType.ONE_TIME)
+                        .startDate(LocalDate.of(2023, 10, 1))
+                        .endDate(LocalDate.of(2023, 10, 31))
+                        .isPublic(true)
+                        .leaderId(1L)
+                        .build()
+        );
+
+        // 클럽에 호스트 멤버 추가
+        Member hostMember = memberService.findMemberById(1L)
+                .orElseThrow(() -> new IllegalStateException("호스트 멤버가 존재하지 않습니다."));
+        clubMemberService.addMemberToClub(
+                club.getId(),
+                hostMember,
+                ClubMemberRole.HOST
+        );
+
+        // 추가할 멤버 (testInitData의 멤버 사용)
+        Member member1 = memberService.findMemberById(2L).orElseThrow(
+                () -> new IllegalStateException("멤버가 존재하지 않습니다.")
+        );
+
+        // 클럽에 멤버 추가
+        clubMemberService.addMemberToClub(club.getId(), member1, ClubMemberRole.PARTICIPANT);
+
+        assertThat(club.getClubMembers().size()).isEqualTo(2); // 클럽에 멤버가 1명 추가되었는지 확인
+
+        // when
+        ResultActions resultActions = mvc.perform(
+                        put("/api/v1/clubs/" + club.getId() + "/members/" + member1.getId() + "/role")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content("{\"role\": \"HOST\"}")
+                )
+                .andDo(print());
+
+        // then
+        resultActions
+                .andExpect(handler().handlerType(ApiV1ClubMemberController.class))
+                .andExpect(handler().methodName("changeMemberRole"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value(400))
+                .andExpect(jsonPath("$.message").value("호스트 권한은 직접 부여할 수 없습니다."));
     }
 
     @Test
