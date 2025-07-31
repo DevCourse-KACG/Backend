@@ -6,7 +6,10 @@ import com.back.domain.club.club.entity.Club;
 import com.back.domain.club.club.repository.ClubRepository;
 import com.back.domain.club.clubMember.entity.ClubMember;
 import com.back.domain.club.clubMember.repository.ClubMemberRepository;
-import com.back.domain.member.member.dto.request.*;
+import com.back.domain.member.member.dto.request.GuestDto;
+import com.back.domain.member.member.dto.request.MemberLoginDto;
+import com.back.domain.member.member.dto.request.MemberRegisterDto;
+import com.back.domain.member.member.dto.request.UpdateMemberInfoDto;
 import com.back.domain.member.member.dto.response.*;
 import com.back.domain.member.member.entity.Member;
 import com.back.domain.member.member.entity.MemberInfo;
@@ -18,7 +21,6 @@ import com.back.global.enums.ClubMemberState;
 import com.back.global.exception.ServiceException;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -31,7 +33,7 @@ import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
-@Transactional
+@Transactional(readOnly = true)
 public class MemberService {
     private final MemberRepository memberRepository;
     private final MemberInfoRepository memberInfoRepository;
@@ -40,6 +42,7 @@ public class MemberService {
     private final S3Service s3Service;
     private final ClubRepository clubRepository;
     private final ClubMemberRepository clubMemberRepository;
+    private final PasswordEncoder passwordEncoder;
 
     /**
      * ==================================================
@@ -68,7 +71,7 @@ public class MemberService {
         return new MemberAuthResponse(apiKey, accessToken);
     }
 
-    // ============================== [비회원] 모임 등록 ==============================
+    // ============================== [비회원] 모임 가입 ==============================
 
     //[비회원] 모임 가입 메인 메소드
     @Transactional
@@ -181,10 +184,9 @@ public class MemberService {
         MemberInfo memberInfo = member.getMemberInfo();
 
         // 2. 비밀번호 변경 시 암호화 처리
-        BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
         String password = member.getPassword();
         if (dto.password() != null && !dto.password().isBlank()) {
-            password = encoder.encode(dto.password());
+            password = passwordEncoder.encode(dto.password());
         }
 
         // 3. 닉네임, 태그, 바이오 등 변경 정보 설정 (기본값 유지 포함)
@@ -242,16 +244,12 @@ public class MemberService {
     }
 
     private void validatePassword(String password, Member member) {
-        // 1. 비밀번호 일치 여부 확인
-        PasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
-
         if (!passwordEncoder.matches(password, member.getPassword())) {
             throw new ServiceException(400, "해당 사용자를 찾을 수 없습니다.");
         }
     }
 
     private Member validateMemberLogin(Optional<MemberInfo> memberInfo) {
-        // 1. 이메일 기반 회원 조회 여부 확인
         if (memberInfo.isEmpty()) {
             throw new ServiceException(400, "해당 사용자를 찾을 수 없습니다.");
         }
@@ -282,8 +280,7 @@ public class MemberService {
 
     private Member createAndSaveMember(MemberRegisterDto dto, String tag) {
         // 1. 비밀번호 암호화
-        BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
-        String hashedPassword = encoder.encode(dto.password());
+        String hashedPassword = passwordEncoder.encode(dto.password());
 
         // 2. Member 엔티티 생성 및 저장
         Member member = Member.createMember(dto.nickname(), hashedPassword, tag);
@@ -292,8 +289,7 @@ public class MemberService {
 
     private Member createAndSaveGuestMember(@Valid GuestDto dto, String tag) {
         // 1. 비밀번호 암호화
-        BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
-        String hashedPassword = encoder.encode(dto.password());
+        String hashedPassword = passwordEncoder.encode(dto.password());
 
         // 2. 비회원 Member 엔티티 생성 및 저장
         Member guest = Member.createGuest(dto.nickname(), hashedPassword, tag);
@@ -341,14 +337,10 @@ public class MemberService {
 
     public Member findMemberByEmail(String email) {
         // 1. 이메일로 MemberInfo 조회
-        Optional<MemberInfo> memberInfo = memberInfoRepository.findByEmail(email);
+        MemberInfo memberInfo = memberInfoRepository.findByEmail(email)
+                .orElseThrow(() -> new ServiceException(400, "사용자를 찾을 수 없습니다."));
 
-        // 2. 조회 실패 시 예외
-        if (memberInfo.isEmpty()) {
-            throw new ServiceException(400, "사용자를 찾을 수 없습니다.");
-        }
-
-        return memberInfo.get().getMember();
+        return memberInfo.getMember();
     }
 
     private void deleteMember(Member member) {
@@ -357,15 +349,8 @@ public class MemberService {
     }
 
     public Member findMemberByNicknameAndTag(String nickname, String tag) {
-        // 1. 닉네임과 태그로 회원 조회
-        Optional<Member> optionalMember = memberRepository.findByNicknameAndTag(nickname, tag);
-
-        // 2. 조회 실패 시 예외
-        if (optionalMember.isEmpty()) {
-            throw new ServiceException(400, "회원 정보를 찾을 수 없습니다.");
-        }
-
-        return optionalMember.get();
+        return memberRepository.findByNicknameAndTag(nickname, tag)
+                .orElseThrow(() ->  new ServiceException(400, "회원 정보를 찾을 수 없습니다."));
     }
 
     public Optional<Member> findMemberById(Long id) {
@@ -378,13 +363,9 @@ public class MemberService {
 
     public Member findMemberByApiKey(String apiKey) {
         // 1. API 키로 MemberInfo 조회
-        Optional<MemberInfo> optionalMemberInfo = memberInfoRepository.findByApiKey(apiKey);
+        MemberInfo optionalMemberInfo = memberInfoRepository.findByApiKey(apiKey)
+                .orElseThrow(() -> new ServiceException(400, "유효하지 않은 Refresh Token 입니다."));
 
-        // 2. 조회 실패 시 예외
-        if (optionalMemberInfo.isEmpty()) {
-            throw new ServiceException(400, "유효하지 않은 Refresh Token 입니다.");
-        }
-
-        return optionalMemberInfo.get().getMember();
+        return optionalMemberInfo.getMember();
     }
 }
