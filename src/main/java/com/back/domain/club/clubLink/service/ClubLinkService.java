@@ -5,6 +5,8 @@ import com.back.domain.club.club.repository.ClubRepository;
 import com.back.domain.club.clubLink.dtos.ClubLinkDtos;
 import com.back.domain.club.clubLink.entity.ClubLink;
 import com.back.domain.club.clubLink.repository.ClubLinkRepository;
+import com.back.domain.club.clubMember.entity.ClubMember;
+import com.back.domain.club.clubMember.repository.ClubMemberRepository;
 import com.back.domain.member.member.entity.Member;
 import com.back.global.exception.ServiceException;
 import lombok.RequiredArgsConstructor;
@@ -18,10 +20,14 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class ClubLinkService {
     private final ClubRepository clubRepository;
+    private final ClubMemberRepository clubMemberRepository;
     private final ClubLinkRepository clubLinkRepository;
 
     @Transactional
     public ClubLinkDtos.CreateClubLinkResponse createClubLink(Member user, Long clubId) {
+        //권한 체크하여 Host, Manager이 아닐 시 에러
+        ClubMember clubMember = clubMemberRepository.findByClubAndMember()
+
         Club club = clubRepository.findById(clubId)
                 .orElseThrow(() -> new ServiceException(400, "해당 id의 클럽을 찾을 수 없습니다."));
 

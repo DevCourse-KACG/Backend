@@ -15,7 +15,6 @@ import java.time.LocalDateTime;
 public class ClubLink {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Setter(AccessLevel.PRIVATE)
     @EqualsAndHashCode.Include
     private Long id;
 
