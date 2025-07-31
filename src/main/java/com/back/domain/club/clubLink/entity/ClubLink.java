@@ -5,7 +5,7 @@ import jakarta.persistence.*;
 import jdk.jfr.Description;
 import lombok.*;
 
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 @Entity
 @NoArgsConstructor
@@ -20,15 +20,16 @@ public class ClubLink {
     private Long id;
 
     @Description("초대 코드")
+    @Column(unique = true, nullable = false)
     private String inviteCode;
 
     @Description("링크 생성 날짜")
     @Column(columnDefinition = "TIMESTAMP")
-    private LocalDate createAt;
+    private LocalDateTime createdAt;
 
     @Description("링크 만료 날짜")
     @Column(columnDefinition = "TIMESTAMP")
-    private LocalDate expiresAt;
+    private LocalDateTime expiresAt;
 
     @Description("클럽 정보")
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
@@ -39,9 +40,9 @@ public class ClubLink {
 
     //===================================빌더=========================================
     @Builder
-    public ClubLink(String inviteCode, LocalDate createAt, LocalDate expiresAt, Club club) {
+    public ClubLink(String inviteCode, LocalDateTime createdAt, LocalDateTime expiresAt, Club club) {
         this.inviteCode = inviteCode;
-        this.createAt = createAt;
+        this.createdAt = createdAt;
         this.expiresAt = expiresAt;
         this.club = club;
     }

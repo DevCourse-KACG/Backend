@@ -1,6 +1,6 @@
 package com.back.domain.club.clubLink.dtos;
 
-public class ClubControllerDtos {
+public class ClubLinkDtos {
 
     /**
 
