@@ -4,6 +4,9 @@ import com.back.domain.api.service.ApiKeyService;
 import com.back.domain.auth.service.AuthService;
 import com.back.domain.club.club.entity.Club;
 import com.back.domain.club.club.repository.ClubRepository;
+import com.back.domain.club.clubMember.entity.ClubMember;
+import com.back.domain.club.clubMember.repository.ClubMemberRepository;
+import com.back.domain.member.member.dto.request.GuestRegisterDto;
 import com.back.domain.member.member.dto.request.MemberRegisterDto;
 import com.back.domain.member.member.dto.response.MemberDetailInfoResponse;
 import com.back.domain.member.member.entity.Member;
@@ -67,6 +70,9 @@ public class ApiV1MemberControllerTest {
 
     @Autowired
     private MemberService memberService;
+
+    @Autowired
+    private ClubMemberRepository clubMemberRepository;
 
     @Test
     @DisplayName("회원가입 - 정상 기입 / 객체 정상 생성")
@@ -750,12 +756,13 @@ public class ApiV1MemberControllerTest {
     @DisplayName("비회원 모임 등록 - 성공 및 DB 저장 확인")
     public void GuestRegister_success_withDbCheck() throws Exception {
         // 회원 생성 (기존 회원 fixture)
-        memberFixture.createMember(1);
+        Member guest = memberFixture.createMember(1);
 
         // API 요청 바디 (요청하는 비회원 정보)
         String nickname = "guestUser";
         String rawPassword = "guestPassword123";
-        int clubId = 42;
+        Long clubId = 1L;
+        Club club = clubRepository.findById(clubId).orElseThrow();
         String requestBody = String.format("""
         {
             "nickname": "%s",
@@ -778,7 +785,9 @@ public class ApiV1MemberControllerTest {
 
         // DB에서 저장 여부 확인
         Optional<Member> savedGuestOpt = memberRepository.findByNickname(nickname);
-        assertTrue(savedGuestOpt.isPresent(), "비회원 게스트 회원이 DB에 저장되어야 합니다.");
+        assertTrue(savedGuestOpt.isPresent(), "비회원 게스트 회원이 멤버 DB에 저장되어야 합니다.");
+        Optional<ClubMember> savedClubGuestOpt = clubMemberRepository.findByClubAndMember(club, guest);
+        assertTrue(true, "비회원 게스트 회원이 클럽멤버 DB에 저장되어야 합니다.");
 
         Member savedGuest = savedGuestOpt.get();
         assertEquals(nickname, savedGuest.getNickname());
@@ -789,8 +798,6 @@ public class ApiV1MemberControllerTest {
 
         // tag가 자동 생성되거나 세팅된다면, null이 아닌지 확인 가능
         assertNotNull(savedGuest.getTag());
-
-        // clubId는 Member 엔티티에 직접 없으면, 연관된 클럽 객체로 확인 (필요시)
     }
 
     @Test
@@ -826,6 +833,35 @@ public class ApiV1MemberControllerTest {
                 .andExpect(cookie().exists("accessToken"))
                 .andDo(print());
     }
+
+    @Test
+    @DisplayName("비회원 닉네임 중복 확인 - 중복된 경우")
+    void guestNicknameDuplicate_shouldReturnTrue() throws Exception {
+        // given
+        GuestRegisterDto guestRegisterDto = new GuestRegisterDto("중복회원", "password", 5L);
+
+        memberService.registerGuestMember(guestRegisterDto);
+
+        String duplicateNickname = "중복회원";
+
+        String requestBody = """
+        {
+            "nickname": "%s",
+            "password": "password12",
+            "clubId": 5
+        }
+    """.formatted(duplicateNickname);
+
+        // when & then
+        mockMvc.perform(post("/api/v1/members/auth/guest-register")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(requestBody))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value(400))
+                .andExpect(jsonPath("$.message").value("이미 사용 중인 닉네임입니다."));
+    }
+
+
 
     @Test
     @DisplayName("회원가입 - 이메일 중복 시 예외 발생")
