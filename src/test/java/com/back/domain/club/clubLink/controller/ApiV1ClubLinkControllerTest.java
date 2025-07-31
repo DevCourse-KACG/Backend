@@ -21,7 +21,7 @@ import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
-import java.util.List;
+import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -85,9 +85,10 @@ public class ApiV1ClubLinkControllerTest {
             assertNotNull(inviteCodeFromResponse);
 
             // DB 에서 실제 저장된 초대 코드 확인
-            List<ClubLink> savedLinks = clubLinkRepository.findAll();
-            assertFalse(savedLinks.isEmpty());
-            assertEquals(inviteCodeFromResponse, savedLinks.get(0).getInviteCode());
+            Club club = clubRepository.findById(1L).orElseThrow();
+            Optional<ClubLink> savedLink = clubLinkRepository.findByClubAndExpiresAtAfter(club, LocalDateTime.now());
+            assertTrue(savedLink.isPresent());
+            assertEquals(inviteCodeFromResponse, savedLink.get().getInviteCode());
         }
     }
 
