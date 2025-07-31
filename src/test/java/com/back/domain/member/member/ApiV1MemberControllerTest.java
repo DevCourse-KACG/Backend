@@ -28,7 +28,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
@@ -74,6 +74,9 @@ public class ApiV1MemberControllerTest {
 
     @Autowired
     private ClubMemberRepository clubMemberRepository;
+
+    @Autowired
+    private PasswordEncoder passwordEncoder;
 
     @Test
     @DisplayName("회원가입 - 정상 기입 / 객체 정상 생성")
@@ -881,8 +884,6 @@ public class ApiV1MemberControllerTest {
     @Test
     @DisplayName("회원가입 - 비밀번호 해싱 성공")
     public void registerPasswordHashingAndMatching() {
-        BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
-
         String rawPassword = "pw1";
 
         memberService.registerMember(new MemberRegisterDto("1", rawPassword, "user1", "<>"));
@@ -892,9 +893,9 @@ public class ApiV1MemberControllerTest {
 
         assertNotEquals(rawPassword, savedHashedPassword);
 
-        assertTrue(encoder.matches(rawPassword, savedHashedPassword));
+        assertTrue(passwordEncoder.matches(rawPassword, savedHashedPassword));
 
-        assertFalse(encoder.matches("wrongPassword", savedHashedPassword));
+        assertFalse(passwordEncoder.matches("wrongPassword", savedHashedPassword));
     }
 
     @Test
