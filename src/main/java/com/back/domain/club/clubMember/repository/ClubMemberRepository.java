@@ -3,6 +3,7 @@ package com.back.domain.club.clubMember.repository;
 import com.back.domain.club.club.entity.Club;
 import com.back.domain.club.clubMember.entity.ClubMember;
 import com.back.domain.member.member.entity.Member;
+import com.back.global.enums.ClubMemberRole;
 import com.back.global.enums.ClubMemberState;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -30,4 +31,6 @@ public interface ClubMemberRepository extends JpaRepository<ClubMember, Long> {
     List<ClubMember> findByClub(Club club);
 
     boolean existsByClubAndMember(Club club, Member member);
+
+    boolean existsByClubAndMemberAndRoleIn(Club club, Member member, List<ClubMemberRole> roles);
 }
