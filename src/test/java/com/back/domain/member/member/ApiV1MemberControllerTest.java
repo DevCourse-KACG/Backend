@@ -379,6 +379,39 @@ public class ApiV1MemberControllerTest {
     }
 
     @Test
+    @DisplayName("회원탈퇴 - 인증 없이 탈퇴 요청 시도 시 401 Unauthorized")
+    public void withdrawMembership_Unauthenticated_Failure() throws Exception {
+        mockMvc.perform(delete("/api/v1/members/me")
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.code").value(401))
+                .andExpect(jsonPath("$.message").value("인증이 필요합니다."));
+    }
+
+    @Test
+    @DisplayName("회원탈퇴 - 존재하지 않는 회원 ID로 탈퇴 시도 시 404 Not Found")
+    public void withdrawMembership_NonexistentUserId_Failure() throws Exception {
+        // 실제 DB에 없는 임의의 회원 ID 사용
+        Long fakeMemberId = 999999L;
+
+        SecurityUser fakeUser = new SecurityUser(
+                fakeMemberId,
+                "fakeNickname",
+                "fakeTag",
+                MemberType.MEMBER,
+                "fakePassword",
+                Collections.emptyList()
+        );
+
+        mockMvc.perform(delete("/api/v1/members/me")
+                        .with(user(fakeUser))
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.code").value(400))
+                .andExpect(jsonPath("$.message").value("회원 정보를 찾을 수 없습니다."));
+    }
+
+
+    @Test
     @DisplayName("access token 재발급 - 정상")
     public void reGenerateAccessToken_success() throws Exception {
         //회원 생성

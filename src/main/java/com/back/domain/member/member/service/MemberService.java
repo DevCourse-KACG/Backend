@@ -335,7 +335,7 @@ public class MemberService {
 
         // 2. 조회 실패 시 예외
         if (optionalMember.isEmpty()) {
-            throw new ServiceException(400, "해당 닉네임의 사용자를 찾을 수 없습니다.");
+            throw new ServiceException(400, "회원 정보를 찾을 수 없습니다.");
         }
 
         return optionalMember.get();
