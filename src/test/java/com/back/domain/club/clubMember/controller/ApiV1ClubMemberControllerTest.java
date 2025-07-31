@@ -470,6 +470,93 @@ class ApiV1ClubMemberControllerTest {
     }
 
     @Test
+    @DisplayName("클럽에 멤버 추가 - 클럽 정원 초과")
+    @WithUserDetails(value = "hgd222@test.com") // 1번 멤버로 로그인
+    void addMemberToClub_ExceedMaximumCapacity() throws Exception {
+        // given
+        // 테스트 클럽 생성
+        Club club = clubService.createClub(
+                Club.builder()
+                        .name("테스트 그룹")
+                        .bio("테스트 그룹 설명")
+                        .category(ClubCategory.STUDY)
+                        .mainSpot("서울")
+                        .maximumCapacity(2) // 정원을 2명으로 설정
+                        .eventType(EventType.ONE_TIME)
+                        .startDate(LocalDate.of(2023, 10, 1))
+                        .endDate(LocalDate.of(2023, 10, 31))
+                        .isPublic(true)
+                        .leaderId(1L)
+                        .build()
+        );
+
+        // 클럽에 호스트 멤버 추가
+        Member hostMember = memberService.findMemberById(1L)
+                .orElseThrow(() -> new IllegalStateException("호스트 멤버가 존재하지 않습니다."));
+        clubMemberService.addMemberToClub(
+                club.getId(),
+                hostMember,
+                ClubMemberRole.HOST
+        );
+
+        // 클럽에 호스트가 아닌 멤버 추가
+        Member unauthorizedMember = memberService.findMemberById(2L).orElseThrow(
+                () -> new IllegalStateException("멤버가 존재하지 않습니다.")
+        );
+        clubMemberService.addMemberToClub(
+                club.getId(),
+                unauthorizedMember,
+                ClubMemberRole.PARTICIPANT
+        );
+
+        // 추가할 멤버 (testInitData의 멤버 사용)
+        Member member1 = memberService.findMemberById(3L).orElseThrow(
+                () -> new IllegalStateException("멤버가 존재하지 않습니다.")
+        );
+
+        Member member2 = memberService.findMemberById(4L).orElseThrow(
+                () -> new IllegalStateException("멤버가 존재하지 않습니다.")
+        );
+
+        // JSON 데이터 파트 생성
+        String jsonData = """
+                {
+                    "members": [
+                        {
+                            "email": "%s",
+                            "role": "PARTICIPANT"
+                        },
+                        {
+                            "email": "%s",
+                            "role": "PARTICIPANT"
+                        }
+                    ]
+                }
+                """.stripIndent().formatted(member1.getEmail(), member2.getEmail());
+
+        // when
+        ResultActions resultActions = mvc.perform(
+                        post("/api/v1/clubs/" + club.getId() + "/members")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(jsonData)
+                )
+                .andDo(print());
+        // then
+        resultActions
+                .andExpect(handler().handlerType(ApiV1ClubMemberController.class))
+                .andExpect(handler().methodName("addMembersToClub"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value(400))
+                .andExpect(jsonPath("$.message").value("클럽의 최대 멤버 수를 초과했습니다."));
+
+        // 추가 검증: 클럽에 멤버가 실제로 추가되지 않았는지 확인
+        club = clubService.getClubById(club.getId()).orElseThrow(
+                () -> new IllegalStateException("클럽이 존재하지 않습니다.")
+        );
+        assertThat(club.getClubMembers().size()).isEqualTo(2); // 클럽에 멤버가 2명만 있어야 함 (호스트 + 참여자)
+    }
+
+    @Test
     @DisplayName("클럽 멤버 탈퇴")
     @WithUserDetails(value = "hgd222@test.com") // 1번 멤버로 로그인
     void withdrawMemberFromClub() throws Exception {
@@ -661,7 +748,6 @@ class ApiV1ClubMemberControllerTest {
                 .andExpect(jsonPath("$.code").value(403))
                 .andExpect(jsonPath("$.message").value("권한이 없습니다."));
     }
-
 
     @Test
     @DisplayName("참여자 권한 변경")
@@ -1208,6 +1294,75 @@ class ApiV1ClubMemberControllerTest {
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.code").value(400))
                 .andExpect(jsonPath("$.message").value("Unknown Member state: INVALID_STATE"));
+    }
+
+    @Test
+    @DisplayName("참여자 목록 반환 - WITHDRAW 상태 필터 확인")
+    @WithUserDetails(value = "hgd222@test.com") // 1번 멤버로 로그인
+    void getClubMembers_WithdrawStateFilter() throws Exception {
+        // given
+        // 테스트 클럽 생성
+        Club club = clubService.createClub(
+                Club.builder()
+                        .name("테스트 그룹")
+                        .bio("테스트 그룹 설명")
+                        .category(ClubCategory.STUDY)
+                        .mainSpot("서울")
+                        .maximumCapacity(10)
+                        .eventType(EventType.ONE_TIME)
+                        .startDate(LocalDate.of(2023, 10, 1))
+                        .endDate(LocalDate.of(2023, 10, 31))
+                        .isPublic(true)
+                        .leaderId(1L)
+                        .build()
+        );
+
+        // 클럽에 호스트 멤버 추가
+        Member hostMember = memberService.findMemberById(1L)
+                .orElseThrow(() -> new IllegalStateException("호스트 멤버가 존재하지 않습니다."));
+        clubMemberService.addMemberToClub(
+                club.getId(),
+                hostMember,
+                ClubMemberRole.HOST
+        );
+
+        // 추가할 멤버 (testInitData의 멤버 사용)
+        Member member1 = memberService.findMemberById(2L).orElseThrow(
+                () -> new IllegalStateException("멤버가 존재하지 않습니다.")
+        );
+
+        // 클럽에 멤버 추가
+        ClubMember clubMember1 = clubMemberService.addMemberToClub(club.getId(), member1, ClubMemberRole.PARTICIPANT);
+
+        // 클럽 멤버 상태를 WITHDRAWN으로 변경
+        clubMember1.updateState(ClubMemberState.WITHDRAWN);
+        clubMemberRepository.save(clubMember1); // 상태 변경된 클럽 멤버 저장
+
+        assertThat(club.getClubMembers().size()).isEqualTo(2); // 클럽에 멤버가 2명 추가되었는지 확인
+
+        // when
+        ResultActions resultActions = mvc.perform(
+                        get("/api/v1/clubs/" + club.getId() + "/members")
+                                .contentType(MediaType.APPLICATION_JSON)
+                )
+                .andDo(print());
+
+        // then
+        resultActions
+                .andExpect(handler().handlerType(ApiV1ClubMemberController.class))
+                .andExpect(handler().methodName("getClubMembers"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value(200))
+                .andExpect(jsonPath("$.message").value("클럽 멤버 목록이 조회됐습니다."))
+                .andExpect(jsonPath("$.data.members.length()").value(1)) // 멤버가 1명(Host)인지 확인
+                .andExpect(jsonPath("$.data.members[0].memberId").value(hostMember.getId()))
+                .andExpect(jsonPath("$.data.members[0].nickname").value(hostMember.getNickname()))
+                .andExpect(jsonPath("$.data.members[0].tag").value(hostMember.getTag()))
+                .andExpect(jsonPath("$.data.members[0].role").value(ClubMemberRole.HOST.name()))
+                .andExpect(jsonPath("$.data.members[0].email").value(hostMember.getEmail()))
+                .andExpect(jsonPath("$.data.members[0].memberType").value(hostMember.getMemberType().name()))
+                .andExpect(jsonPath("$.data.members[0].profileImageUrl").value("")) // 호스트는 이미지 URL이 없으므로 빈 문자열
+                .andExpect(jsonPath("$.data.members[0].state").value(club.getClubMembers().get(0).getState().name())); // 호스트의 상태 확인
     }
 }
 
