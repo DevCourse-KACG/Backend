@@ -195,6 +195,11 @@ public class ClubService {
         Member leader = memberService.findMemberById(club.getLeaderId())
                 .orElseThrow(() -> new ServiceException(404, "해당 ID의 클럽 리더를 찾을 수 없습니다."));
 
+        // 비공개 클럽인 경우, 현재 로그인한 유저가 클럽 멤버인지 확인
+        if (!club.isPublic() && !clubMemberValidService.isClubMember(rq.getActor().getId(), clubId)) {
+            throw new ServiceException(403, "비공개 클럽 정보는 클럽 멤버만 조회할 수 있습니다.");
+        }
+
         return new ClubControllerDtos.ClubInfoResponse(
                 club.getId(),
                 club.getName(),
