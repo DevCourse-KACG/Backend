@@ -33,9 +33,6 @@ public class ClubControllerDtos {
         String endDate,
         @NotNull
         Boolean isPublic,
-        @NotNull
-        Long leaderId,
-
         CreateClubRequestMemberInfo[] clubMembers
     ) {}
 

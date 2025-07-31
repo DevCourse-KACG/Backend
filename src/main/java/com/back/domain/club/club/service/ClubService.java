@@ -85,7 +85,7 @@ public class ClubService {
                 .startDate(LocalDate.parse(reqBody.startDate()))
                 .endDate(LocalDate.parse(reqBody.endDate()))
                 .isPublic(reqBody.isPublic())
-                .leaderId(reqBody.leaderId())
+                .leaderId(rq.getActor().getId()) // 현재 로그인한 유저의 ID를 리더 ID로 설정
                 .build()
         );
         // 2. 이미지가 제공된 경우 S3에 업로드
@@ -97,7 +97,7 @@ public class ClubService {
 
         // 클럽 생성 시 유저를 리더로 설정하고 멤버에 추가
         Member leader = memberService.findMemberById(rq.getActor().getId())
-                .orElseThrow(() -> new NoSuchElementException("ID " + reqBody.leaderId() + "에 해당하는 리더를 찾을 수 없습니다."));
+                .orElseThrow(() -> new NoSuchElementException("ID " + rq.getActor().getId() + "에 해당하는 리더를 찾을 수 없습니다."));
         ClubMember clubLeader = ClubMember.builder()
                 .member(leader)
                 .role(ClubMemberRole.HOST) // 클럽 생성자는 HOST 역할
