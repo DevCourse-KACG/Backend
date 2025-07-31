@@ -1,6 +1,6 @@
 package com.back.domain.auth.service;
 
-import com.back.domain.member.member.MemberType;
+import com.back.global.enums.MemberType;
 import com.back.domain.member.member.entity.Member;
 import com.back.standard.util.Ut;
 import org.springframework.beans.factory.annotation.Value;

@@ -13,7 +13,7 @@ import com.back.domain.club.clubMember.repository.ClubMemberRepository;
 import com.back.domain.member.friend.entity.Friend;
 import com.back.domain.member.friend.entity.FriendStatus;
 import com.back.domain.member.friend.repository.FriendRepository;
-import com.back.domain.member.member.MemberType;
+import com.back.global.enums.MemberType;
 import com.back.domain.member.member.entity.Member;
 import com.back.domain.member.member.entity.MemberInfo;
 import com.back.domain.member.member.repository.MemberInfoRepository;

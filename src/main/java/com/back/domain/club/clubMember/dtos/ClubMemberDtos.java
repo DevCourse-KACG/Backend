@@ -1,6 +1,6 @@
 package com.back.domain.club.clubMember.dtos;
 
-import com.back.domain.member.member.MemberType;
+import com.back.global.enums.MemberType;
 import com.back.global.enums.ClubMemberRole;
 import com.back.global.enums.ClubMemberState;
 import jakarta.validation.constraints.NotBlank;

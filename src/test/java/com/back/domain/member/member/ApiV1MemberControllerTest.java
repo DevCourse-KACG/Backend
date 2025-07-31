@@ -14,6 +14,7 @@ import com.back.domain.member.member.entity.MemberInfo;
 import com.back.domain.member.member.repository.MemberRepository;
 import com.back.domain.member.member.service.MemberService;
 import com.back.domain.member.member.support.MemberFixture;
+import com.back.global.enums.MemberType;
 import com.back.global.exception.ServiceException;
 import com.back.global.security.SecurityUser;
 import com.jayway.jsonpath.JsonPath;

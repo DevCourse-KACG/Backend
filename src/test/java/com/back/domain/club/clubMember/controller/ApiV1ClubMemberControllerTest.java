@@ -5,7 +5,7 @@ import com.back.domain.club.club.service.ClubService;
 import com.back.domain.club.clubMember.entity.ClubMember;
 import com.back.domain.club.clubMember.repository.ClubMemberRepository;
 import com.back.domain.club.clubMember.service.ClubMemberService;
-import com.back.domain.member.member.MemberType;
+import com.back.global.enums.MemberType;
 import com.back.domain.member.member.entity.Member;
 import com.back.domain.member.member.service.MemberService;
 import com.back.global.aws.S3Service;
