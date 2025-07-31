@@ -1,9 +1,13 @@
 package com.back.domain.club.clubMember.controller;
 
+import com.back.domain.club.club.entity.Club;
+import com.back.domain.club.clubMember.dtos.MyClubControllerDtos;
+import com.back.domain.club.clubMember.service.MyClubService;
+import com.back.global.rsData.RsData;
+import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 /**
  * 클럽 관련 API를 제공하는 컨트롤러
@@ -14,5 +18,45 @@ import org.springframework.web.bind.annotation.RestController;
 @RequiredArgsConstructor
 @Tag(name = "MyClubController", description = "유저 본인 클럽 관련 API")
 public class ApiV1MyClubController {
+    private final MyClubService myClubService;
+
+    @PostMapping("{clubId}/join")
+    @Operation(summary = "클럽 초대 수락")
+    public RsData<MyClubControllerDtos.AcceptClubInvitationResponse> acceptClubInvitation(
+            @PathVariable Long clubId
+    ) {
+        // 클럽 초대 수락 로직을 처리하는 서비스 메서드를 호출
+        Club selectedClub = myClubService.handleClubInvitation(clubId, true);
+
+        // 성공적으로 초대를 수락/거절한 경우 응답 반환
+        return RsData.of(
+                200,
+                "클럽 초대를 수락했습니다.",
+                new MyClubControllerDtos.AcceptClubInvitationResponse(
+                        selectedClub.getId(),
+                        selectedClub.getName()
+                )
+        );
+    }
+
+    @DeleteMapping("{clubId}/invitation")
+    @Operation(summary = "클럽 초대 거절")
+    public RsData<MyClubControllerDtos.AcceptClubInvitationResponse> rejectClubInvitation(
+            @PathVariable Long clubId
+    ) {
+        // 클럽 초대 거절 로직을 처리하는 서비스 메서드를 호출
+        Club selectedClub = myClubService.handleClubInvitation(clubId, false);
+
+        // 성공적으로 초대를 수락/거절한 경우 응답 반환
+        return RsData.of(
+                200,
+                "클럽 초대를 거절했습니다.",
+                new MyClubControllerDtos.AcceptClubInvitationResponse(
+                        selectedClub.getId(),
+                        selectedClub.getName()
+                )
+        );
+    }
+
 
 }

@@ -28,6 +28,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDate;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -92,13 +93,13 @@ class ApiV1MyClubControllerTest {
 
         String jsonData = """
                 {
-                    "status": true,
+                    "accept": true
                 }
                 """.stripIndent();
 
         // when
         ResultActions resultActions = mvc.perform(
-                        post("/api/v1/my-clubs/" + club.getId() + "/accept-invitation")
+                        post("/api/v1/my-clubs/" + club.getId() + "/join")
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(jsonData)
                 )
@@ -161,13 +162,13 @@ class ApiV1MyClubControllerTest {
 
         String jsonData = """
                 {
-                    "status": false
+                    "accept": false
                 }
                 """.stripIndent();
 
         // when
         ResultActions resultActions = mvc.perform(
-                        post("/api/v1/my-clubs/" + club.getId() + "/reject-invitation")
+                        delete("/api/v1/my-clubs/" + club.getId() + "/invitation")
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(jsonData)
                 )
@@ -219,13 +220,13 @@ class ApiV1MyClubControllerTest {
 
         String jsonData = """
                 {
-                    "status": true
+                    "accept": true
                 }
                 """.stripIndent();
 
         // when
         ResultActions resultActions = mvc.perform(
-                        post("/api/v1/my-clubs/" + club.getId() + "/accept-invitation")
+                        post("/api/v1/my-clubs/" + club.getId() + "/join")
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(jsonData)
                 )
@@ -285,13 +286,13 @@ class ApiV1MyClubControllerTest {
 
         String jsonData = """
                 {
-                    "status": true
+                    "accept": true
                 }
                 """.stripIndent();
 
         // when
         ResultActions resultActions = mvc.perform(
-                        post("/api/v1/my-clubs/" + club.getId() + "/accept-invitation")
+                        post("/api/v1/my-clubs/" + club.getId() + "/join")
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(jsonData)
                 )
@@ -350,13 +351,13 @@ class ApiV1MyClubControllerTest {
 
         String jsonData = """
                 {
-                    "status": true
+                    "accept": true
                 }
                 """.stripIndent();
 
         // when
         ResultActions resultActions = mvc.perform(
-                        post("/api/v1/my-clubs/" + club.getId() + "/accept-invitation")
+                        post("/api/v1/my-clubs/" + club.getId() + "/join")
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(jsonData)
                 )
@@ -379,13 +380,13 @@ class ApiV1MyClubControllerTest {
         // given
         String jsonData = """
                 {
-                    "status": true
+                    "accept": true
                 }
                 """.stripIndent();
 
         // when
         ResultActions resultActions = mvc.perform(
-                        post("/api/v1/my-clubs/999/accept-invitation") // 존재하지 않는 클럽 ID
+                        post("/api/v1/my-clubs/999/join") // 존재하지 않는 클럽 ID
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(jsonData)
                 )
