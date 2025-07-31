@@ -58,8 +58,7 @@ public class ClubControllerDtos {
             String eventType,
             String startDate,
             String endDate,
-            Boolean isPublic,
-            Long leaderId
+            Boolean isPublic
     ) {}
 
     /**

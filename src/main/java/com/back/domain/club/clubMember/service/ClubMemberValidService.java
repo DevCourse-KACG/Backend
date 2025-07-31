@@ -1,7 +1,7 @@
 package com.back.domain.club.clubMember.service;
 
 import com.back.domain.club.club.entity.Club;
-import com.back.domain.club.club.service.ClubService;
+import com.back.domain.club.club.repository.ClubRepository;
 import com.back.domain.club.clubMember.entity.ClubMember;
 import com.back.domain.club.clubMember.repository.ClubMemberRepository;
 import com.back.domain.member.member.entity.Member;
@@ -20,7 +20,7 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class ClubMemberValidService {
     private final ClubMemberRepository clubMemberRepository;
-    private final ClubService clubService;
+    private final ClubRepository clubRepository;
     private final MemberService memberService;
 
     /**
@@ -32,7 +32,7 @@ public class ClubMemberValidService {
      */
     @Transactional(readOnly = true)
     public boolean checkMemberRole(Long clubId, Long memberId, ClubMemberRole[] roles) {
-        Club club = clubService.getClubById(clubId)
+        Club club = clubRepository.findById(clubId)
                 .orElseThrow(() -> new ServiceException(404, "클럽이 존재하지 않습니다."));
         Member member = memberService.findMemberById(memberId)
                 .orElseThrow(() -> new ServiceException(404, "멤버가 존재하지 않습니다."));
@@ -56,7 +56,7 @@ public class ClubMemberValidService {
      */
     @Transactional(readOnly = true)
     public boolean isClubMember(Long clubId, Long memberId) {
-        Club club = clubService.getClubById(clubId)
+        Club club = clubRepository.findById(clubId)
                 .orElseThrow(() -> new ServiceException(404, "클럽이 존재하지 않습니다."));
         Member member = memberService.findMemberById(memberId)
                 .orElseThrow(() -> new ServiceException(404, "멤버가 존재하지 않습니다."));

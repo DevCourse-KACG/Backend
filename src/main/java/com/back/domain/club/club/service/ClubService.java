@@ -154,9 +154,8 @@ public class ClubService {
         LocalDate startDate = dto.startDate() != null ? LocalDate.parse(dto.startDate()) : club.getStartDate();
         LocalDate endDate = dto.endDate() != null ? LocalDate.parse(dto.endDate()) : club.getEndDate();
         boolean isPublic = dto.isPublic() != null ? dto.isPublic() : club.isPublic();
-        long leaderId = dto.leaderId() != null ? dto.leaderId() : club.getLeaderId();
 
-        club.updateInfo(name, bio, category, mainSpot, maximumCapacity, recruitingStatus, eventType, startDate, endDate, isPublic, leaderId);
+        club.updateInfo(name, bio, category, mainSpot, maximumCapacity, recruitingStatus, eventType, startDate, endDate, isPublic);
 
         // 이미지가 제공된 경우 S3에 업로드
         if (image != null && !image.isEmpty()) {
