@@ -2,6 +2,10 @@ package com.back.domain.member.member.service;
 
 import com.back.domain.api.service.ApiKeyService;
 import com.back.domain.auth.service.AuthService;
+import com.back.domain.club.club.entity.Club;
+import com.back.domain.club.club.repository.ClubRepository;
+import com.back.domain.club.clubMember.entity.ClubMember;
+import com.back.domain.club.clubMember.repository.ClubMemberRepository;
 import com.back.domain.member.member.dto.request.*;
 import com.back.domain.member.member.dto.response.*;
 import com.back.domain.member.member.entity.Member;
@@ -9,6 +13,8 @@ import com.back.domain.member.member.entity.MemberInfo;
 import com.back.domain.member.member.repository.MemberInfoRepository;
 import com.back.domain.member.member.repository.MemberRepository;
 import com.back.global.aws.S3Service;
+import com.back.global.enums.ClubMemberRole;
+import com.back.global.enums.ClubMemberState;
 import com.back.global.exception.ServiceException;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -32,6 +38,8 @@ public class MemberService {
     private final ApiKeyService apiKeyService;
     private final AuthService authService;
     private final S3Service s3Service;
+    private final ClubRepository clubRepository;
+    private final ClubMemberRepository clubMemberRepository;
 
     /**
      * ==================================================
@@ -42,6 +50,7 @@ public class MemberService {
     // ============================== [회원] 회원가입 ==============================
 
     //[회원] 회원가입 메인 메소드
+    @Transactional
     public MemberAuthResponse registerMember(MemberRegisterDto dto) {
         // 1. 이메일 중복 확인
         validateDuplicateMember(dto);
@@ -62,6 +71,7 @@ public class MemberService {
     // ============================== [비회원] 모임 등록 ==============================
 
     //[비회원] 모임 가입 메인 메소드
+    @Transactional
     public GuestResponse registerGuestMember(@Valid GuestRegisterDto dto) {
         // 1. 해당 그룹 내 비회원 닉네임 중복 확인
         validateDuplicateGuest(dto);
@@ -70,7 +80,21 @@ public class MemberService {
         String tag = generateMemberTag(dto.nickname());
         Member guest = createAndSaveGuestMember(dto, tag);
 
-        // 3. Access Token 생성 및 응답
+        // 3. 클럽 조회
+        Club club = clubRepository.findById(dto.clubId())
+                .orElseThrow(() -> new ServiceException(400, "클럽을 찾을 수 없습니다."));
+
+        // 4. ClubMember 엔티티 생성 및 저장
+        ClubMember clubMember = ClubMember.builder()
+                .member(guest)
+                .club(club)
+                .role(ClubMemberRole.PARTICIPANT)
+                .state(ClubMemberState.APPLYING)
+                .build();
+
+        clubMemberRepository.save(clubMember);
+
+        // 5. Access Token 생성 및 응답
         String accessToken = generateAccessToken(guest);
         return new GuestResponse(dto.nickname(), accessToken, dto.clubId());
     }
@@ -116,6 +140,7 @@ public class MemberService {
     // ============================== [회원] 탈퇴 ==============================
 
     //회원 탈퇴 메인 메소드
+    @Transactional
     public MemberWithdrawMembershipResponse withdrawMember(String nickname, String tag) {
         // 1. 닉네임과 태그로 회원 조회
         Member member = findMemberByNicknameAndTag(nickname, tag);
@@ -148,6 +173,7 @@ public class MemberService {
     }
 
     //유저 정보 수정 메소드
+    @Transactional
     public MemberDetailInfoResponse updateMemberInfo(Long id, UpdateMemberInfoDto dto, MultipartFile image) {
         // 1. 회원 조회
         Member member = findMemberById(id).orElseThrow(() ->
@@ -209,6 +235,7 @@ public class MemberService {
     private void validateDuplicateGuest(@Valid GuestRegisterDto dto) {
         // 1. 비회원용 닉네임 중복 확인
         String nickname = dto.nickname();
+
         if (memberRepository.existsGuestNicknameInClub(nickname, dto.clubId())) {
             throw new ServiceException(400, "이미 사용 중인 닉네임입니다.");
         }
@@ -335,7 +362,7 @@ public class MemberService {
 
         // 2. 조회 실패 시 예외
         if (optionalMember.isEmpty()) {
-            throw new ServiceException(400, "해당 닉네임의 사용자를 찾을 수 없습니다.");
+            throw new ServiceException(400, "회원 정보를 찾을 수 없습니다.");
         }
 
         return optionalMember.get();
@@ -355,7 +382,7 @@ public class MemberService {
 
         // 2. 조회 실패 시 예외
         if (optionalMemberInfo.isEmpty()) {
-            throw new ServiceException(400, "사용자를 찾을 수 없습니다.");
+            throw new ServiceException(400, "유효하지 않은 Refresh Token 입니다.");
         }
 
         return optionalMemberInfo.get().getMember();

@@ -3,7 +3,7 @@ package com.back.domain.member.member.entity;
 
 import com.back.domain.club.clubMember.entity.ClubMember;
 import com.back.domain.member.friend.entity.Friend;
-import com.back.domain.member.member.MemberType;
+import com.back.global.enums.MemberType;
 import com.back.domain.preset.preset.entity.Preset;
 import jakarta.persistence.*;
 import jdk.jfr.Description;

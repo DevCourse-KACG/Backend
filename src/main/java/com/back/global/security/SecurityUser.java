@@ -1,6 +1,6 @@
 package com.back.global.security;
 
-import com.back.domain.member.member.MemberType;
+import com.back.global.enums.MemberType;
 import lombok.Getter;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.User;
