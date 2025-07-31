@@ -43,4 +43,12 @@ public class ApiV1CheckListController {
 
     return ResponseEntity.status(checkListDto.code()).body(checkListDto);
   }
+
+  @DeleteMapping("/{checkListId}")
+  @Operation(summary = "체크리스트 삭제")
+  public ResponseEntity<RsData<CheckListDto>> deleteCheckList(@PathVariable Long checkListId) {
+    RsData<CheckListDto> checkListDto = checkListService.deleteCheckList(checkListId);
+
+    return ResponseEntity.status(checkListDto.code()).body(checkListDto);
+  }
 }

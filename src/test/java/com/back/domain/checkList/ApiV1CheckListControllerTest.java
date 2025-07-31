@@ -863,4 +863,153 @@ public class ApiV1CheckListControllerTest {
         .andDo(print());
   }
 
+  @Test
+  @DisplayName("체크리스트 삭제")
+  void t22() throws Exception {
+    // 먼저 체크리스트를 생성
+    JsonNode jsonNode = checkListCreate();
+    Long checkListId = jsonNode.get("data").get("id").asLong();
+
+    mockMvc.perform(
+            delete("/api/v1/checklists/" + checkListId)
+                .header("Authorization", "Bearer " + jwtToken))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.code").value(200))
+        .andExpect(jsonPath("$.message").value("체크리스트 삭제 성공"))
+        .andDo(print());
+  }
+
+  @Test
+  @DisplayName("체크리스트 삭제 실패 - 체크리스트가 존재하지 않는 경우")
+  void t23() throws Exception {
+    Long nonExistentCheckListId = 9999L; // 존재하지 않는 체크리스트 ID
+
+    mockMvc.perform(
+            delete("/api/v1/checklists/" + nonExistentCheckListId)
+                .header("Authorization", "Bearer " + jwtToken))
+        .andExpect(status().isNotFound())
+        .andExpect(jsonPath("$.code").value(404))
+        .andExpect(jsonPath("$.message").value("체크리스트를 찾을 수 없습니다"))
+        .andDo(print());
+  }
+
+  @Test
+  @DisplayName("체크리스트 삭제 실패 - 클럽 멤버가 아닌 경우")
+  void t24() throws Exception {
+    // 다른 멤버를 생성하고 클럽에 추가하지 않음
+    Member anotherMember = Member.builder()
+        .nickname("다른 유저")
+        .password("password")
+        .build();
+    memberRepository.save(anotherMember);
+
+    // 다른 멤버 jwt 토큰 생성
+    Map<String, Object> anotherClaims = Map.of(
+        "id", anotherMember.getId(),
+        "nickname", anotherMember.getNickname());
+    String anotherJwtToken = Ut.jwt.toString(secretKey, expirationSeconds, anotherClaims);
+
+    // 먼저 체크리스트를 생성
+    JsonNode jsonNode = checkListCreate();
+    Long checkListId = jsonNode.get("data").get("id").asLong();
+
+    mockMvc.perform(
+            delete("/api/v1/checklists/" + checkListId)
+                .header("Authorization", "Bearer " + anotherJwtToken))
+        .andExpect(status().isForbidden())
+        .andExpect(jsonPath("$.code").value(403))
+        .andExpect(jsonPath("$.message").value("클럽 멤버가 아닙니다"))
+        .andDo(print());
+  }
+
+  @Test
+  @DisplayName("체크리스트 삭제 실패 - 호스트 또는 관리자만 체크리스트를 삭제할 수 있는 경우")
+  void t25() throws Exception {
+    // 새로운 클럽 멤버 생성
+    Member anotherMember = Member.builder()
+        .nickname("다른 유저")
+        .password("password")
+        .build();
+    memberRepository.save(anotherMember);
+
+    // anotherMember JWT 토큰 생성
+    Map<String, Object> anotherClaims = Map.of(
+        "id", anotherMember.getId(),
+        "nickname", anotherMember.getNickname());
+    String anotherJwtToken = Ut.jwt.toString(secretKey, expirationSeconds, anotherClaims);
+
+    ClubMember anotherClubMember = ClubMember.builder()
+        .member(anotherMember)
+        .role(ClubMemberRole.PARTICIPANT) // 호스트 또는 관리자가 아닌 경우
+        .state(ClubMemberState.JOINING)
+        .build();
+
+    club.addClubMember(anotherClubMember);
+    clubRepository.save(club);
+
+    // 먼저 체크리스트를 생성
+    JsonNode jsonNode = checkListCreate();
+    Long checkListId = jsonNode.get("data").get("id").asLong();
+
+    mockMvc.perform(
+            delete("/api/v1/checklists/" + checkListId)
+                .header("Authorization", "Bearer " + anotherJwtToken))
+        .andExpect(status().isForbidden())
+        .andExpect(jsonPath("$.code").value(403))
+        .andExpect(jsonPath("$.message").value("호스트 또는 관리자만 체크리스트를 삭제할 수 있습니다"))
+        .andDo(print());
+  }
+
+  @Test
+  @DisplayName("체크리스트 삭제 실패 - JWT가 유효하지 않은 경우")
+  void t26() throws Exception {
+    // 먼저 체크리스트를 생성
+    JsonNode jsonNode = checkListCreate();
+    Long checkListId = jsonNode.get("data").get("id").asLong();
+
+    mockMvc.perform(
+            delete("/api/v1/checklists/" + checkListId)
+                .header("Authorization", "Bearer invalid_token"))
+        .andExpect(status().is(499))
+        .andExpect(jsonPath("$.code").value(499))
+        .andExpect(jsonPath("$.message").value("AccessToken 만료"))
+        .andDo(print());
+  }
+
+  @Test
+  @DisplayName("체크리스트 삭제 실패 - JWT가 없는 경우")
+  void t27() throws Exception {
+    // 먼저 체크리스트를 생성
+    JsonNode jsonNode = checkListCreate();
+    Long checkListId = jsonNode.get("data").get("id").asLong();
+
+    mockMvc.perform(
+            delete("/api/v1/checklists/" + checkListId))
+        .andExpect(status().isNotFound())
+        .andExpect(jsonPath("$.code").value(404))
+        .andExpect(jsonPath("$.message").value("AccessToken을 찾을 수 없습니다"))
+        .andDo(print());
+  }
+
+  @Test
+  @DisplayName("체크리스트 삭제 실패 - JWT 토큰 만료")
+  void t28() throws Exception {
+    // 먼저 체크리스트를 생성
+    JsonNode jsonNode = checkListCreate();
+    Long checkListId = jsonNode.get("data").get("id").asLong();
+
+    // 만료된 JWT 토큰 생성
+    Map<String, Object> expiredClaims = Map.of(
+        "id", member.getId(),
+        "nickname", member.getNickname());
+    String expiredJwtToken = Ut.jwt.toString(secretKey, -1, expiredClaims); // 만료 시간을 -1로 설정
+
+    mockMvc.perform(
+            delete("/api/v1/checklists/" + checkListId)
+                .header("Authorization", "Bearer " + expiredJwtToken))
+        .andExpect(status().is(499))
+        .andExpect(jsonPath("$.code").value(499))
+        .andExpect(jsonPath("$.message").value("AccessToken 만료"))
+        .andDo(print());
+  }
 }
