@@ -79,15 +79,4 @@ public class ApiV1ClubController {
         Page<ClubControllerDtos.SimpleClubInfoResponse> response = clubService.getPublicClubs(pageable);
         return new RsData<>(200, "공개 클럽 목록이 조회됐습니다.", response);
     }
-
-    @GetMapping("/{clubId}/memberes/invitation-link")
-    @Operation(summary = "클럽 초대 링크 생성")
-    public RsData<ClubControllerDtos.CreateClubLinkResponse> createClubLink(@PathVariable Long clubId) {
-
-        ClubControllerDtos.CreateClubLinkResponse response = clubService.createClubLink(clubId);
-
-        return new RsData<>(200, "클럽 초대 링크가 생성되었습니다.", response);
-    }
-
-
 }
