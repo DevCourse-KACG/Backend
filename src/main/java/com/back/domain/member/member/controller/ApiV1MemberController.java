@@ -6,8 +6,8 @@ import com.back.domain.member.member.dto.response.*;
 import com.back.domain.member.member.entity.Member;
 import com.back.domain.member.member.service.MemberService;
 import com.back.global.exception.ServiceException;
+import com.back.global.rq.Rq;
 import com.back.global.rsData.RsData;
-import com.back.global.security.SecurityUser;
 import io.jsonwebtoken.io.IOException;
 import io.swagger.v3.oas.annotations.Operation;
 import jakarta.servlet.http.Cookie;
@@ -15,7 +15,6 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -29,7 +28,8 @@ import org.springframework.web.multipart.MultipartFile;
 @RequiredArgsConstructor
 @RequestMapping("api/v1/members")
 public class ApiV1MemberController {
-    final MemberService memberService;
+    private final MemberService memberService;
+    private final Rq rq;
 
     // ================= 회원용 API =================
     @Operation(summary = "회원가입 API", description = "이메일, 비밀번호 등을 받아 회원가입을 처리합니다.")
@@ -70,8 +70,9 @@ public class ApiV1MemberController {
     @Operation(summary = "회원탈퇴 API", description = "회원탈퇴 처리 API 입니다.")
     @PreAuthorize("isAuthenticated()")
     @DeleteMapping("/me")
-    public RsData<MemberWithdrawMembershipResponse> withdrawMembership(HttpServletResponse response,
-                                                                       @AuthenticationPrincipal SecurityUser user) {
+    public RsData<MemberWithdrawMembershipResponse> withdrawMembership(HttpServletResponse response) {
+        Member user = rq.getActor();
+
         MemberWithdrawMembershipResponse responseDto =
                 memberService.withdrawMember(user.getNickname(), user.getTag());
 
@@ -87,8 +88,9 @@ public class ApiV1MemberController {
     @Operation(summary = "내 정보 반환 API", description = "현재 로그인한 유저 정보를 반환하는 API 입니다.")
     @PreAuthorize("isAuthenticated()")
     @GetMapping("/me")
-    public RsData<MemberDetailInfoResponse> getMyInfo(HttpServletResponse response,
-                                                      @AuthenticationPrincipal SecurityUser user) {
+    public RsData<MemberDetailInfoResponse> getMyInfo(HttpServletResponse response) {
+
+        Member user = rq.getActor();
 
         MemberDetailInfoResponse memberDetailInfoResponse =
                 memberService.getMemberInfo(user.getId());
@@ -101,9 +103,11 @@ public class ApiV1MemberController {
     @Operation(summary = "내 정보 수정 API", description = "현재 로그인한 유저 정보를 수정하는 API 입니다.")
     @PreAuthorize("isAuthenticated()")
     @PutMapping("/me")
-    public RsData<MemberDetailInfoResponse> updateInfo(@AuthenticationPrincipal SecurityUser user,
-                                                       @Valid @RequestPart(value = "data") UpdateMemberInfoDto dto,
+    public RsData<MemberDetailInfoResponse> updateInfo(@Valid @RequestPart(value = "data") UpdateMemberInfoDto dto,
                                                        @RequestPart(value = "profileImage", required = false) MultipartFile profileImage) throws IOException {
+
+        Member user = rq.getActor();
+
         MemberDetailInfoResponse memberDetailInfoResponse =
                 memberService.updateMemberInfo(user.getId(), dto, profileImage);
 
@@ -170,8 +174,9 @@ public class ApiV1MemberController {
     @Operation(summary = "비밀번호 유효성 검사 API", description = "비밀번호의 유효성을 인증하는 API 입니다.")
     @PreAuthorize("isAuthenticated()")
     @PostMapping("/auth/verify-password")
-    public RsData<MemberPasswordResponse> checkPasswordValidity(@AuthenticationPrincipal SecurityUser user,
-                                                                @Valid @RequestBody PasswordCheckRequestDto dto) {
+    public RsData<MemberPasswordResponse> checkPasswordValidity(@Valid @RequestBody PasswordCheckRequestDto dto) {
+
+        Member user = rq.getActor();
 
         if (user == null) {
             throw new ServiceException(401, "인증이 필요합니다.");

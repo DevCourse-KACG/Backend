@@ -59,12 +59,12 @@ public class Member {
   private List<ClubMember> clubMembers; // 소속 그룹 목록
 
   @Builder
-  public Member(MemberInfo memberInfo, String nickname, String password, MemberType memberType, String tag) {
-    this.memberInfo = memberInfo;
+  public Member(String nickname, String password, MemberType memberType, String tag, MemberInfo memberInfo) {
     this.nickname = nickname;
     this.password = password;
     this.memberType = memberType;
     this.tag = tag;
+    this.memberInfo = memberInfo;
   }
 
   public void setMemberInfo(MemberInfo memberInfo) {

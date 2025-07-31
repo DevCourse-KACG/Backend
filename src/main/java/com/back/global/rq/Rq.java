@@ -1,10 +1,14 @@
 package com.back.global.rq;
 
 
+import com.back.domain.member.member.entity.Member;
+import com.back.global.security.SecurityUser;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 
 import java.util.Arrays;
@@ -17,26 +21,26 @@ public class Rq {
     private final HttpServletResponse resp;
 
 //    Spring Security를 사용하여 인증된 사용자의 정보를 가져오는 메소드
-//    public Member getActor() {
-//        return Optional.ofNullable(
-//                        SecurityContextHolder
-//                                .getContext()
-//                                .getAuthentication()
-//                )
-//                .map(Authentication::getPrincipal)
-//                .filter(principal -> principal instanceof SecurityUser)
-//                .map(principal -> (SecurityUser) principal)
-//                .map(securityUser ->
-//                    Member.builder()
-//                            .id(securityUser.getId())
-//                            .email(securityUser.getEmail())
-//                            .name(securityUser.getUsername())
-//                            .password("N/A") // 비밀번호는 노출하지 않음
-//                            .isAdmin(securityUser.isAdmin())
-//                            .build()
-//                )
-//                .orElse(null);
-//    }
+    public Member getActor() {
+        return Optional.ofNullable(
+                        SecurityContextHolder
+                                .getContext()
+                                .getAuthentication()
+                )
+                .map(Authentication::getPrincipal)
+                .filter(principal -> principal instanceof SecurityUser)
+                .map(principal -> (SecurityUser) principal)
+                .map(securityUser ->
+                    Member.builder()
+                            .id(securityUser.getId())
+                            .nickname(securityUser.getNickname())
+                            .password("N/A") // 비밀번호는 노출하지 않음
+                            .memberType(securityUser.getMemberType())
+                            .tag(securityUser.getTag())
+                            .build()
+                )
+                .orElse(null);
+    }
 
     public String getHeader(String name, String defaultValue) {
         return Optional
