@@ -363,7 +363,7 @@ class ApiV1FriendControllerTest {
     }
 
     @Test
-    @DisplayName("친구 수락 - 친구 엔티티는 있으나 로그인 회원과 관련 없을 경우 예외 처리")
+    @DisplayName("친구 거절 - 친구 엔티티는 있으나 로그인 회원과 관련 없을 경우 예외 처리")
     @WithUserDetails(value = "chs4s@test.com")
     void trj3() throws Exception {
         performErrPatchFriend(

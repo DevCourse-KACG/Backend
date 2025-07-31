@@ -237,17 +237,6 @@ public class FriendService {
     }
 
     /**
-     * 친구 회원 정보를 가져오는 메서드
-     * @param friendId 친구 회원 아이디
-     * @return Member
-     */
-    private Member getFriendMember(Long friendId) {
-        return memberRepository
-                .findById(friendId)
-                .orElseThrow(() -> new NoSuchElementException(MemberErrorCode.MEMBER_NOT_FOUND.getMessage()));
-    }
-
-    /**
      * 친구 회원 정보를 이메일로 가져오는 메서드
      * @param friendEmail
      * @return MemberInfo

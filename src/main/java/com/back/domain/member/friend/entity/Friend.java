@@ -1,7 +1,6 @@
 package com.back.domain.member.friend.entity;
 
 import com.back.domain.member.member.entity.Member;
-import com.back.global.exception.ServiceException;
 import jakarta.persistence.*;
 import lombok.*;
 import org.springframework.data.annotation.CreatedDate;
@@ -62,6 +61,6 @@ public class Friend {
     public Member getOther(Member self) {
         if (member1.equals(self)) return member2;
         if (member2.equals(self)) return member1;
-        throw new ServiceException(400, "해당 멤버는 이 친구 관계에 포함되지 않습니다.");
+        throw new IllegalArgumentException("해당 멤버는 이 친구 관계에 포함되지 않습니다.");
     }
 }
