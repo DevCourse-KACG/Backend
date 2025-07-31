@@ -37,6 +37,18 @@ public class ClubService {
     private final S3Service s3Service;
     private final Rq rq;
 
+    /**
+     * 클럽 호스트 권한을 검증합니다.
+     * @param clubId 클럽 ID
+     * @throws ServiceException 권한이 없는 경우 403 예외 발생
+     */
+    public void validateHostPermission(Long clubId) {
+        Member user = memberService.findMemberById(rq.getActor().getId())
+                .orElseThrow(() -> new ServiceException(404, "해당 ID의 유저를 찾을 수 없습니다."));
+        if (!clubMemberValidService.checkMemberRole(clubId, user.getId(), new ClubMemberRole[]{ClubMemberRole.HOST})) {
+            throw new ServiceException(403, "권한이 없습니다.");
+        }
+    }
 
     /**
      * 마지막으로 생성된 클럽을 반환합니다.
@@ -85,7 +97,9 @@ public class ClubService {
                 .startDate(LocalDate.parse(reqBody.startDate()))
                 .endDate(LocalDate.parse(reqBody.endDate()))
                 .isPublic(reqBody.isPublic())
-                .leaderId(rq.getActor().getId()) // 현재 로그인한 유저의 ID를 리더 ID로 설정
+                .leaderId(Optional.ofNullable(rq.getActor())
+                        .map(Member::getId)
+                        .orElseThrow(() -> new ServiceException(401, "인증되지 않은 사용자입니다.")))
                 .build()
         );
         // 2. 이미지가 제공된 경우 S3에 업로드
@@ -138,10 +152,7 @@ public class ClubService {
                 .orElseThrow(() -> new ServiceException(404, "해당 ID의 클럽을 찾을 수 없습니다."));
 
         // 권한 확인 : 현재 로그인한 유저가 클럽 호스트인지 확인
-        Member user = memberService.findMemberById(rq.getActor().getId())
-                .orElseThrow(() -> new ServiceException(404, "해당 ID의 유저를 찾을 수 없습니다."));
-        if(!clubMemberValidService.checkMemberRole(clubId, user.getId(), new ClubMemberRole[]{ClubMemberRole.HOST}))
-            throw new ServiceException(403, "권한이 없습니다.");
+        validateHostPermission(clubId);
 
         // 클럽 정보 업데이트
         String name = dto.name() != null ? dto.name() : club.getName();
@@ -170,10 +181,7 @@ public class ClubService {
     public void deleteClub(Long clubId) {
 
         // 권한 확인 : 현재 로그인한 유저가 클럽 호스트인지 확인
-        Member user = memberService.findMemberById(rq.getActor().getId())
-                .orElseThrow(() -> new ServiceException(404, "해당 ID의 유저를 찾을 수 없습니다."));
-        if(!clubMemberValidService.checkMemberRole(clubId, user.getId(), new ClubMemberRole[]{ClubMemberRole.HOST}))
-            throw new ServiceException(403, "권한이 없습니다.");
+        validateHostPermission(clubId);
 
         Club club = clubRepository.findById(clubId)
                 .orElseThrow(() -> new ServiceException(404, "해당 ID의 클럽을 찾을 수 없습니다."));
@@ -196,8 +204,10 @@ public class ClubService {
                 .orElseThrow(() -> new ServiceException(404, "해당 ID의 클럽 리더를 찾을 수 없습니다."));
 
         // 비공개 클럽인 경우, 현재 로그인한 유저가 클럽 멤버인지 확인
-        if (!club.isPublic() && !clubMemberValidService.isClubMember(rq.getActor().getId(), clubId)) {
-            throw new ServiceException(403, "비공개 클럽 정보는 클럽 멤버만 조회할 수 있습니다.");
+        if (!club.isPublic()) {
+            if (rq.getActor() == null || !clubMemberValidService.isClubMember(rq.getActor().getId(), clubId)) {
+                throw new ServiceException(403, "비공개 클럽 정보는 클럽 멤버만 조회할 수 있습니다.");
+            }
         }
 
         return new ClubControllerDtos.ClubInfoResponse(

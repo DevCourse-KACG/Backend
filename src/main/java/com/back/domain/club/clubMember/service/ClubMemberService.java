@@ -65,10 +65,7 @@ public class ClubMemberService {
         Club club = clubService.getClubById(clubId).orElseThrow(() -> new ServiceException(404, "클럽이 존재하지 않습니다."));
 
         // 권한 확인 : 현재 로그인한 유저가 클럽 호스트인지 확인
-        Member user = memberService.findMemberById(rq.getActor().getId())
-                .orElseThrow(() -> new ServiceException(404, "유저가 존재하지 않습니다."));
-        if(!clubMemberValidService.checkMemberRole(clubId, user.getId(), new ClubMemberRole[]{ClubMemberRole.HOST}))
-            throw new ServiceException(403, "권한이 없습니다.");
+        clubService.validateHostPermission(clubId);
 
         // 요청된 이메일 추출
         List<String> requestEmails = reqBody.members().stream()
@@ -107,6 +104,7 @@ public class ClubMemberService {
     @Transactional
     public void withdrawMemberFromClub(Long clubId, Long memberId) {
         // 권한 확인 : 현재 로그인한 유저가 클럽 호스트인지 확인
+        // 또는 탈퇴할 멤버 본인인지 확인
         Member user = memberService.findMemberById(rq.getActor().getId())
                 .orElseThrow(() -> new ServiceException(404, "유저가 존재하지 않습니다."));
         if(!clubMemberValidService.checkMemberRole(clubId, user.getId(), new ClubMemberRole[]{ClubMemberRole.HOST}) && !user.getId().equals(memberId))
@@ -133,10 +131,7 @@ public class ClubMemberService {
     @Transactional
     public void changeMemberRole(Long clubId, Long memberId, @NotBlank String role) {
         // 권한 확인 : 현재 로그인한 유저가 클럽 호스트인지 확인
-        Member user = memberService.findMemberById(rq.getActor().getId())
-                .orElseThrow(() -> new ServiceException(404, "유저가 존재하지 않습니다."));
-        if(!clubMemberValidService.checkMemberRole(clubId, user.getId(), new ClubMemberRole[]{ClubMemberRole.HOST}))
-            throw new ServiceException(403, "권한이 없습니다.");
+        clubService.validateHostPermission(clubId);
 
         Club club = clubService.getClubById(clubId)
                 .orElseThrow(() -> new ServiceException(404, "클럽이 존재하지 않습니다."));
