@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+import org.springframework.web.multipart.support.MissingServletRequestPartException;
 
 import java.util.Comparator;
 import java.util.NoSuchElementException;
@@ -149,5 +150,18 @@ public class GlobalExceptionHandler {
           ),
           BAD_REQUEST
       );
+    }
+
+    //MissingServletRequestPartException: 요청된 multipart 요청에서 필수 파트가 누락되었을 때 발생하는 예외
+    @ExceptionHandler(MissingServletRequestPartException.class)
+    public ResponseEntity<RsData<Void>> handle(MissingServletRequestPartException ex) {
+        String message = "필수 multipart 파트 '%s'가 존재하지 않습니다.".formatted(ex.getRequestPartName());
+        return new ResponseEntity<>(
+                RsData.of(
+                        400,
+                        message
+                ),
+                BAD_REQUEST
+        );
     }
 }

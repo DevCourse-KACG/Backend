@@ -670,6 +670,83 @@ public class ApiV1MemberControllerTest {
     }
 
     @Test
+    @DisplayName("회원 정보 수정 - 잘못된 multipart 형식으로 요청 (data part 누락)")
+    public void updateUserInfo_invalidMultipartFormat() throws Exception {
+        Member member = memberFixture.createMember(1);
+
+        SecurityUser securityUser = new SecurityUser(
+                member.getId(),
+                member.getNickname(),
+                member.getTag(),
+                member.getMemberType(),
+                member.getPassword(),
+                Collections.emptyList()
+        );
+
+        // data part 없이 프로필 이미지 파일만 보냄 → 예외 발생 예상
+        MockMultipartFile imagePart = new MockMultipartFile(
+                "profileImage",
+                "profile.jpg",
+                MediaType.IMAGE_JPEG_VALUE,
+                "fake-image-content".getBytes(StandardCharsets.UTF_8)
+        );
+
+        mockMvc.perform(multipart(HttpMethod.PUT, "/api/v1/members/me")
+                        .file(imagePart)
+                        .with(user(securityUser))
+                        .contentType(MediaType.MULTIPART_FORM_DATA))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value(400))
+                .andExpect(jsonPath("$.message").value("필수 multipart 파트 'data'가 존재하지 않습니다."));
+    }
+
+    @Test
+    @DisplayName("회원 정보 수정 - 허용되지 않은 이미지 포맷 업로드 시 400 Bad Request")
+    public void updateUserInfo_invalidImageFormat() throws Exception {
+        Member member = memberFixture.createMember(1);
+
+        SecurityUser securityUser = new SecurityUser(
+                member.getId(),
+                member.getNickname(),
+                member.getTag(),
+                member.getMemberType(),
+                member.getPassword(),
+                Collections.emptyList()
+        );
+
+        String requestBody = """
+            {
+                "nickname": "개나리",
+                "password": "newPassword",
+                "bio": "노란색 개나리"
+            }
+            """;
+
+        MockMultipartFile dataPart = new MockMultipartFile(
+                "data", "data",
+                MediaType.APPLICATION_JSON_VALUE,
+                requestBody.getBytes(StandardCharsets.UTF_8)
+        );
+
+        // 허용되지 않는 파일 확장자 (예: .txt)
+        MockMultipartFile invalidImagePart = new MockMultipartFile(
+                "profileImage", "profileImage.txt",
+                MediaType.TEXT_PLAIN_VALUE,
+                "some text content".getBytes(StandardCharsets.UTF_8)
+        );
+
+        mockMvc.perform(multipart(HttpMethod.PUT, "/api/v1/members/me")
+                        .file(dataPart)
+                        .file(invalidImagePart)
+                        .with(user(securityUser))
+                        .contentType(MediaType.MULTIPART_FORM_DATA))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value(400))
+                .andExpect(jsonPath("$.message").exists());
+    }
+
+
+    @Test
     @DisplayName("비회원 모임 등록 - 성공 및 DB 저장 확인")
     public void GuestRegister_success_withDbCheck() throws Exception {
         // 회원 생성 (기존 회원 fixture)
