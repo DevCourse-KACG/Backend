@@ -73,6 +73,10 @@ public class ApiV1MemberController {
     public RsData<MemberWithdrawMembershipResponse> withdrawMembership(HttpServletResponse response) {
         Member user = rq.getActor();
 
+        if (user == null) {
+            throw new ServiceException(401, "인증이 필요합니다.");
+        }
+
         MemberWithdrawMembershipResponse responseDto =
                 memberService.withdrawMember(user.getNickname(), user.getTag());
 
@@ -89,8 +93,11 @@ public class ApiV1MemberController {
     @PreAuthorize("isAuthenticated()")
     @GetMapping("/me")
     public RsData<MemberDetailInfoResponse> getMyInfo(HttpServletResponse response) {
-
         Member user = rq.getActor();
+
+        if (user == null) {
+            throw new ServiceException(401, "인증이 필요합니다.");
+        }
 
         MemberDetailInfoResponse memberDetailInfoResponse =
                 memberService.getMemberInfo(user.getId());
@@ -105,8 +112,10 @@ public class ApiV1MemberController {
     @PutMapping("/me")
     public RsData<MemberDetailInfoResponse> updateInfo(@Valid @RequestPart(value = "data") UpdateMemberInfoDto dto,
                                                        @RequestPart(value = "profileImage", required = false) MultipartFile profileImage) throws IOException {
-
         Member user = rq.getActor();
+        if (user == null) {
+            throw new ServiceException(401, "인증이 필요합니다.");
+        }
 
         MemberDetailInfoResponse memberDetailInfoResponse =
                 memberService.updateMemberInfo(user.getId(), dto, profileImage);
