@@ -1,6 +1,6 @@
 package com.back.domain.member.member.controller;
 
-import com.back.domain.api.dto.TokenRefreshRequest;
+import com.back.domain.api.request.TokenRefreshRequest;
 import com.back.domain.member.member.dto.request.*;
 import com.back.domain.member.member.dto.response.*;
 import com.back.domain.member.member.entity.Member;
