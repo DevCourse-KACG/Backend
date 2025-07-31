@@ -787,10 +787,11 @@ public class ApiV1MemberControllerTest {
         // DB에서 저장 여부 확인
         Optional<Member> savedGuestOpt = memberRepository.findByNickname(nickname);
         assertTrue(savedGuestOpt.isPresent(), "비회원 게스트 회원이 멤버 DB에 저장되어야 합니다.");
-        Optional<ClubMember> savedClubGuestOpt = clubMemberRepository.findByClubAndMember(club, guest);
-        assertTrue(true, "비회원 게스트 회원이 클럽멤버 DB에 저장되어야 합니다.");
 
         Member savedGuest = savedGuestOpt.get();
+        Optional<ClubMember> savedClubGuestOpt = clubMemberRepository.findByClubAndMember(club, savedGuest);
+        assertTrue(savedClubGuestOpt.isPresent(), "비회원 게스트 회원이 클럽멤버 DB에 저장되어야 합니다.");
+
         assertEquals(nickname, savedGuest.getNickname());
         assertEquals(MemberType.GUEST, savedGuest.getMemberType());
 

@@ -235,13 +235,6 @@ public class MemberService {
     private void validateDuplicateGuest(@Valid GuestRegisterDto dto) {
         // 1. 비회원용 닉네임 중복 확인
         String nickname = dto.nickname();
-        System.out.println(nickname+"검사 시작");
-
-        clubRepository.findById(dto.clubId()).ifPresentOrElse(club -> {
-            System.out.println("clubId=" + dto.clubId() + ", name=" + club.getName());
-        }, () -> {
-            System.out.println("클럽을 찾을 수 없습니다.");
-        });
 
         if (memberRepository.existsGuestNicknameInClub(nickname, dto.clubId())) {
             throw new ServiceException(400, "이미 사용 중인 닉네임입니다.");
