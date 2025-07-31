@@ -136,7 +136,6 @@ public class Club {
      * @param startDate 시작 날짜
      * @param endDate 종료 날짜
      * @param isPublic 클럽 공개 여부
-     * @param leaderId 클럽장 아이디
      */
     public void updateInfo(
             String name,
@@ -148,8 +147,7 @@ public class Club {
             EventType eventType,
             LocalDate startDate,
             LocalDate endDate,
-            boolean isPublic,
-            Long leaderId
+            boolean isPublic
     ){
         this.name = name;
         this.bio = bio;
@@ -161,7 +159,6 @@ public class Club {
         this.startDate = startDate;
         this.endDate = endDate;
         this.isPublic = isPublic;
-        this.leaderId = leaderId;
     }
 
 
