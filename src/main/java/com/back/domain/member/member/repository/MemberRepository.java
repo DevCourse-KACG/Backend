@@ -17,10 +17,6 @@ public interface MemberRepository extends JpaRepository<Member, Long> {
 
     Optional<Member> findByNicknameAndTag(String nickname, String tag);
 
-    // 회원 ID로 회원 정보를 조회하며, 회원 상세 정보 포함 (n+1 쿼리 방지)
-    /*@EntityGraph(attributePaths = "memberInfo")
-    Optional<Member> findByIdWithMemberInfo(Long memberId);*/
-
     // 회원 ID로 회원 정보를 조회하며, 친구 관계를 포함 (n+1 쿼리 방지)
     @EntityGraph(attributePaths = {
             "friendshipsAsMember1.member2.memberInfo", // member1로 등록 된 경우 친구 member2의 정보
@@ -29,6 +25,7 @@ public interface MemberRepository extends JpaRepository<Member, Long> {
     @Query("SELECT m FROM Member m WHERE m.id = :memberId")
     Optional<Member> findWithFriendsById(Long memberId);
 
+    //clubId로 조회된 클럽의 GUEST 중 입력된 닉네임을 가지고 있는 GUEST가 있는지 조회
     @Query("""
     select case when count(m) > 0 then true else false end
     from Member m
@@ -39,6 +36,7 @@ public interface MemberRepository extends JpaRepository<Member, Long> {
 """)
     boolean existsGuestNicknameInClub(String nickname, @Param("clubId") Long clubId);
 
+    //clubId로 조회된 클럽의 GUEST 중 입력된 닉네임을 가지고 있는 GUEST를 반환
     @Query("""
     select m
     from Member m
