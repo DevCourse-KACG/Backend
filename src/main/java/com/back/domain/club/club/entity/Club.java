@@ -117,6 +117,14 @@ public class Club {
   }
 
   /**
+   * 클럽에 새로운 일정을 추가합니다.
+   * @param schedule
+   */
+  public void addClubSchedule(Schedule schedule) {
+      this.clubSchedules.add(schedule);
+      schedule.setClub(this); // 양방향 연관관계 설정
+  }
+  /**
    * 클럽의 이미지 URL을 업데이트합니다.
    * @param imageUrl
    */

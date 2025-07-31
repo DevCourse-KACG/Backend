@@ -13,6 +13,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/api/v1/checklists")
 @RequiredArgsConstructor
@@ -50,5 +52,13 @@ public class ApiV1CheckListController {
     RsData<CheckListDto> checkListDto = checkListService.deleteCheckList(checkListId);
 
     return ResponseEntity.status(checkListDto.code()).body(checkListDto);
+  }
+
+  @GetMapping("/group/{groupId}")
+  @Operation(summary = "체크리스트 목록 조회")
+  public ResponseEntity<RsData<List<CheckListDto>>> getCheckListByGroupId(@PathVariable Long groupId) {
+    RsData<List<CheckListDto>> checkListDtos = checkListService.getCheckListByGroupId(groupId);
+
+    return ResponseEntity.status(checkListDtos.code()).body(checkListDtos);
   }
 }

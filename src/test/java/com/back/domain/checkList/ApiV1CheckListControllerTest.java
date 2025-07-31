@@ -119,7 +119,20 @@ public class ApiV1CheckListControllerTest {
         .spot("테스트 장소")
         .build();
 
+    // 클럽에 다른 일정 추가
+    Schedule scheduleBuilder2 = Schedule.builder()
+        .club(club)
+        .title("테스트 일정2")
+        .content("테스트 일정 내용2")
+        .startDate(LocalDateTime.parse("2025-08-20T10:00:00"))
+        .endDate(LocalDateTime.parse("2025-08-21T10:00:00"))
+        .spot("테스트 장소2")
+        .build();
+
+
     schedule = scheduleRepository.save(scheduleBuilder);
+    scheduleRepository.save(scheduleBuilder2);
+
   }
 
   JsonNode checkListCreate() throws Exception {
@@ -1012,4 +1025,21 @@ public class ApiV1CheckListControllerTest {
         .andExpect(jsonPath("$.message").value("AccessToken 만료"))
         .andDo(print());
   }
+
+  @Test
+  @DisplayName("체크리스트 목록 조회")
+  void t29() throws Exception {
+    // 먼저 체크리스트를 생성
+    JsonNode jsonNode = checkListCreate();
+
+    mockMvc.perform(
+            get("/api/v1/checklists/group/" + club.getId())
+                .header("Authorization", "Bearer " + jwtToken))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.code").value(200))
+        .andExpect(jsonPath("$.message").value("체크리스트 목록 조회 성공"))
+        .andDo(print());
+  }
+
+
 }
