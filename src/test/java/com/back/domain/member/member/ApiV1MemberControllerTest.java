@@ -411,6 +411,39 @@ public class ApiV1MemberControllerTest {
     }
 
     @Test
+    @DisplayName("Access Token 재발급 실패 - 잘못된 또는 만료된 refreshToken")
+    public void reGenerateAccessToken_fail_invalidOrExpiredRefreshToken() throws Exception {
+        String invalidRefreshToken = "invalid_or_expired_refresh_token";
+
+        String requestBody = String.format("""
+    {
+        "refreshToken": "%s"
+    }
+    """, invalidRefreshToken);
+
+        mockMvc.perform(post("/api/v1/members/auth/refresh")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(requestBody))
+                .andExpect(jsonPath("$.code").value(400))
+                .andExpect(jsonPath("$.message").value("유효하지 않은 Refresh Token 입니다."))
+                .andExpect(jsonPath("$.data").doesNotExist());
+    }
+
+    @Test
+    @DisplayName("로그아웃 실패 - 잘못된 accessToken 으로 요청")
+    public void logout_fail_invalidAccessToken() throws Exception {
+        Cookie invalidAccessTokenCookie = new Cookie("accessToken", "invalid_access_token_value");
+
+        mockMvc.perform(delete("/api/v1/members/auth/logout")
+                        .cookie(invalidAccessTokenCookie))
+                .andExpect(jsonPath("$.code").value(499))
+                .andExpect(jsonPath("$.message").value("access token이 유효하지 않습니다."))
+                .andExpect(jsonPath("$.data").doesNotExist());
+    }
+
+
+
+    @Test
     @DisplayName("내 정보 조회 - 정상")
     public void getMyInfo_success() throws Exception {
         Member member = memberFixture.createMember(1);

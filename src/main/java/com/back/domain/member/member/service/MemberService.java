@@ -355,7 +355,7 @@ public class MemberService {
 
         // 2. 조회 실패 시 예외
         if (optionalMemberInfo.isEmpty()) {
-            throw new ServiceException(400, "사용자를 찾을 수 없습니다.");
+            throw new ServiceException(400, "유효하지 않은 Refresh Token 입니다.");
         }
 
         return optionalMemberInfo.get().getMember();
