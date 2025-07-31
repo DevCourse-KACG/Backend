@@ -15,6 +15,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 @Service
@@ -37,10 +38,18 @@ public class ClubLinkService {
             throw new ServiceException(400, "호스트나 매니저만 초대 링크를 생성할 수 있습니다.");
         }
 
+        LocalDateTime now = LocalDateTime.now();
+
+        //기존 활성 링크가 있을 시 해당 링크 반환
+        Optional<ClubLink> existingLink = clubLinkRepository.findByClubAndExpiresAtAfter(club, now);
+        if (existingLink.isPresent()) {
+            String existingCode = existingLink.get().getInviteCode();
+            return new ClubLinkDtos.CreateClubLinkResponse(existingCode);
+        }
+
         //UUID 기반 초대 코드 생성
         String inviteCode = UUID.randomUUID().toString();
 
-        LocalDateTime now = LocalDateTime.now();
         LocalDateTime expireAt = now.plusDays(7);
 
         //클럽 링크 객체 생성 및 db 저장

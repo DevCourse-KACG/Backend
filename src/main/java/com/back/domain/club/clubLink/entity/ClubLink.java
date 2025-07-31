@@ -19,7 +19,7 @@ public class ClubLink {
     private Long id;
 
     @Description("초대 코드")
-    @Column(unique = true, nullable = false)
+    @Column(unique = true, nullable = false, length = 50)
     private String inviteCode;
 
     @Description("링크 생성 날짜")
@@ -33,7 +33,6 @@ public class ClubLink {
     @Description("클럽 정보")
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "club_id", nullable = false)
-    @Setter
     private Club club;
 
 
