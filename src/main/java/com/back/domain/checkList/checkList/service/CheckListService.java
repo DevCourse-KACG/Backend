@@ -285,8 +285,9 @@ public class CheckListService {
     Member member = otnMember.get();
 
     // 클럽 ID로 클럽 조회
-    Club club = clubRepository.findById(groupId)
-        .orElseThrow(() -> new ServiceException(404, "클럽을 찾을 수 없습니다"));
+    Optional<Club> otnClub = clubRepository.findById(groupId);
+    if (otnClub.isEmpty()) return RsData.of(404, "클럽을 찾을 수 없습니다");
+    Club club = otnClub.get();
 
     // 클럽 멤버 조회
     Optional<ClubMember> otnClubMember = club.getClubMembers().stream()
@@ -303,16 +304,13 @@ public class CheckListService {
         .filter(checkList -> checkList != null && checkList.isActive())
         .toList();
 
-    // 체크리스트가 존재하지 않는 경우 빈 리스트 반환
-    if (checkLists.isEmpty()) {
-      return RsData.of(404, "체크리스트가 존재하지 않습니다");
-    }
+    otnClubMember.get().getClub().getClubSchedules().forEach(schedule -> {
+      System.out.println("Schedule ID: " + schedule.getId() + ", CheckList: " + schedule.getCheckList());
+    });
 
-    // CheckListDto로 변환
     List<CheckListDto> checkListDtos = checkLists.stream()
         .map(CheckListDto::new)
         .collect(Collectors.toList());
-
     return RsData.of(200, "체크리스트 목록 조회 성공", checkListDtos);
   }
 
