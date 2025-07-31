@@ -18,6 +18,8 @@ public interface ClubRepository extends JpaRepository<Club, Long> {
 
     Page<Club> findAllByIsPublicTrue(Pageable pageable);
 
+    Optional<Club> findByIdAndStateIsTrue(Long clubId);
+
     @Query("""
             SELECT c FROM Club c 
             WHERE c.id = :clubId 

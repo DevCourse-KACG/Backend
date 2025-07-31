@@ -77,7 +77,7 @@ public class CheckListAuthorizationChecker {
             throw new NoSuchElementException("일정을 찾을 수 없습니다");
         }
         // Schedule에 CheckList가 이미 존재하는 경우
-        if (schedule.getCheckList() != null) {
+        if (schedule.getCheckList() != null && !schedule.getCheckList().equals(checkList)) {
             throw new ServiceException(409, "이미 체크리스트가 존재합니다");
         }
         // Club 엔티티 반환
