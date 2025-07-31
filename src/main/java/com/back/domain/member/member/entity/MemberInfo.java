@@ -33,6 +33,7 @@ public class MemberInfo {
     private Member member;
 
 
+    //===============================빌더==========================
     @Builder
     public MemberInfo(String email, String bio, String profileImageUrl, Member member, String apiKey) {
         this.email = email;
@@ -42,6 +43,8 @@ public class MemberInfo {
         this.apiKey = apiKey;
     }
 
+
+    //===========================기타 Getter, Setter=======================
     public void setMember(Member member) {
         this.member = member;
     }
