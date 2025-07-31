@@ -1,4 +1,4 @@
-package com.back.domain.club.clubLink.controller.service;
+package com.back.domain.club.clubLink.service;
 
 import com.back.domain.club.club.dtos.ClubControllerDtos;
 import com.back.domain.club.club.entity.Club;
