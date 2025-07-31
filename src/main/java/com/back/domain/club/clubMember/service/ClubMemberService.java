@@ -77,23 +77,30 @@ public class ClubMemberService {
                 clubMemberRepository.findExistingEmails(clubId, requestEmails)
         );
 
-        // 중복 제외한 새로운 멤버만 추가
-        reqBody.members().stream()
-                .distinct() // 중복 제거
+        // 1. 실제로 추가될 새로운 멤버 목록을 먼저 필터링합니다.
+        List<ClubMemberDtos.ClubMemberRegisterInfo> newMembersToAdd = reqBody.members().stream()
+                .distinct()
                 .filter(memberInfo -> !existingEmails.contains(memberInfo.email()))
-                .forEach(memberInfo -> {
-                    Member member = memberService.findMemberByEmail(memberInfo.email());
+                .toList();
 
-                    ClubMember clubMember = ClubMember.builder()
-                            .member(member)
-                            .role(ClubMemberRole.fromString(memberInfo.role().toUpperCase()))
-                            .state(ClubMemberState.INVITED)
-                            .build();
+        // 2. 멤버를 추가하기 전에 정원 초과 여부를 먼저 확인합니다.
+        if (club.getClubMembers().size() + newMembersToAdd.size() > club.getMaximumCapacity()) {
+            throw new ServiceException(400, "클럽의 최대 멤버 수를 초과했습니다.");
+        }
 
-                    club.addClubMember(clubMember);
-                    clubMemberRepository.save(clubMember);
-                });
+        // 3. 유효성 검사를 통과한 경우에만 멤버를 추가합니다.
+        newMembersToAdd.forEach(memberInfo -> {
+            Member member = memberService.findMemberByEmail(memberInfo.email());
 
+            ClubMember clubMember = ClubMember.builder()
+                    .member(member)
+                    .role(ClubMemberRole.fromString(memberInfo.role().toUpperCase()))
+                    .state(ClubMemberState.INVITED)
+                    .build();
+
+            club.addClubMember(clubMember);
+            clubMemberRepository.save(clubMember);
+        });
     }
 
     /**
@@ -109,6 +116,11 @@ public class ClubMemberService {
                 .orElseThrow(() -> new ServiceException(404, "유저가 존재하지 않습니다."));
         if(!clubMemberValidService.checkMemberRole(clubId, user.getId(), new ClubMemberRole[]{ClubMemberRole.HOST}) && !user.getId().equals(memberId))
             throw new ServiceException(403, "권한이 없습니다.");
+
+        // 호스트 본인이 탈퇴하려는 경우 예외 처리
+        if (user.getId().equals(memberId)) {
+            throw new ServiceException(400, "호스트는 탈퇴할 수 없습니다.");
+        }
 
         Club club = clubService.getClubById(clubId)
                 .orElseThrow(() -> new ServiceException(404, "클럽이 존재하지 않습니다."));
@@ -139,6 +151,17 @@ public class ClubMemberService {
                 .orElseThrow(() -> new ServiceException(404, "멤버가 존재하지 않습니다."));
         ClubMember clubMember = clubMemberRepository.findByClubAndMember(club, member)
                 .orElseThrow(() -> new ServiceException(404, "멤버가 존재하지 않습니다."));
+
+        // 호스트 본인이 역할을 변경하려는 경우 예외 처리
+        if (member.getId().equals(rq.getActor().getId())) {
+            throw new ServiceException(400, "호스트는 본인의 역할을 변경할 수 없습니다.");
+        }
+
+        // 호스트 권한 부여 금지
+        if (role.equalsIgnoreCase(ClubMemberRole.HOST.name())) {
+            throw new ServiceException(400, "호스트 권한은 직접 부여할 수 없습니다.");
+        }
+
 
         // 역할 변경
         clubMember.updateRole(ClubMemberRole.fromString(role.toUpperCase()));
@@ -174,6 +197,8 @@ public class ClubMemberService {
 
         // 클럽 멤버 정보를 DTO로 변환
         List<ClubMemberDtos.ClubMemberInfo> memberInfos = clubMembers.stream()
+                .filter(clubMember -> clubMember.getMember() != null) // 멤버가 존재하는 경우만 필터링
+                .filter(clubMember -> clubMember.getState() != ClubMemberState.WITHDRAWN) // 탈퇴한 멤버 제외
                 .map(clubMember -> {
                     Member m = clubMember.getMember();
 
