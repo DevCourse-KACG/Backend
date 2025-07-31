@@ -4,7 +4,7 @@ import com.back.domain.club.club.dtos.ClubControllerDtos;
 import com.back.domain.club.club.entity.Club;
 import com.back.domain.club.club.repository.ClubRepository;
 import com.back.domain.club.clubMember.entity.ClubMember;
-import com.back.domain.club.clubMember.repository.ClubMemberRepository;
+import com.back.domain.club.clubMember.service.ClubMemberValidService;
 import com.back.domain.member.member.entity.Member;
 import com.back.domain.member.member.service.MemberService;
 import com.back.global.aws.S3Service;
@@ -32,8 +32,8 @@ import java.util.Optional;
 @RequiredArgsConstructor
 public class ClubService {
     private final ClubRepository clubRepository;
-    private final ClubMemberRepository clubMemberRepository;
     private final MemberService memberService;
+    private final ClubMemberValidService clubMemberValidService;
     private final S3Service s3Service;
     private final Rq rq;
 
@@ -130,10 +130,11 @@ public class ClubService {
         Club club = clubRepository.findById(clubId)
                 .orElseThrow(() -> new ServiceException(404, "해당 ID의 클럽을 찾을 수 없습니다."));
 
-        // TODO : 유저 권한 체크
+        // 권한 확인 : 현재 로그인한 유저가 클럽 호스트인지 확인
         Member user = memberService.findMemberById(rq.getActor().getId())
                 .orElseThrow(() -> new ServiceException(404, "해당 ID의 유저를 찾을 수 없습니다."));
-
+        if(!clubMemberValidService.checkMemberRole(clubId, user.getId(), new ClubMemberRole[]{ClubMemberRole.HOST}))
+            throw new ServiceException(403, "권한이 없습니다.");
 
         // 클럽 정보 업데이트
         String name = dto.name() != null ? dto.name() : club.getName();
@@ -162,7 +163,11 @@ public class ClubService {
 
     public void deleteClub(Long clubId) {
 
-        // TODO : 유저 권한 체크
+        // 권한 확인 : 현재 로그인한 유저가 클럽 호스트인지 확인
+        Member user = memberService.findMemberById(rq.getActor().getId())
+                .orElseThrow(() -> new ServiceException(404, "해당 ID의 유저를 찾을 수 없습니다."));
+        if(!clubMemberValidService.checkMemberRole(clubId, user.getId(), new ClubMemberRole[]{ClubMemberRole.HOST}))
+            throw new ServiceException(403, "권한이 없습니다.");
 
         Club club = clubRepository.findById(clubId)
                 .orElseThrow(() -> new ServiceException(404, "해당 ID의 클럽을 찾을 수 없습니다."));
