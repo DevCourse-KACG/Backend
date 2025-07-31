@@ -19,7 +19,7 @@ public class ApiV1ClubLinkController {
     private final Rq rq;
     private final ClubLinkService  clubLinkService;
 
-    @GetMapping("/{clubId}/memberes/invitation-link")
+    @GetMapping("/{clubId}/members/invitation-link")
     @Operation(summary = "클럽 초대 링크 생성")
     public RsData<ClubLinkDtos.CreateClubLinkResponse> createClubLink(@PathVariable Long clubId) {
 
