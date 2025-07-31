@@ -2,11 +2,14 @@ package com.back.domain.member.friend.controller;
 
 import com.back.domain.member.friend.dto.FriendDto;
 import com.back.domain.member.friend.entity.Friend;
+import com.back.domain.member.friend.error.FriendErrorCode;
 import com.back.domain.member.friend.repository.FriendRepository;
 import com.back.domain.member.friend.service.FriendService;
 import com.back.domain.member.member.entity.Member;
 import com.back.domain.member.member.entity.MemberInfo;
+import com.back.domain.member.member.error.MemberErrorCode;
 import com.back.domain.member.member.repository.MemberRepository;
+import com.back.global.exception.ErrorCode;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -42,12 +45,10 @@ class ApiV1FriendControllerTest {
     /**
      * 친구 추가 요청 예외 처리하는 메서드
      * @param friendEmail       친구의 이메일
-     * @param expectedStatus    예상되는 HTTP 상태 코드
-     * @param expectedMessage   예상되는 에러 메시지
+     * @param exceptedErrorCode 예상되는 HTTP 상태 코드, 에러 메시지
      */
     void performErrAddFriend(String friendEmail,
-                             int expectedStatus,
-                             String expectedMessage
+                             ErrorCode exceptedErrorCode
     ) throws Exception {
         ResultActions resultActions = mockMvc.perform(post("/api/v1/members/me/friends")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -59,9 +60,9 @@ class ApiV1FriendControllerTest {
         resultActions
                 .andExpect(handler().handlerType(ApiV1FriendController.class))
                 .andExpect(handler().methodName("addFriend"))
-                .andExpect(status().is(expectedStatus))
-                .andExpect(jsonPath("$.code").value(expectedStatus))
-                .andExpect(jsonPath("$.message").value(expectedMessage));
+                .andExpect(status().is(exceptedErrorCode.getStatus()))
+                .andExpect(jsonPath("$.code").value(exceptedErrorCode.getStatus()))
+                .andExpect(jsonPath("$.message").value(exceptedErrorCode.getMessage()));
     }
 
     /**
@@ -69,14 +70,12 @@ class ApiV1FriendControllerTest {
      * @param friendId          친구 엔티티 ID
      * @param pathUrl           URL 경로 (accept, reject 등)
      * @param methodName        메서드 이름
-     * @param expectedStatus    예상되는 HTTP 상태 코드
-     * @param expectedMessage   예상되는 에러 메시지
+     * @param exceptedErrorCode 예상되는 HTTP 상태 코드, 에러 메시지
      */
     void performErrPatchFriend(Long friendId,
                                String pathUrl,
                                String methodName,
-                               int expectedStatus,
-                               String expectedMessage
+                               ErrorCode exceptedErrorCode
     ) throws Exception {
         ResultActions resultActions = mockMvc
                 .perform(patch("/api/v1/members/me/friends/%d/%s".formatted(friendId, pathUrl))
@@ -86,20 +85,18 @@ class ApiV1FriendControllerTest {
         resultActions
                 .andExpect(handler().handlerType(ApiV1FriendController.class))
                 .andExpect(handler().methodName(methodName))
-                .andExpect(status().is(expectedStatus))
-                .andExpect(jsonPath("$.code").value(expectedStatus))
-                .andExpect(jsonPath("$.message").value(expectedMessage));
+                .andExpect(status().is(exceptedErrorCode.getStatus()))
+                .andExpect(jsonPath("$.code").value(exceptedErrorCode.getStatus()))
+                .andExpect(jsonPath("$.message").value(exceptedErrorCode.getMessage()));
     }
 
     /**
      * 친구 삭제 요청 예외 처리하는 메서드
      * @param friendId          친구 엔티티 ID
-     * @param expectedStatus    예상되는 HTTP 상태 코드
-     * @param expectedMessage   예상되는 에러 메시지
+     * @param exceptedErrorCode 예상되는 HTTP 상태 코드, 에러 메시지
      */
     void performErrDelFriend(Long friendId,
-                             int expectedStatus,
-                             String expectedMessage
+                             ErrorCode exceptedErrorCode
     ) throws Exception {
         ResultActions resultActions = mockMvc
                 .perform(delete("/api/v1/members/me/friends/" + friendId)
@@ -109,9 +106,9 @@ class ApiV1FriendControllerTest {
         resultActions
                 .andExpect(handler().handlerType(ApiV1FriendController.class))
                 .andExpect(handler().methodName("deleteFriend"))
-                .andExpect(status().is(expectedStatus))
-                .andExpect(jsonPath("$.code").value(expectedStatus))
-                .andExpect(jsonPath("$.message").value(expectedMessage));
+                .andExpect(status().is(exceptedErrorCode.getStatus()))
+                .andExpect(jsonPath("$.code").value(exceptedErrorCode.getStatus()))
+                .andExpect(jsonPath("$.message").value(exceptedErrorCode.getMessage()));
     }
 
     @Test
@@ -190,8 +187,7 @@ class ApiV1FriendControllerTest {
     void tc2() throws Exception {
         performErrAddFriend(
                 "a@test.com",
-                404,
-                "친구 대상이 존재하지 않습니다."
+                MemberErrorCode.MEMBER_NOT_FOUND
         );
     }
 
@@ -201,8 +197,7 @@ class ApiV1FriendControllerTest {
     void tc3() throws Exception {
         performErrAddFriend(
                 "hgd222@test.com",
-                400,
-                "자기 자신을 친구로 추가할 수 없습니다."
+                FriendErrorCode.FRIEND_REQUEST_SELF
         );
     }
 
@@ -212,8 +207,7 @@ class ApiV1FriendControllerTest {
     void tc4() throws Exception {
         performErrAddFriend(
                 "lyh3@test.com",
-                409,
-                "이미 친구 요청을 보냈습니다. 상대방의 수락을 기다려주세요."
+                FriendErrorCode.FRIEND_ALREADY_REQUEST_PENDING
         );
     }
 
@@ -223,8 +217,7 @@ class ApiV1FriendControllerTest {
     void tc5() throws Exception {
         performErrAddFriend(
                 "hgd222@test.com",
-                409,
-                "이미 친구 요청을 받았습니다. 수락 또는 거절해주세요."
+                FriendErrorCode.FRIEND_ALREADY_RESPOND_PENDING
         );
     }
 
@@ -234,8 +227,7 @@ class ApiV1FriendControllerTest {
     void tc6() throws Exception {
         performErrAddFriend(
                 "cjw5@test.com",
-                409,
-                "이미 친구입니다."
+                FriendErrorCode.FRIEND_ALREADY_ACCEPTED
         );
     }
 
@@ -245,8 +237,7 @@ class ApiV1FriendControllerTest {
     void tc7() throws Exception {
         performErrAddFriend(
                 "pms4@test.com",
-                409,
-                "이전에 거절한 친구 요청입니다. 다시 요청할 수 없습니다."
+                FriendErrorCode.FRIEND_ALREADY_REJECTED
         );
     }
 
@@ -288,8 +279,7 @@ class ApiV1FriendControllerTest {
                 100L,
                 "accept",
                 "acceptFriend",
-                404,
-                "친구 요청이 존재하지 않습니다."
+                FriendErrorCode.FRIEND_NOT_FOUND
         );
     }
 
@@ -301,8 +291,7 @@ class ApiV1FriendControllerTest {
                 1L,
                 "accept",
                 "acceptFriend",
-                400,
-                "로그인한 회원과 관련된 친구가 아닙니다."
+                FriendErrorCode.FRIEND_ACCESS_DENIED
         );
     }
 
@@ -314,8 +303,7 @@ class ApiV1FriendControllerTest {
                 1L,
                 "accept",
                 "acceptFriend",
-                400,
-                "요청한 사람이 친구 수락할 수 없습니다. 친구에게 요청 수락을 받으세요."
+                FriendErrorCode.FRIEND_REQUEST_NOT_ALLOWED_ACCEPT
         );
     }
 
@@ -327,8 +315,7 @@ class ApiV1FriendControllerTest {
                 2L,
                 "accept",
                 "acceptFriend",
-                400,
-                "이미 친구입니다."
+                FriendErrorCode.FRIEND_ALREADY_ACCEPTED
         );
     }
 
@@ -370,8 +357,7 @@ class ApiV1FriendControllerTest {
                 100L,
                 "reject",
                 "rejectFriend",
-                404,
-                "친구 요청이 존재하지 않습니다."
+                FriendErrorCode.FRIEND_NOT_FOUND
         );
     }
 
@@ -383,8 +369,7 @@ class ApiV1FriendControllerTest {
                 1L,
                 "reject",
                 "rejectFriend",
-                400,
-                "로그인한 회원과 관련된 친구가 아닙니다."
+                FriendErrorCode.FRIEND_ACCESS_DENIED
         );
     }
 
@@ -396,8 +381,7 @@ class ApiV1FriendControllerTest {
                 1L,
                 "reject",
                 "rejectFriend",
-                400,
-                "요청한 사람이 친구 요청을 거절할 수 없습니다. 친구의 요청 수락/거절을 기다리세요."
+                FriendErrorCode.FRIEND_REQUEST_NOT_ALLOWED_REJECT
         );
     }
 
@@ -409,8 +393,7 @@ class ApiV1FriendControllerTest {
                 2L,
                 "reject",
                 "rejectFriend",
-                400,
-                "이미 친구입니다. 친구 삭제를 이용해 주세요."
+                FriendErrorCode.FRIEND_ALREADY_ACCEPTED_NOT_ALLOWED
         );
     }
 
@@ -451,8 +434,7 @@ class ApiV1FriendControllerTest {
     void td2() throws Exception {
         performErrDelFriend(
                 100L,
-                404,
-                "친구 요청이 존재하지 않습니다."
+                FriendErrorCode.FRIEND_NOT_FOUND
         );
     }
 
@@ -462,8 +444,7 @@ class ApiV1FriendControllerTest {
     void td3() throws Exception {
         performErrDelFriend(
                 1L,
-                400,
-                "친구 요청이 수락되지 않았습니다."
+                FriendErrorCode.FRIEND_NOT_ACCEPTED
         );
     }
 }

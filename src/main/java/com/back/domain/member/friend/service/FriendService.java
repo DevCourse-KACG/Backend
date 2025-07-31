@@ -5,11 +5,14 @@ import com.back.domain.member.friend.dto.FriendWithBioDto;
 import com.back.domain.member.friend.dto.FriendDto;
 import com.back.domain.member.friend.entity.Friend;
 import com.back.domain.member.friend.entity.FriendStatus;
+import com.back.domain.member.friend.error.FriendErrorCode;
 import com.back.domain.member.friend.repository.FriendRepository;
 import com.back.domain.member.member.entity.Member;
 import com.back.domain.member.member.entity.MemberInfo;
+import com.back.domain.member.member.error.MemberErrorCode;
 import com.back.domain.member.member.repository.MemberInfoRepository;
 import com.back.domain.member.member.repository.MemberRepository;
+import com.back.global.exception.ErrorCode;
 import com.back.global.exception.ServiceException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -36,7 +39,7 @@ public class FriendService {
     public List<FriendDto> getFriends(Long memberId) {
         // 로그인 회원
         Member member = memberRepository.findWithFriendsById(memberId)
-                .orElseThrow(() -> new NoSuchElementException("회원이 존재하지 않습니다."));
+                .orElseThrow(() -> new NoSuchElementException(MemberErrorCode.MEMBER_NOT_FOUND.getMessage()));
 
         // 친구 목록 조회 - 우선 친구만 조회
         // TODO: 필터, 정렬, 페이징 추가 예정
@@ -58,7 +61,7 @@ public class FriendService {
     public Friend getFriendById(Long friendId) {
         return friendRepository
                 .findById(friendId)
-                .orElseThrow(() -> new NoSuchElementException("친구 요청이 존재하지 않습니다."));
+                .orElseThrow(() -> new NoSuchElementException(FriendErrorCode.FRIEND_NOT_FOUND.getMessage()));
     }
 
     /**
@@ -78,7 +81,7 @@ public class FriendService {
 
         // 자기 자신을 친구로 추가하는 경우 예외 처리
         if (requester.equals(responder)) {
-            throw new ServiceException(400, "자기 자신을 친구로 추가할 수 없습니다.");
+            throw new ServiceException(FriendErrorCode.FRIEND_REQUEST_SELF);
         }
 
         // id 순
@@ -89,22 +92,22 @@ public class FriendService {
         friendRepository
                 .findByMembers(requester, responder)
                 .ifPresent(existingFriend -> {
-                    String errMsg;
+                    ErrorCode errorCode;
                     // 친구 관계 상태에 따라 에러 메시지
                     switch (existingFriend.getStatus()) {
                         case PENDING -> {
                             // 요청자 여부에 따라 에러 메시지
                             if (existingFriend.getRequestedBy().equals(requester)) {
-                                errMsg = "이미 친구 요청을 보냈습니다. 상대방의 수락을 기다려주세요.";
+                                errorCode = FriendErrorCode.FRIEND_ALREADY_REQUEST_PENDING;
                             } else {
-                                errMsg = "이미 친구 요청을 받았습니다. 수락 또는 거절해주세요.";
+                                errorCode = FriendErrorCode.FRIEND_ALREADY_RESPOND_PENDING;
                             }
                         }
-                        case ACCEPTED -> errMsg = "이미 친구입니다.";
-                        case REJECTED -> errMsg = "이전에 거절한 친구 요청입니다. 다시 요청할 수 없습니다.";
-                        default -> errMsg = "처리할 수 없는 친구 관계 상태입니다.";
+                        case ACCEPTED -> errorCode = FriendErrorCode.FRIEND_ALREADY_ACCEPTED;
+                        case REJECTED -> errorCode = FriendErrorCode.FRIEND_ALREADY_REJECTED;
+                        default -> errorCode = FriendErrorCode.FRIEND_STATUS_UNHANDLED;
                     }
-                    throw new ServiceException(409, errMsg);
+                    throw new ServiceException(errorCode);
                 });
 
         // 친구 요청 생성
@@ -143,12 +146,12 @@ public class FriendService {
 
         // 받는이가 아닌 요청자가 친구 요청을 수락하는 경우 예외 처리
         if (me.equals(friend.getRequestedBy())) {
-            throw new ServiceException(400, "요청한 사람이 친구 수락할 수 없습니다. 친구에게 요청 수락을 받으세요.");
+            throw new ServiceException(FriendErrorCode.FRIEND_REQUEST_NOT_ALLOWED_ACCEPT);
         }
 
         // 친구 요청의 상태가 PENDING이 아닌 경우 예외 처리
         if (friend.getStatus() == FriendStatus.ACCEPTED) {
-            throw new ServiceException(400, "이미 친구입니다.");
+            throw new ServiceException(FriendErrorCode.FRIEND_ALREADY_ACCEPTED);
         }
 
         // 친구 요청 수락
@@ -175,12 +178,12 @@ public class FriendService {
 
         // 받는이가 아닌 요청자가 친구 요청을 거절하는 경우 예외 처리
         if (me.equals(friend.getRequestedBy())) {
-            throw new ServiceException(400, "요청한 사람이 친구 요청을 거절할 수 없습니다. 친구의 요청 수락/거절을 기다리세요.");
+            throw new ServiceException(FriendErrorCode.FRIEND_REQUEST_NOT_ALLOWED_REJECT);
         }
 
         // 이미 친구인 경우 예외 처리
         if (friend.getStatus() == FriendStatus.ACCEPTED) {
-            throw new ServiceException(400, "이미 친구입니다. 친구 삭제를 이용해 주세요.");
+            throw new ServiceException(FriendErrorCode.FRIEND_ALREADY_ACCEPTED_NOT_ALLOWED);
         }
 
         // 친구 요청 거절
@@ -209,7 +212,7 @@ public class FriendService {
 
         // 친구 요청의 상태가 ACCEPTED가 아닌 경우 예외 처리
         if (friend.getStatus() != FriendStatus.ACCEPTED) {
-            throw new ServiceException(400, "친구 요청이 수락되지 않았습니다.");
+            throw new ServiceException(FriendErrorCode.FRIEND_NOT_ACCEPTED);
         }
         // 삭제하는 친구
         Member friendMember = friend.getOther(me);
@@ -228,7 +231,7 @@ public class FriendService {
     private Member getMember(Long memberId) {
         return memberRepository
                 .findById(memberId)
-                .orElseThrow(() -> new NoSuchElementException("회원이 존재하지 않습니다."));
+                .orElseThrow(() -> new NoSuchElementException(MemberErrorCode.MEMBER_NOT_FOUND.getMessage()));
     }
 
     /**
@@ -239,7 +242,7 @@ public class FriendService {
     private Member getFriendMember(Long friendId) {
         return memberRepository
                 .findById(friendId)
-                .orElseThrow(() -> new NoSuchElementException("친구 대상이 존재하지 않습니다."));
+                .orElseThrow(() -> new NoSuchElementException(MemberErrorCode.MEMBER_NOT_FOUND.getMessage()));
     }
 
     /**
@@ -250,7 +253,7 @@ public class FriendService {
     private MemberInfo getFriendMemberInfoByEmail(String friendEmail) {
         return memberInfoRepository
                 .findByEmailWithMember(friendEmail)
-                .orElseThrow(() -> new NoSuchElementException("친구 대상이 존재하지 않습니다."));
+                .orElseThrow(() -> new NoSuchElementException(MemberErrorCode.MEMBER_NOT_FOUND.getMessage()));
     }
 
     /**
@@ -260,7 +263,7 @@ public class FriendService {
      */
     private void validateFriend(Friend friend, Member me) {
         if (!friend.involves(me)) {
-            throw new ServiceException(400, "로그인한 회원과 관련된 친구가 아닙니다.");
+            throw new ServiceException(FriendErrorCode.FRIEND_ACCESS_DENIED);
         }
     }
 }
