@@ -11,6 +11,7 @@ import com.back.domain.member.member.service.MemberService;
 import com.back.global.enums.ClubMemberRole;
 import com.back.global.enums.ClubMemberState;
 import com.back.global.exception.ServiceException;
+import com.back.global.rq.Rq;
 import jakarta.validation.constraints.NotBlank;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -27,9 +28,13 @@ public class ClubMemberService {
     private final ClubMemberRepository clubMemberRepository;
     private final ClubService clubService;
     private final MemberService memberService;
+    private final ClubMemberValidService clubMemberValidService;
+    private final Rq rq;
+
+
 
     /**
-     * 클럽에 멤버를 추가합니다.
+     * 클럽에 멤버를 추가합니다. (테스트용, controller에선 사용하지 않음)
      * @param clubId 클럽 ID
      * @param member 추가할 멤버
      * @param role 클럽 멤버 역할
@@ -58,6 +63,9 @@ public class ClubMemberService {
     @Transactional
     public void addMembersToClub(Long clubId, ClubMemberDtos.ClubMemberRegisterRequest reqBody) {
         Club club = clubService.getClubById(clubId).orElseThrow(() -> new ServiceException(404, "클럽이 존재하지 않습니다."));
+
+        // 권한 확인 : 현재 로그인한 유저가 클럽 호스트인지 확인
+        clubService.validateHostPermission(clubId);
 
         // 요청된 이메일 추출
         List<String> requestEmails = reqBody.members().stream()
@@ -95,7 +103,12 @@ public class ClubMemberService {
      */
     @Transactional
     public void withdrawMemberFromClub(Long clubId, Long memberId) {
-        // TODO : 유저 권한 체크
+        // 권한 확인 : 현재 로그인한 유저가 클럽 호스트인지 확인
+        // 또는 탈퇴할 멤버 본인인지 확인
+        Member user = memberService.findMemberById(rq.getActor().getId())
+                .orElseThrow(() -> new ServiceException(404, "유저가 존재하지 않습니다."));
+        if(!clubMemberValidService.checkMemberRole(clubId, user.getId(), new ClubMemberRole[]{ClubMemberRole.HOST}) && !user.getId().equals(memberId))
+            throw new ServiceException(403, "권한이 없습니다.");
 
         Club club = clubService.getClubById(clubId)
                 .orElseThrow(() -> new ServiceException(404, "클럽이 존재하지 않습니다."));
@@ -117,7 +130,8 @@ public class ClubMemberService {
      */
     @Transactional
     public void changeMemberRole(Long clubId, Long memberId, @NotBlank String role) {
-        // TODO : 유저 권한 체크
+        // 권한 확인 : 현재 로그인한 유저가 클럽 호스트인지 확인
+        clubService.validateHostPermission(clubId);
 
         Club club = clubService.getClubById(clubId)
                 .orElseThrow(() -> new ServiceException(404, "클럽이 존재하지 않습니다."));
@@ -142,6 +156,12 @@ public class ClubMemberService {
         // 클럽 확인
         Club club = clubService.getClubById(clubId)
                 .orElseThrow(() -> new ServiceException(404, "클럽이 존재하지 않습니다."));
+
+        // 권한 확인 : 현재 로그인한 유저가 클럽 멤버인지 확인
+        Member user = rq.getActor();
+        if(!clubMemberValidService.isClubMember(clubId, user.getId()))
+            throw new ServiceException(403, "권한이 없습니다.");
+
 
         // 클럽멤버 목록 반환
         List<ClubMember> clubMembers;

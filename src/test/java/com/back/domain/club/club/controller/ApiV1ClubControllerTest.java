@@ -2,11 +2,13 @@ package com.back.domain.club.club.controller;
 
 import com.back.domain.club.club.entity.Club;
 import com.back.domain.club.club.service.ClubService;
+import com.back.domain.club.clubMember.service.ClubMemberService;
 import com.back.domain.member.member.dto.request.MemberRegisterDto;
 import com.back.domain.member.member.entity.Member;
 import com.back.domain.member.member.service.MemberService;
 import com.back.global.aws.S3Service;
 import com.back.global.enums.ClubCategory;
+import com.back.global.enums.ClubMemberRole;
 import com.back.global.enums.EventType;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -15,6 +17,7 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
+import org.springframework.security.test.context.support.WithUserDetails;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
@@ -43,12 +46,15 @@ class ApiV1ClubControllerTest {
     private ClubService clubService;
     @Autowired
     private MemberService memberService;
+    @Autowired
+    private ClubMemberService clubMemberService;
 
     @MockitoBean
     private S3Service s3Service; // S3Service는 MockBean으로 주입하여 실제 S3와의 통신을 피합니다.
 
     @Test
     @DisplayName("빈 클럽 생성 - 이미지 없는 경우")
+    @WithUserDetails(value = "hgd222@test.com") //1번 유저로 로그인
     void createClub() throws Exception {
         // given
         String jsonData = """
@@ -62,7 +68,6 @@ class ApiV1ClubControllerTest {
                 "startDate" : "2023-10-01",
                 "endDate" : "2023-10-31",
                 "isPublic": true,
-                "leaderId": 1,
                 "clubMembers" : []
             }
             """;
@@ -105,11 +110,12 @@ class ApiV1ClubControllerTest {
         assertThat(club.isPublic()).isTrue();
         assertThat(club.getLeaderId()).isEqualTo(1L);
         assertThat(club.isState()).isTrue(); // 활성화 상태가 true인지 확인
-        assertThat(club.getClubMembers().isEmpty()).isTrue(); // 구성원이 비어있는지 확인
+        assertThat(club.getClubMembers().size()).isEqualTo(1); // 구성원이 한명(호스트)인지 확인
     }
 
     @Test
     @DisplayName("빈 클럽 생성 - 이미지가 있는 경우")
+    @WithUserDetails(value = "hgd222@test.com") //1번 유저로 로그인
     void createClubWithImage() throws Exception {
         // given
         // ⭐️ S3 업로더의 행동 정의: 어떤 파일이든 업로드 요청이 오면, 지정된 가짜 URL을 반환한다.
@@ -136,7 +142,6 @@ class ApiV1ClubControllerTest {
                 "startDate" : "2025-08-01",
                 "endDate" : "2026-07-31",
                 "isPublic": false,
-                "leaderId": 2,
                 "clubMembers" : []
             }
             """;
@@ -165,6 +170,7 @@ class ApiV1ClubControllerTest {
 
     @Test
     @DisplayName("초기 유저 있는 클럽 생성")
+    @WithUserDetails(value = "hgd222@test.com") //1번 유저로 로그인
     void createClubWithMembers() throws Exception {
         // given
         String jsonData = """
@@ -178,12 +184,7 @@ class ApiV1ClubControllerTest {
                 "startDate" : "2023-10-01",
                 "endDate" : "2023-10-31",
                 "isPublic": true,
-                "leaderId": 1,
                 "clubMembers" : [
-                    {
-                        "id": 1,
-                        "role" : "HOST"
-                    },
                     {
                         "id": 2,
                         "role" : "MANAGER"
@@ -254,6 +255,7 @@ class ApiV1ClubControllerTest {
 
     @Test
     @DisplayName("클럽 정보 수정")
+    @WithUserDetails(value = "hgd222@test.com") //1번 유저로 로그인
     void updateClub() throws Exception {
         // given
         // 클럽 생성
@@ -270,6 +272,15 @@ class ApiV1ClubControllerTest {
                 .isPublic(true)
                 .leaderId(1L)
                 .build()
+        );
+
+        // 클럽에 호스트 멤버 추가
+        Member hostMember = memberService.findMemberById(1L)
+                .orElseThrow(() -> new IllegalStateException("호스트 멤버가 존재하지 않습니다."));
+        clubMemberService.addMemberToClub(
+                club.getId(),
+                hostMember,
+                ClubMemberRole.HOST
         );
 
         // ⭐️ S3 업로더의 행동 정의: 어떤 파일이든 업로드 요청이 오면, 지정된 가짜 URL을 반환한다.
@@ -296,8 +307,7 @@ class ApiV1ClubControllerTest {
                 "eventType" : "LONG_TERM",
                 "startDate" : "2024-10-01",
                 "endDate" : "2024-10-31",
-                "isPublic": true,
-                "leaderId": 2
+                "isPublic": true
             }
             """;
         MockMultipartFile dataPart = new MockMultipartFile("data", "", "application/json", jsonData.getBytes(StandardCharsets.UTF_8));
@@ -342,14 +352,15 @@ class ApiV1ClubControllerTest {
         assertThat(club.getStartDate()).isEqualTo(LocalDate.of(2024, 10, 1));
         assertThat(club.getEndDate()).isEqualTo(LocalDate.of(2024, 10, 31));
         assertThat(club.isPublic()).isTrue();
-        assertThat(club.getLeaderId()).isEqualTo(2L);
+        assertThat(club.getLeaderId()).isEqualTo(1L);
         assertThat(club.isRecruitingStatus()).isFalse(); // 모집 상태가 false인지 확인
         assertThat(club.isState()).isTrue(); // 활성화 상태가 true인지 확인
-        assertThat(club.getClubMembers().isEmpty()).isTrue(); // 구성원이 비어있는지 확인
+        assertThat(club.getClubMembers().size()).isEqualTo(1); // 구성원이 한명(호스트)인지 확인
     }
 
     @Test
     @DisplayName("클럽 정보 수정 - 부분 수정")
+    @WithUserDetails(value = "hgd222@test.com") //1번 유저로 로그인
     void updateClubPart() throws Exception {
         // given
         // 클럽 생성
@@ -366,6 +377,15 @@ class ApiV1ClubControllerTest {
                         .isPublic(true)
                         .leaderId(1L)
                         .build()
+        );
+
+        // 클럽에 호스트 멤버 추가
+        Member hostMember = memberService.findMemberById(1L)
+                .orElseThrow(() -> new IllegalStateException("호스트 멤버가 존재하지 않습니다."));
+        clubMemberService.addMemberToClub(
+                club.getId(),
+                hostMember,
+                ClubMemberRole.HOST
         );
 
         // ⭐️ S3 업로더의 행동 정의: 어떤 파일이든 업로드 요청이 오면, 지정된 가짜 URL을 반환한다.
@@ -388,8 +408,7 @@ class ApiV1ClubControllerTest {
                 "recruitingStatus": false,
                 "startDate" : "2024-10-01",
                 "endDate" : "2024-10-31",
-                "isPublic": true,
-                "leaderId": 2
+                "isPublic": true
             }
             """;
         MockMultipartFile dataPart = new MockMultipartFile("data", "", "application/json", jsonData.getBytes(StandardCharsets.UTF_8));
@@ -434,14 +453,15 @@ class ApiV1ClubControllerTest {
         assertThat(club.getStartDate()).isEqualTo(LocalDate.of(2024, 10, 1));
         assertThat(club.getEndDate()).isEqualTo(LocalDate.of(2024, 10, 31));
         assertThat(club.isPublic()).isTrue();
-        assertThat(club.getLeaderId()).isEqualTo(2L);
+        assertThat(club.getLeaderId()).isEqualTo(1L);
         assertThat(club.isRecruitingStatus()).isFalse(); // 모집 상태가 false인지 확인
         assertThat(club.isState()).isTrue(); // 활성화 상태가 true인지 확인
-        assertThat(club.getClubMembers().isEmpty()).isTrue(); // 구성원이 비어있는지 확인
+        assertThat(club.getClubMembers().size()).isEqualTo(1); // 구성원이 한명(호스트)인지 확인
     }
 
     @Test
     @DisplayName("클럽 수정 - 존재하지 않는 클럽")
+    @WithUserDetails(value = "hgd222@test.com") //1번 유저로 로그인
     void updateNonExistentClub() throws Exception {
         // given
         Long nonExistentClubId = 999L; // 존재하지 않는 클럽 ID
@@ -465,8 +485,7 @@ class ApiV1ClubControllerTest {
                 "eventType" : "LONG_TERM",
                 "startDate" : "2024-10-01",
                 "endDate" : "2024-10-31",
-                "isPublic": true,
-                "leaderId": 2
+                "isPublic": true
             }
             """;
         MockMultipartFile dataPart = new MockMultipartFile("data", "", "application/json", jsonData.getBytes(StandardCharsets.UTF_8));
@@ -491,7 +510,89 @@ class ApiV1ClubControllerTest {
     }
 
     @Test
+    @DisplayName("클럽 수정 - 권한 없는 유저")
+    @WithUserDetails(value = "chs4s@test.com") //2번 유저로 로그인
+    void updateClubWithoutPermission() throws Exception {
+        // given
+        // 클럽 생성
+        Club club = clubService.createClub(
+                Club.builder()
+                        .name("테스트 그룹")
+                        .bio("테스트 그룹 설명")
+                        .category(ClubCategory.STUDY)
+                        .mainSpot("서울")
+                        .maximumCapacity(10)
+                        .eventType(EventType.ONE_TIME)
+                        .startDate(LocalDate.of(2023, 10, 1))
+                        .endDate(LocalDate.of(2023, 10, 31))
+                        .isPublic(true)
+                        .leaderId(1L)
+                        .build()
+        );
+
+        // 클럽에 호스트 멤버 추가
+        Member hostMember = memberService.findMemberById(1L)
+                .orElseThrow(() -> new IllegalStateException("호스트 멤버가 존재하지 않습니다."));
+        clubMemberService.addMemberToClub(
+                club.getId(),
+                hostMember,
+                ClubMemberRole.HOST
+        );
+
+        // 클럽에 2번 유저를 멤버로 추가
+        Member member = memberService.findMemberById(2L)
+                .orElseThrow(() -> new IllegalStateException("멤버가 존재하지 않습니다."));
+        clubMemberService.addMemberToClub(
+                club.getId(),
+                member,
+                ClubMemberRole.PARTICIPANT // 2번 유저는 PARTICIPANT 역할
+        );
+
+        // 1. 가짜 이미지 파일(MockMultipartFile) 생성
+        MockMultipartFile imagePart = new MockMultipartFile(
+                "image", // @RequestPart("image") 이름과 일치
+                "image.jpg",
+                MediaType.IMAGE_JPEG_VALUE,
+                "test image".getBytes()
+        );
+
+        // 2. JSON 데이터 파트 생성
+        String jsonData = """
+                {
+                    "name": "수정된 테스트 그룹",
+                    "bio": "수정된 테스트 그룹 설명",
+                    "category" : "HOBBY",
+                    "mainSpot" : "수정된 서울",
+                    "maximumCapacity" : 11,
+                    "eventType" : "LONG_TERM",
+                    "startDate" : "2024-10-01",
+                    "endDate" : "2024-10-31",
+                    "isPublic": true
+                }
+                """;
+        MockMultipartFile dataPart = new MockMultipartFile("data", "", "application/json", jsonData.getBytes(StandardCharsets.UTF_8));
+
+        // when
+        ResultActions resultActions = mvc.perform(
+                        multipart("/api/v1/clubs/" + club.getId()) // 클럽 ID를 URL에 포함
+                                .file(dataPart)
+                                .file(imagePart) // 'image' 파트 추가
+                                .with(request -> {
+                                    request.setMethod("PATCH"); // PATCH 메소드로 요청
+                                    return request;
+                                })
+                )
+                .andDo(print());
+        // then
+        resultActions
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.code").value(403))
+                .andExpect(jsonPath("$.message").value("권한이 없습니다."));
+    }
+
+    @Test
     @DisplayName("클럽 정보 삭제")
+    @WithUserDetails(value = "hgd222@test.com") //1번 유저로 로그인
     void deleteClub() throws Exception {
         // given
         // 클럽 생성
@@ -508,6 +609,14 @@ class ApiV1ClubControllerTest {
                         .isPublic(true)
                         .leaderId(1L)
                         .build()
+        );
+        // 클럽에 호스트 멤버 추가
+        Member hostMember = memberService.findMemberById(1L)
+                .orElseThrow(() -> new IllegalStateException("호스트 멤버가 존재하지 않습니다."));
+        clubMemberService.addMemberToClub(
+                club.getId(),
+                hostMember,
+                ClubMemberRole.HOST
         );
 
         // when
@@ -536,6 +645,7 @@ class ApiV1ClubControllerTest {
 
     @Test
     @DisplayName("클럽 정보 삭제 - 존재하지 않는 클럽")
+    @WithUserDetails(value = "hgd222@test.com") //1번 유저로 로그인
     void deleteNonExistentClub() throws Exception {
         // given
         Long nonExistentClubId = 999L; // 존재하지 않는 클럽 ID
@@ -553,7 +663,62 @@ class ApiV1ClubControllerTest {
         resultActions
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.code").value(404))
-                .andExpect(jsonPath("$.message").value("해당 ID의 클럽을 찾을 수 없습니다."));
+                .andExpect(jsonPath("$.message").value("클럽이 존재하지 않습니다."));
+    }
+
+    @Test
+    @DisplayName("클럽 정보 삭제 - 권한 없는 유저")
+    @WithUserDetails(value = "chs4s@test.com") //2번 유저로 로그인
+    void deleteClubWithoutPermission() throws Exception {
+        // given
+        // 클럽 생성
+        Club club = clubService.createClub(
+                Club.builder()
+                        .name("테스트 그룹")
+                        .bio("테스트 그룹 설명")
+                        .category(ClubCategory.STUDY)
+                        .mainSpot("서울")
+                        .maximumCapacity(10)
+                        .eventType(EventType.ONE_TIME)
+                        .startDate(LocalDate.of(2023, 10, 1))
+                        .endDate(LocalDate.of(2023, 10, 31))
+                        .isPublic(true)
+                        .leaderId(1L)
+                        .build()
+        );
+
+        // 클럽에 호스트 멤버 추가
+        Member hostMember = memberService.findMemberById(1L)
+                .orElseThrow(() -> new IllegalStateException("호스트 멤버가 존재하지 않습니다."));
+        clubMemberService.addMemberToClub(
+                club.getId(),
+                hostMember,
+                ClubMemberRole.HOST
+        );
+
+        // 클럽에 2번 유저를 멤버로 추가
+        Member member = memberService.findMemberById(2L)
+                .orElseThrow(() -> new IllegalStateException("멤버가 존재하지 않습니다."));
+        clubMemberService.addMemberToClub(
+                club.getId(),
+                member,
+                ClubMemberRole.PARTICIPANT // 2번 유저는 PARTICIPANT 역할
+        );
+
+        // when
+        ResultActions resultActions = mvc.perform(
+                multipart("/api/v1/clubs/" + club.getId())
+                        .with(request -> {
+                            request.setMethod("DELETE"); // DELETE 메소드로 요청
+                            return request;
+                        })
+        ).andDo(print());
+
+        // then
+        resultActions
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.code").value(403))
+                .andExpect(jsonPath("$.message").value("권한이 없습니다."));
     }
 
     @Test

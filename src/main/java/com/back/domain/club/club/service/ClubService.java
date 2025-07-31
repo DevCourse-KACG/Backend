@@ -4,6 +4,7 @@ import com.back.domain.club.club.dtos.ClubControllerDtos;
 import com.back.domain.club.club.entity.Club;
 import com.back.domain.club.club.repository.ClubRepository;
 import com.back.domain.club.clubMember.entity.ClubMember;
+import com.back.domain.club.clubMember.service.ClubMemberValidService;
 import com.back.domain.member.member.entity.Member;
 import com.back.domain.member.member.service.MemberService;
 import com.back.global.aws.S3Service;
@@ -12,6 +13,7 @@ import com.back.global.enums.ClubMemberRole;
 import com.back.global.enums.ClubMemberState;
 import com.back.global.enums.EventType;
 import com.back.global.exception.ServiceException;
+import com.back.global.rq.Rq;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -31,7 +33,22 @@ import java.util.Optional;
 public class ClubService {
     private final ClubRepository clubRepository;
     private final MemberService memberService;
+    private final ClubMemberValidService clubMemberValidService;
     private final S3Service s3Service;
+    private final Rq rq;
+
+    /**
+     * 클럽 호스트 권한을 검증합니다.
+     * @param clubId 클럽 ID
+     * @throws ServiceException 권한이 없는 경우 403 예외 발생
+     */
+    public void validateHostPermission(Long clubId) {
+        Member user = memberService.findMemberById(rq.getActor().getId())
+                .orElseThrow(() -> new ServiceException(404, "해당 ID의 유저를 찾을 수 없습니다."));
+        if (!clubMemberValidService.checkMemberRole(clubId, user.getId(), new ClubMemberRole[]{ClubMemberRole.HOST})) {
+            throw new ServiceException(403, "권한이 없습니다.");
+        }
+    }
 
     /**
      * 마지막으로 생성된 클럽을 반환합니다.
@@ -52,7 +69,7 @@ public class ClubService {
     }
 
     /**
-     * 클럽을 생성합니다.
+     * 클럽을 생성합니다. (테스트용. controller에서 사용하지 않음)
      * @param club 클럽 정보
      * @return 생성된 클럽
      */
@@ -80,7 +97,9 @@ public class ClubService {
                 .startDate(LocalDate.parse(reqBody.startDate()))
                 .endDate(LocalDate.parse(reqBody.endDate()))
                 .isPublic(reqBody.isPublic())
-                .leaderId(reqBody.leaderId())
+                .leaderId(Optional.ofNullable(rq.getActor())
+                        .map(Member::getId)
+                        .orElseThrow(() -> new ServiceException(401, "인증되지 않은 사용자입니다.")))
                 .build()
         );
         // 2. 이미지가 제공된 경우 S3에 업로드
@@ -90,6 +109,15 @@ public class ClubService {
             clubRepository.save(club); // 이미지 URL 업데이트 후 클럽 정보 저장
         }
 
+        // 클럽 생성 시 유저를 리더로 설정하고 멤버에 추가
+        Member leader = memberService.findMemberById(rq.getActor().getId())
+                .orElseThrow(() -> new NoSuchElementException("ID " + rq.getActor().getId() + "에 해당하는 리더를 찾을 수 없습니다."));
+        ClubMember clubLeader = ClubMember.builder()
+                .member(leader)
+                .role(ClubMemberRole.HOST) // 클럽 생성자는 HOST 역할
+                .state(ClubMemberState.JOINING) // 초기 상태는 JOINING으로 설정
+                .build();
+        club.addClubMember(clubLeader); // 연관관계 편의 메서드를 사용하여 Club에 ClubMember 추가
 
         // 클럽 멤버 설정
         Arrays.stream(reqBody.clubMembers()).forEach(memberInfo -> {
@@ -123,6 +151,9 @@ public class ClubService {
         Club club = clubRepository.findById(clubId)
                 .orElseThrow(() -> new ServiceException(404, "해당 ID의 클럽을 찾을 수 없습니다."));
 
+        // 권한 확인 : 현재 로그인한 유저가 클럽 호스트인지 확인
+        validateHostPermission(clubId);
+
         // 클럽 정보 업데이트
         String name = dto.name() != null ? dto.name() : club.getName();
         String bio = dto.bio() != null ? dto.bio() : club.getBio();
@@ -134,9 +165,8 @@ public class ClubService {
         LocalDate startDate = dto.startDate() != null ? LocalDate.parse(dto.startDate()) : club.getStartDate();
         LocalDate endDate = dto.endDate() != null ? LocalDate.parse(dto.endDate()) : club.getEndDate();
         boolean isPublic = dto.isPublic() != null ? dto.isPublic() : club.isPublic();
-        long leaderId = dto.leaderId() != null ? dto.leaderId() : club.getLeaderId();
 
-        club.updateInfo(name, bio, category, mainSpot, maximumCapacity, recruitingStatus, eventType, startDate, endDate, isPublic, leaderId);
+        club.updateInfo(name, bio, category, mainSpot, maximumCapacity, recruitingStatus, eventType, startDate, endDate, isPublic);
 
         // 이미지가 제공된 경우 S3에 업로드
         if (image != null && !image.isEmpty()) {
@@ -149,6 +179,10 @@ public class ClubService {
     }
 
     public void deleteClub(Long clubId) {
+
+        // 권한 확인 : 현재 로그인한 유저가 클럽 호스트인지 확인
+        validateHostPermission(clubId);
+
         Club club = clubRepository.findById(clubId)
                 .orElseThrow(() -> new ServiceException(404, "해당 ID의 클럽을 찾을 수 없습니다."));
 
@@ -168,6 +202,13 @@ public class ClubService {
 
         Member leader = memberService.findMemberById(club.getLeaderId())
                 .orElseThrow(() -> new ServiceException(404, "해당 ID의 클럽 리더를 찾을 수 없습니다."));
+
+        // 비공개 클럽인 경우, 현재 로그인한 유저가 클럽 멤버인지 확인
+        if (!club.isPublic()) {
+            if (rq.getActor() == null || !clubMemberValidService.isClubMember(rq.getActor().getId(), clubId)) {
+                throw new ServiceException(403, "비공개 클럽 정보는 클럽 멤버만 조회할 수 있습니다.");
+            }
+        }
 
         return new ClubControllerDtos.ClubInfoResponse(
                 club.getId(),
