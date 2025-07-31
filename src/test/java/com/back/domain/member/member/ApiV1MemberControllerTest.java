@@ -296,6 +296,49 @@ public class ApiV1MemberControllerTest {
     }
 
     @Test
+    @DisplayName("로그인 실패 - 이메일 대소문자 구분 (대문자 입력 시도)")
+    public void loginFail_emailCaseSensitive() throws Exception {
+        memberFixture.createMember(1); // test1@example.com 으로 회원 생성됨
+
+        String requestBody = """
+    {
+        "email": "TEST1@EXAMPLE.COM",
+        "password": "password123"
+    }
+    """;
+
+        mockMvc.perform(post("/api/v1/members/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(requestBody))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value("해당 사용자를 찾을 수 없습니다."))
+                .andExpect(jsonPath("$.code").value(400))
+                .andExpect(jsonPath("$.data").doesNotExist());
+    }
+
+    @Test
+    @DisplayName("로그인 실패 - 비밀번호 공백 입력")
+    public void loginFail_blankPassword() throws Exception {
+        memberFixture.createMember(1); // 회원 생성
+
+        String requestBody = """
+    {
+        "email": "test1@example.com",
+        "password": ""
+    }
+    """;
+
+        mockMvc.perform(post("/api/v1/members/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(requestBody))
+                .andExpect(status().isBadRequest())  // 빈 비밀번호는 보통 400 Bad Request 처리 예상
+                .andExpect(jsonPath("$.message").value("password-NotBlank-비밀번호는 필수 입력값입니다.")) // DTO @NotBlank 메시지와 일치하게 수정
+                .andExpect(jsonPath("$.code").value(400))
+                .andExpect(jsonPath("$.data").doesNotExist());
+    }
+
+
+    @Test
     @DisplayName("로그아웃 - 정상 처리")
     public void logout() throws Exception {
         memberFixture.createMember(1);
