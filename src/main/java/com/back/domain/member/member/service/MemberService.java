@@ -72,7 +72,7 @@ public class MemberService {
 
     //[비회원] 모임 가입 메인 메소드
     @Transactional
-    public GuestResponse registerGuestMember(@Valid GuestRegisterDto dto) {
+    public GuestResponse registerGuestMember(@Valid GuestDto dto) {
         // 1. 해당 그룹 내 비회원 닉네임 중복 확인
         validateDuplicateGuest(dto);
 
@@ -121,18 +121,18 @@ public class MemberService {
     // ============================== [비회원] 임시 로그인 ==============================
 
     //비회원 임시 로그인 메인 메소드
-    public GuestResponse loginGuestMember(@Valid GuestLoginDto guestLoginDto) {
+    public GuestResponse loginGuestMember(@Valid GuestDto guestDto) {
         // 1. 닉네임과 클럽 ID로 비회원 조회 및 검증
-        Optional<Member> optionalMember = memberRepository.findByGuestNicknameInClub(guestLoginDto.nickname(), guestLoginDto.clubId());
+        Optional<Member> optionalMember = memberRepository.findByGuestNicknameInClub(guestDto.nickname(), guestDto.clubId());
         Member member = validateGuestLogin(optionalMember);
 
         // 2. 비밀번호 검증
-        validatePassword(guestLoginDto.password(), member);
+        validatePassword(guestDto.password(), member);
 
         // 3. Access Token 생성 및 응답
         String accessToken = authService.generateAccessToken(member);
-        String nickname = guestLoginDto.nickname();
-        Long clubId = guestLoginDto.clubId();
+        String nickname = guestDto.nickname();
+        Long clubId = guestDto.clubId();
 
         return new GuestResponse(nickname, accessToken, clubId);
     }
@@ -232,7 +232,7 @@ public class MemberService {
         }
     }
 
-    private void validateDuplicateGuest(@Valid GuestRegisterDto dto) {
+    private void validateDuplicateGuest(@Valid GuestDto dto) {
         // 1. 비회원용 닉네임 중복 확인
         String nickname = dto.nickname();
 
@@ -290,7 +290,7 @@ public class MemberService {
         return memberRepository.save(member);
     }
 
-    private Member createAndSaveGuestMember(@Valid GuestRegisterDto dto, String tag) {
+    private Member createAndSaveGuestMember(@Valid GuestDto dto, String tag) {
         // 1. 비밀번호 암호화
         BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
         String hashedPassword = encoder.encode(dto.password());

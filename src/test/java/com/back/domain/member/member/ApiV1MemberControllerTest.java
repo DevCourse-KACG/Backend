@@ -6,7 +6,7 @@ import com.back.domain.club.club.entity.Club;
 import com.back.domain.club.club.repository.ClubRepository;
 import com.back.domain.club.clubMember.entity.ClubMember;
 import com.back.domain.club.clubMember.repository.ClubMemberRepository;
-import com.back.domain.member.member.dto.request.GuestRegisterDto;
+import com.back.domain.member.member.dto.request.GuestDto;
 import com.back.domain.member.member.dto.request.MemberRegisterDto;
 import com.back.domain.member.member.dto.response.MemberDetailInfoResponse;
 import com.back.domain.member.member.entity.Member;
@@ -840,9 +840,9 @@ public class ApiV1MemberControllerTest {
     @DisplayName("비회원 닉네임 중복 확인 - 중복된 경우")
     void guestNicknameDuplicate_shouldReturnTrue() throws Exception {
         // given
-        GuestRegisterDto guestRegisterDto = new GuestRegisterDto("중복회원", "password", 5L);
+        GuestDto guestDto = new GuestDto("중복회원", "password", 5L);
 
-        memberService.registerGuestMember(guestRegisterDto);
+        memberService.registerGuestMember(guestDto);
 
         String duplicateNickname = "중복회원";
 
