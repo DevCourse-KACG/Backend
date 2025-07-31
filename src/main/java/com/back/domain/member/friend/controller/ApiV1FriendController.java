@@ -1,9 +1,9 @@
 package com.back.domain.member.friend.controller;
 
 import com.back.domain.member.friend.dto.FriendAddReqBody;
-import com.back.domain.member.friend.dto.FriendDelDto;
+import com.back.domain.member.friend.dto.FriendMemberDto;
+import com.back.domain.member.friend.dto.FriendWithBioDto;
 import com.back.domain.member.friend.dto.FriendDto;
-import com.back.domain.member.friend.dto.FriendsResDto;
 import com.back.domain.member.friend.service.FriendService;
 import com.back.global.rsData.RsData;
 import com.back.global.security.SecurityUser;
@@ -25,10 +25,10 @@ public class ApiV1FriendController {
 
     @GetMapping
     @Operation(summary = "내 친구 목록 조회")
-    public RsData<List<FriendsResDto>> getFriends(
+    public RsData<List<FriendDto>> getFriends(
             @AuthenticationPrincipal SecurityUser user
     ) {
-        List<FriendsResDto> friendDtoList = friendService.getFriends(user.getId());
+        List<FriendDto> friendDtoList = friendService.getFriends(user.getId());
 
         return RsData.of(
                 200,
@@ -39,61 +39,61 @@ public class ApiV1FriendController {
 
     @PostMapping
     @Operation(summary = "친구 추가")
-    public RsData<FriendDto> addFriend(
+    public RsData<FriendWithBioDto> addFriend(
             @AuthenticationPrincipal SecurityUser user,
             @Valid @RequestBody FriendAddReqBody reqBody
     ) {
-        FriendDto friendDto = friendService.addFriend(user.getId(), reqBody.friend_email());
+        FriendWithBioDto friendWithBioDto = friendService.addFriend(user.getId(), reqBody.friend_email());
 
         return RsData.of(
                 201,
                 "%s 에게 친구 추가 요청이 성공적으로 처리되었습니다.".formatted(reqBody.friend_email()),
-                friendDto
+                friendWithBioDto
         );
     }
 
     @PatchMapping("/{friendId}/accept")
     @Operation(summary = "친구 요청 수락")
-    public RsData<FriendDto> acceptFriend(
+    public RsData<FriendWithBioDto> acceptFriend(
             @AuthenticationPrincipal SecurityUser user,
             @PathVariable Long friendId
     ) {
-        FriendDto friendDto = friendService.acceptFriend(user.getId(), friendId);
+        FriendWithBioDto friendWithBioDto = friendService.acceptFriend(user.getId(), friendId);
 
         return RsData.of(
                 200,
-                "%s님과 친구가 되었습니다.".formatted(friendDto.friendNickname()),
-                friendDto
+                "%s님과 친구가 되었습니다.".formatted(friendWithBioDto.friendNickname()),
+                friendWithBioDto
         );
     }
 
     @PatchMapping("/{friendId}/reject")
     @Operation(summary = "친구 요청 거절")
-    public RsData<FriendDto> rejectFriend(
+    public RsData<FriendWithBioDto> rejectFriend(
             @AuthenticationPrincipal SecurityUser user,
             @PathVariable Long friendId
     ) {
-        FriendDto friendDto = friendService.rejectFriend(user.getId(), friendId);
+        FriendWithBioDto friendWithBioDto = friendService.rejectFriend(user.getId(), friendId);
 
         return RsData.of(
                 200,
-                "%s님의 친구 요청을 거절하였습니다.".formatted(friendDto.friendNickname()),
-                friendDto
+                "%s님의 친구 요청을 거절하였습니다.".formatted(friendWithBioDto.friendNickname()),
+                friendWithBioDto
         );
     }
 
     @DeleteMapping("/{friendId}")
     @Operation(summary = "친구 삭제")
-    public RsData<FriendDelDto> deleteFriend(
+    public RsData<FriendMemberDto> deleteFriend(
             @AuthenticationPrincipal SecurityUser user,
             @PathVariable Long friendId
     ) {
-        FriendDelDto friendDelDto = friendService.deleteFriend(user.getId(), friendId);
+        FriendMemberDto friendMemberDto = friendService.deleteFriend(user.getId(), friendId);
 
         return RsData.of(
                 200,
-                "%s님이 친구 목록에서 삭제되었습니다.".formatted(friendDelDto.friendNickname()),
-                friendDelDto
+                "%s님이 친구 목록에서 삭제되었습니다.".formatted(friendMemberDto.friendNickname()),
+                friendMemberDto
         );
     }
 }

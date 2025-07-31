@@ -1,8 +1,8 @@
 package com.back.domain.member.friend.service;
 
-import com.back.domain.member.friend.dto.FriendDelDto;
+import com.back.domain.member.friend.dto.FriendMemberDto;
+import com.back.domain.member.friend.dto.FriendWithBioDto;
 import com.back.domain.member.friend.dto.FriendDto;
-import com.back.domain.member.friend.dto.FriendsResDto;
 import com.back.domain.member.friend.entity.Friend;
 import com.back.domain.member.friend.entity.FriendStatus;
 import com.back.domain.member.friend.repository.FriendRepository;
@@ -30,10 +30,10 @@ public class FriendService {
 
     /**
      * 내 친구 목록을 조회하는 메서드
-     * @param memberId
+     * @param memberId 로그인 회원 아이디
      * @return List<FriendsResDto>
      */
-    public List<FriendsResDto> getFriends(Long memberId) {
+    public List<FriendDto> getFriends(Long memberId) {
         // 로그인 회원
         Member member = memberRepository.findWithFriendsById(memberId)
                 .orElseThrow(() -> new NoSuchElementException("회원이 존재하지 않습니다."));
@@ -45,19 +45,30 @@ public class FriendService {
                         member.getFriendshipsAsMember2().stream()  // member2로 등록된 친구 관계
                 )
                 .filter(friend -> friend.getStatus() == FriendStatus.ACCEPTED)     // 친구만
-                .map(friend -> new FriendsResDto(friend, friend.getOther(member))) // DTO 변환
-                .sorted(Comparator.comparing(FriendsResDto::friendNickname))             // 이름 오름차순
+                .map(friend -> new FriendDto(friend, friend.getOther(member))) // DTO 변환
+                .sorted(Comparator.comparing(FriendDto::friendNickname))             // 이름 오름차순
                 .collect(Collectors.toList());
     }
 
     /**
+     * 친구 엔티티를 아이디로 조회하는 메서드
+     * @param friendId
+     * @return Friend
+     */
+    public Friend getFriendById(Long friendId) {
+        return friendRepository
+                .findById(friendId)
+                .orElseThrow(() -> new NoSuchElementException("친구 요청이 존재하지 않습니다."));
+    }
+
+    /**
      * 친구 추가 요청을 처리하는 메서드
-     * @param memberId
-     * @param friendEmail
+     * @param memberId    로그인 회원 아이디
+     * @param friendEmail 친구(Member) 이메일
      * @return FriendDto
      */
     @Transactional
-    public FriendDto addFriend(Long memberId, String friendEmail) {
+    public FriendWithBioDto addFriend(Long memberId, String friendEmail) {
         // 로그인 회원(친구 요청을 보낸 회원)
         Member requester = getMember(memberId);
 
@@ -107,23 +118,28 @@ public class FriendService {
         // 친구 요청 저장
         friendRepository.save(friend);
 
-        return new FriendDto(friend, responder, responderInfo);
+        return new FriendWithBioDto(friend, responder);
     }
 
     /**
      * 친구 요청을 수락하는 메서드
-     * @param memberId
-     * @param friendId
+     * @param memberId 로그인 회원 아이디
+     * @param friendId 친구 엔티티 아이디
      * @return FriendDto
      */
     @Transactional
-    public FriendDto acceptFriend(Long memberId, Long friendId) {
+    public FriendWithBioDto acceptFriend(Long memberId, Long friendId) {
         // 로그인 회원(친구 요청을 받은 회원)
         Member me = getMember(memberId);
+
+        // 친구 엔티티
+        Friend friend = getFriendById(friendId);
+        // 친구 유효성 검사
+        validateFriend(friend, me);
+
         // 친구 요청을 보낸 회원
-        Member friendMember = getFriendMember(friendId);
-        // 친구 관계 확인
-        Friend friend = getFriend(me, friendMember);
+        Member friendMember = friend.getOther(me);
+        // 친구 회원 유효성 검사
 
         // 받는이가 아닌 요청자가 친구 요청을 수락하는 경우 예외 처리
         if (me.equals(friend.getRequestedBy())) {
@@ -138,23 +154,24 @@ public class FriendService {
         // 친구 요청 수락
         friend.setStatus(FriendStatus.ACCEPTED);
 
-        return new FriendDto(friend, friendMember, friendMember.getMemberInfo());
+        return new FriendWithBioDto(friend, friendMember);
     }
 
     /**
      * 친구 요청을 거절하는 메서드
-     * @param memberId
-     * @param friendId
+     * @param memberId 로그인 회원 아이디
+     * @param friendId 친구 엔티티 아이디
      * @return FriendDto
      */
     @Transactional
-    public FriendDto rejectFriend(Long memberId, Long friendId) {
+    public FriendWithBioDto rejectFriend(Long memberId, Long friendId) {
         // 로그인 회원(친구 요청을 받은 회원)
         Member me = getMember(memberId);
-        // 친구 요청을 보낸 회원
-        Member friendMember = getFriendMember(friendId);
-        // 친구 관계 확인
-        Friend friend = getFriend(me, friendMember);
+
+        // 친구 엔티티
+        Friend friend = getFriendById(friendId);
+        // 친구 유효성 검사
+        validateFriend(friend, me);
 
         // 받는이가 아닌 요청자가 친구 요청을 거절하는 경우 예외 처리
         if (me.equals(friend.getRequestedBy())) {
@@ -169,38 +186,43 @@ public class FriendService {
         // 친구 요청 거절
         friend.setStatus(FriendStatus.REJECTED);
 
-        return new FriendDto(friend, friendMember, friendMember.getMemberInfo());
+        // 친구 요청을 보낸 회원
+        Member friendMember = friend.getOther(me);
+        return new FriendWithBioDto(friend, friendMember);
     }
 
     /**
      * 친구 삭제를 처리하는 메서드
-     * @param memberId
-     * @param friendId
+     * @param memberId 로그인 회원 아이디
+     * @param friendId 친구 엔티티 아이디
      * @return FriendDelDto
      */
     @Transactional
-    public FriendDelDto deleteFriend(Long memberId, Long friendId) {
+    public FriendMemberDto deleteFriend(Long memberId, Long friendId) {
         // 로그인 회원
         Member me = getMember(memberId);
-        // 친구
-        Member friendMember = getFriendMember(friendId);
-        // 친구 관계 확인
-        Friend friend = getFriend(me, friendMember);
+
+        // 친구 엔티티
+        Friend friend = getFriendById(friendId);
+        // 친구 유효성 검사
+        validateFriend(friend, me);
 
         // 친구 요청의 상태가 ACCEPTED가 아닌 경우 예외 처리
         if (friend.getStatus() != FriendStatus.ACCEPTED) {
             throw new ServiceException(400, "친구 요청이 수락되지 않았습니다.");
         }
+        // 삭제하는 친구
+        Member friendMember = friend.getOther(me);
 
         // 친구 삭제
         friendRepository.delete(friend);
 
-        return new FriendDelDto(friendMember);
+        return new FriendMemberDto(friendMember);
     }
 
     /**
      * 회원 정보를 가져오는 메서드
-     * @param memberId
+     * @param memberId 로그인 회원 아이디
      * @return Member
      */
     private Member getMember(Long memberId) {
@@ -211,7 +233,7 @@ public class FriendService {
 
     /**
      * 친구 회원 정보를 가져오는 메서드
-     * @param friendId
+     * @param friendId 친구 회원 아이디
      * @return Member
      */
     private Member getFriendMember(Long friendId) {
@@ -232,13 +254,13 @@ public class FriendService {
     }
 
     /**
-     * 친구 관계를 가져오는 메서드
-     * @param me
-     * @param friendMember
-     * @return Friend
+     * 사용자의 친구 관계인지 확인
+     * @param friend 친구 엔티티
+     * @param me 로그인 회원
      */
-    private Friend getFriend(Member me, Member friendMember) {
-        return friendRepository.findByMembers(me, friendMember)
-                .orElseThrow(() -> new NoSuchElementException("친구 요청이 존재하지 않습니다."));
+    private void validateFriend(Friend friend, Member me) {
+        if (!friend.involves(me)) {
+            throw new ServiceException(400, "로그인한 회원과 관련된 친구가 아닙니다.");
+        }
     }
 }
