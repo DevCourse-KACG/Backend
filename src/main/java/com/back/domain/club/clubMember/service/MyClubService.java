@@ -154,4 +154,29 @@ public class MyClubService {
         // 클럽 목록을 MyClubList DTO로 반환
         return new MyClubControllerDtos.MyClubList(clubListItems);
     }
+
+    public Club cancelClubApplication(Long clubId) {
+        // 현재 로그인한 멤버 가져오기
+        Member user = memberService.findMemberById(rq.getActor().getId())
+                .orElseThrow(() -> new ServiceException(404, "멤버가 존재하지 않습니다."));
+
+        // 클럽 ID로 클럽 가져오기
+        Club club = clubService.getClubById(clubId)
+                .orElseThrow(() -> new ServiceException(404, "클럽이 존재하지 않습니다."));
+
+        // 클럽 멤버 정보 조회
+        ClubMember clubMember = clubMemberRepository.findByClubAndMember(club, user)
+                .orElseThrow(() -> new ServiceException(404, "클럽 멤버 정보가 존재하지 않습니다."));
+
+        // 클럽 멤버 상태 확인
+        if (clubMember.getState() != ClubMemberState.APPLYING) {
+            throw new ServiceException(400, "가입 신청 상태가 아닙니다.");
+        }
+
+        // 클럽에서 멤버 제거 및 클럽 멤버 삭제
+        club.removeClubMember(clubMember);
+        clubMemberRepository.delete(clubMember);
+
+        return club; // 클럽 반환
+    }
 }
