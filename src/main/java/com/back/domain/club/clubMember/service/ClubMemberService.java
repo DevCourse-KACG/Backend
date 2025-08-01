@@ -158,9 +158,6 @@ public class ClubMemberService {
      */
     @Transactional
     public void changeMemberRole(Long clubId, Long memberId, @NotBlank String role) {
-        // 권한 확인 : 현재 로그인한 유저가 클럽 호스트인지 확인
-        clubService.validateHostPermission(clubId);
-
         Club club = clubService.getClubById(clubId)
                 .orElseThrow(() -> new ServiceException(404, "클럽이 존재하지 않습니다."));
         Member member = memberService.findMemberById(memberId)
@@ -177,7 +174,6 @@ public class ClubMemberService {
         if (role.equalsIgnoreCase(ClubMemberRole.HOST.name())) {
             throw new ServiceException(400, "호스트 권한은 직접 부여할 수 없습니다.");
         }
-
 
         // 역할 변경
         clubMember.updateRole(ClubMemberRole.fromString(role.toUpperCase()));

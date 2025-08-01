@@ -52,10 +52,12 @@ public class ApiV1ClubMemberController {
 
     @PutMapping("/{memberId}/role")
     @Operation(summary = "클럽 멤버 권한 변경")
+    @PreAuthorize("@clubAuthorizationChecker.isActiveClubHost(#clubId, #user.id)")
     public RsData<Void> changeMemberRole(
             @PathVariable Long clubId,
             @PathVariable Long memberId,
-            @RequestBody @Valid ClubMemberDtos.ClubMemberRoleChangeRequest reqBody
+            @RequestBody @Valid ClubMemberDtos.ClubMemberRoleChangeRequest reqBody,
+            @AuthenticationPrincipal SecurityUser user
     ) {
         clubMemberService.changeMemberRole(clubId, memberId, reqBody.role());
 
