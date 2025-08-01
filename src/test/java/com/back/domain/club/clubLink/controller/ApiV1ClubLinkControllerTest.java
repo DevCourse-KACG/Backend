@@ -207,8 +207,7 @@ public class ApiV1ClubLinkControllerTest {
 
     @Test
     @DisplayName("초대 링크 가입 신청 성공 - 유효한 토큰, 미가입자")
-    @WithUserDetails("uny@test.com")
-        // 홍길동 로그인
+    @WithUserDetails("lcw@test.com")
     void applyToPrivateClub_success() throws Exception {
         Club club = clubRepository.findById(2L).orElseThrow(); // 2L: "친구 모임"
 
