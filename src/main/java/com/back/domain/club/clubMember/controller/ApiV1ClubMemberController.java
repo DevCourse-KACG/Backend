@@ -39,9 +39,11 @@ public class ApiV1ClubMemberController {
 
     @DeleteMapping("/{memberId}")
     @Operation(summary = "클럽에서 멤버 탈퇴")
+    @PreAuthorize("@clubAuthorizationChecker.isActiveClubHost(#clubId, #user.id) || @clubAuthorizationChecker.isSelf(#memberId, #user.id)")
     public RsData<Void> withdrawMemberFromClub(
             @PathVariable Long clubId,
-            @PathVariable Long memberId
+            @PathVariable Long memberId,
+            @AuthenticationPrincipal SecurityUser user
     ) {
         clubMemberService.withdrawMemberFromClub(clubId, memberId);
 

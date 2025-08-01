@@ -131,14 +131,9 @@ public class ClubMemberService {
      */
     @Transactional
     public void withdrawMemberFromClub(Long clubId, Long memberId) {
-        // 권한 확인 : 현재 로그인한 유저가 클럽 호스트인지 확인
-        // 또는 탈퇴할 멤버 본인인지 확인
+        // 호스트 본인이 탈퇴하려는 경우 예외 처리
         Member user = memberService.findMemberById(rq.getActor().getId())
                 .orElseThrow(() -> new ServiceException(404, "유저가 존재하지 않습니다."));
-        if(!clubMemberValidService.checkMemberRole(clubId, user.getId(), new ClubMemberRole[]{ClubMemberRole.HOST}) && !user.getId().equals(memberId))
-            throw new ServiceException(403, "권한이 없습니다.");
-
-        // 호스트 본인이 탈퇴하려는 경우 예외 처리
         if (user.getId().equals(memberId)) {
             throw new ServiceException(400, "호스트는 탈퇴할 수 없습니다.");
         }
@@ -148,7 +143,7 @@ public class ClubMemberService {
         Member member = memberService.findMemberById(memberId)
                 .orElseThrow(() -> new ServiceException(404, "멤버가 존재하지 않습니다."));
         ClubMember clubMember = clubMemberRepository.findByClubAndMember(club, member)
-                .orElseThrow(() -> new ServiceException(404, "멤버가 존재하지 않습니다."));
+                .orElseThrow(() -> new ServiceException(404, "클럽 멤버가 존재하지 않습니다."));
 
         // 클럽에서 멤버 탈퇴
         clubMember.updateState(ClubMemberState.WITHDRAWN);
