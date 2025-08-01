@@ -15,7 +15,7 @@ import org.springframework.web.bind.annotation.*;
 @RequiredArgsConstructor
 public class ApiV1ClubLinkController {
     private final Rq rq;
-    private final ClubLinkService  clubLinkService;
+    private final ClubLinkService clubLinkService;
 
     @PostMapping("/{clubId}/members/invitation-link")
     @Operation(summary = "클럽 초대 링크 생성")
@@ -29,10 +29,10 @@ public class ApiV1ClubLinkController {
 
     @GetMapping("/{clubId}/members/invitation-link")
     @Operation(summary = "클럽 초대 링크 반환")
-    public RsData<ClubLinkDtos.CreateClubLinkResponse> getClubLink(@PathVariable @Positive Long clubId) {
+    public RsData<ClubLinkDtos.CreateClubLinkResponse> getExistingClubLink(@PathVariable @Positive Long clubId) {
 
         Member user = rq.getActor();
-        ClubLinkDtos.CreateClubLinkResponse response = clubLinkService.getClubLink(user, clubId);
+        ClubLinkDtos.CreateClubLinkResponse response = clubLinkService.getExistingClubLink(user, clubId);
 
         return new RsData<>(200, "클럽 초대 링크가 반환되었습니다.", response);
     }
