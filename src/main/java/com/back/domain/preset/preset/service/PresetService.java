@@ -6,15 +6,20 @@ import com.back.domain.preset.preset.dto.PresetWriteReqDto;
 import com.back.domain.preset.preset.entity.Preset;
 import com.back.domain.preset.preset.entity.PresetItem;
 import com.back.domain.preset.preset.repository.PresetRepository;
+import com.back.global.enums.ClubCategory;
 import com.back.global.exception.ServiceException;
 import com.back.global.rq.Rq;
 import com.back.global.rsData.RsData;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
-import java.util.Optional;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -22,6 +27,48 @@ import java.util.stream.Collectors;
 public class PresetService {
   private final PresetRepository presetRepository;
   private final Rq rq;
+
+  private Map<ClubCategory, List<PresetDto>> presetsByCategory;
+
+  /**
+   * 플랫폼 프리셋 세팅
+   * @throws IOException
+   */
+  @PostConstruct
+  public void init() throws IOException {
+    ObjectMapper objectMapper = new ObjectMapper();
+
+    // JSON 파일에서 읽어온 데이터를 임시로 저장할 맵
+    Map<String, List<PresetDto>> tempMap;
+
+    // JSON 파일 읽음
+    try (InputStream is = getClass().getResourceAsStream("/presets/preset-data.json")) {
+      // resource 폴더에 있는 JSON 파일을 읽어서 tempMap에 저장
+      // TypeReference를 사용하여 Map<String, List<PresetDto>> 역직렬화
+      tempMap = objectMapper.readValue(is, new TypeReference<Map<String, List<PresetDto>>>() {});
+    } catch (IOException e) {
+      throw new ServiceException(500, "플랫폼의 프리셋 불러오기에 실패했습니다.");
+    }
+
+    // ClubCategory Enum을 키로 사용하는 Map 세팅
+    presetsByCategory = new EnumMap<>(ClubCategory.class);
+    for (Map.Entry<String, List<PresetDto>> entry : tempMap.entrySet()) {
+      // 카테고리 이름 String -> ClubCategory로 변환
+      ClubCategory key = ClubCategory.fromString(entry.getKey());
+      presetsByCategory.put(key, entry.getValue());
+    }
+  }
+
+  /**
+   * 모임 카테고리별 프리셋 목록
+   * @param category
+   * @return List<PresetDto> 특정 모임 카테고리의 프리셋 목록
+   */
+  public RsData<List<PresetDto>> getPresetsByCategory(ClubCategory category) {
+    List<PresetDto> presetDtos = presetsByCategory.getOrDefault(category, Collections.emptyList());
+
+    return RsData.of(200, "프리셋 목록 조회 성공", presetDtos);
+  }
 
   @Transactional
   public RsData<PresetDto> write(PresetWriteReqDto presetWriteReqDto) {

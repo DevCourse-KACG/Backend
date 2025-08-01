@@ -10,6 +10,7 @@ public enum ClubCategory {
     CULTURE("문화"),
     FOOD("음식"),
     PARTY("파티"),
+    WORK("업무"),
     OTHER("기타");
 
     private final String description;
