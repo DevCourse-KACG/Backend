@@ -65,7 +65,7 @@ public class ApiV1CheckListControllerTest {
 
   @BeforeEach
   void setUp() {
-    member = memberRepository.findById(1L).isPresent() ? memberRepository.findById(1L).get() : null;
+    member = memberRepository.findById(1L).orElseThrow(() -> new IllegalStateException("테스트용 멤버(ID: 1)가 존재하지 않습니다"));
 
     clubMember = ClubMember.builder()
         .member(member)

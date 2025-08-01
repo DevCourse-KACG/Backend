@@ -49,7 +49,7 @@ public class ApiV1PresetControllerTest {
   private Preset preset;
   @BeforeEach
   void setUp() {
-    member = memberRepository.findById(1L).isPresent() ? memberRepository.findById(1L).get() : null;
+    member = memberRepository.findById(1L).orElseThrow(() -> new IllegalStateException("테스트용 멤버(ID: 1)가 존재하지 않습니다"));
 
 
 
@@ -245,7 +245,7 @@ public class ApiV1PresetControllerTest {
   @WithUserDetails(value = "chs4s@test.com")
   void t9() throws Exception {
     // 먼저 프리셋을 생성합니다.
-    long presetId = member.getPresets().getFirst().getId();
+    long presetId = preset.getId();
 
     // 생성된 프리셋의 ID를 사용하여 세부 정보를 조회합니다.
     mockMvc.perform(
