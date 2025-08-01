@@ -66,9 +66,11 @@ public class ApiV1ClubMemberController {
 
     @GetMapping
     @Operation(summary = "클럽 멤버 목록 조회")
+    @PreAuthorize("@clubAuthorizationChecker.isClubMember(#clubId, #user.id)")
     public RsData<ClubMemberDtos.ClubMemberResponse> getClubMembers(
             @PathVariable Long clubId,
-            @RequestParam(required = false) String state // Optional: 상태 필터링
+            @RequestParam(required = false) String state, // Optional: 상태 필터링
+            @AuthenticationPrincipal SecurityUser user
     ) {
         ClubMemberDtos.ClubMemberResponse clubMemberResponse = clubMemberService.getClubMembers(clubId, state);
 

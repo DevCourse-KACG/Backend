@@ -192,12 +192,6 @@ public class ClubMemberService {
         Club club = clubService.getClubById(clubId)
                 .orElseThrow(() -> new ServiceException(404, "클럽이 존재하지 않습니다."));
 
-        // 권한 확인 : 현재 로그인한 유저가 클럽 멤버인지 확인
-        Member user = rq.getActor();
-        if(!clubMemberValidService.isClubMember(clubId, user.getId()))
-            throw new ServiceException(403, "권한이 없습니다.");
-
-
         // 클럽멤버 목록 반환
         List<ClubMember> clubMembers;
         if(state != null){

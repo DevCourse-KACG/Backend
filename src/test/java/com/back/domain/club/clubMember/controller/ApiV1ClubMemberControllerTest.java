@@ -5,7 +5,6 @@ import com.back.domain.club.club.service.ClubService;
 import com.back.domain.club.clubMember.entity.ClubMember;
 import com.back.domain.club.clubMember.repository.ClubMemberRepository;
 import com.back.domain.club.clubMember.service.ClubMemberService;
-import com.back.global.enums.MemberType;
 import com.back.domain.member.member.entity.Member;
 import com.back.domain.member.member.service.MemberService;
 import com.back.global.aws.S3Service;
@@ -816,53 +815,20 @@ class ApiV1ClubMemberControllerTest {
     void getClubMembers() throws Exception {
         // given
         // 테스트 클럽 생성
-        Club club = clubService.createClub(
-                Club.builder()
-                        .name("테스트 그룹")
-                        .bio("테스트 그룹 설명")
-                        .category(ClubCategory.STUDY)
-                        .mainSpot("서울")
-                        .maximumCapacity(10)
-                        .eventType(EventType.ONE_TIME)
-                        .startDate(LocalDate.of(2023, 10, 1))
-                        .endDate(LocalDate.of(2023, 10, 31))
-                        .isPublic(true)
-                        .leaderId(1L)
-                        .build()
-        );
-        // 클럽에 호스트 멤버 추가
+        Long clubId = 1L; // 테스트를 위해 클럽 ID를 1로 고정
+        Club club = clubService.findClubById(clubId)
+                .orElseThrow(() -> new IllegalStateException("클럽이 존재하지 않습니다."));
+
         Member hostMember = memberService.findMemberById(1L)
                 .orElseThrow(() -> new IllegalStateException("호스트 멤버가 존재하지 않습니다."));
-        clubMemberService.addMemberToClub(
-                club.getId(),
-                hostMember,
-                ClubMemberRole.HOST
-        );
+        // 클럽 멤버들 (testInitData의 멤버 사용)
+        Member member1 = memberService.findMemberById(2L)
+                .orElseThrow(() -> new IllegalStateException("멤버가 존재하지 않습니다."));
+        Member member2 = memberService.findMemberById(3L)
+                .orElseThrow(() -> new IllegalStateException("멤버가 존재하지 않습니다."));
 
-        // 추가할 멤버 (testInitData의 멤버 사용)
-        Member member1 = memberService.findMemberById(2L).orElseThrow(
-                () -> new IllegalStateException("멤버가 존재하지 않습니다.")
-        );
-
-        Member member2 = memberService.findMemberById(3L).orElseThrow(
-                () -> new IllegalStateException("멤버가 존재하지 않습니다.")
-        );
-
-        // 비회원 멤버 추가
-        Member nonMember = Member.builder()
-                .id(4L)
-                .nickname("비회원")
-                .password("password")
-                .memberType(MemberType.GUEST)
-                .tag("123456")
-                .build();
-
-        // 클럽에 멤버 추가
-        ClubMember clubMember1 = clubMemberService.addMemberToClub(club.getId(), member1, ClubMemberRole.PARTICIPANT);
-        ClubMember clubMember2 = clubMemberService.addMemberToClub(club.getId(), member2, ClubMemberRole.MANAGER);
-        ClubMember nonMemberClubMember = clubMemberService.addMemberToClub(club.getId(), nonMember, ClubMemberRole.PARTICIPANT);
-
-        assertThat(club.getClubMembers().size()).isEqualTo(4); // 클럽에 멤버가 4명 추가되었는지 확인
+        ClubMember clubMember1 = club.getClubMembers().get(1);
+        ClubMember clubMember2 = club.getClubMembers().get(2);
 
         // when
         ResultActions resultActions = mvc.perform(
@@ -878,7 +844,7 @@ class ApiV1ClubMemberControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value(200))
                 .andExpect(jsonPath("$.message").value("클럽 멤버 목록이 조회됐습니다."))
-                .andExpect(jsonPath("$.data.members.length()").value(4)) // 멤버가 4명인지 확인
+                .andExpect(jsonPath("$.data.members.length()").value(3)) // 멤버가 4명인지 확인
 
                 .andExpect(jsonPath("$.data.members[0].memberId").value(hostMember.getId()))
                 .andExpect(jsonPath("$.data.members[0].nickname").value(hostMember.getNickname()))
@@ -893,7 +859,7 @@ class ApiV1ClubMemberControllerTest {
                 .andExpect(jsonPath("$.data.members[1].memberId").value(member1.getId()))
                 .andExpect(jsonPath("$.data.members[1].nickname").value(member1.getNickname()))
                 .andExpect(jsonPath("$.data.members[1].tag").value(member1.getTag()))
-                .andExpect(jsonPath("$.data.members[1].role").value(ClubMemberRole.PARTICIPANT.name()))
+                .andExpect(jsonPath("$.data.members[1].role").value(clubMember1.getRole().name()))
                 .andExpect(jsonPath("$.data.members[1].email").value(member1.getEmail()))
                 .andExpect(jsonPath("$.data.members[1].memberType").value(member1.getMemberType().name()))
                 .andExpect(jsonPath("$.data.members[1].profileImageUrl").value(""))
@@ -903,21 +869,11 @@ class ApiV1ClubMemberControllerTest {
                 .andExpect(jsonPath("$.data.members[2].memberId").value(member2.getId()))
                 .andExpect(jsonPath("$.data.members[2].nickname").value(member2.getNickname()))
                 .andExpect(jsonPath("$.data.members[2].tag").value(member2.getTag()))
-                .andExpect(jsonPath("$.data.members[2].role").value(ClubMemberRole.MANAGER.name()))
+                .andExpect(jsonPath("$.data.members[2].role").value(clubMember2.getRole().name()))
                 .andExpect(jsonPath("$.data.members[2].email").value(member2.getEmail()))
                 .andExpect(jsonPath("$.data.members[2].memberType").value(member2.getMemberType().name()))
                 .andExpect(jsonPath("$.data.members[2].profileImageUrl").value(""))
-                .andExpect(jsonPath("$.data.members[2].state").value(clubMember2.getState().name()))
-
-                .andExpect(jsonPath("$.data.members[3].clubMemberId").value(nonMemberClubMember.getId()))
-                .andExpect(jsonPath("$.data.members[3].memberId").value(nonMember.getId()))
-                .andExpect(jsonPath("$.data.members[3].nickname").value(nonMember.getNickname()))
-                .andExpect(jsonPath("$.data.members[3].tag").value(nonMember.getTag()))
-                .andExpect(jsonPath("$.data.members[3].role").value(ClubMemberRole.PARTICIPANT.name()))
-                .andExpect(jsonPath("$.data.members[3].email").value("")) // 비회원은 이메일이 없으므로 빈 문자열
-                .andExpect(jsonPath("$.data.members[3].memberType").value(nonMember.getMemberType().name()))
-                .andExpect(jsonPath("$.data.members[3].profileImageUrl").value("")) // 비회원은 이미지 URL이 없으므로 빈 문자열
-                .andExpect(jsonPath("$.data.members[3].state").value(nonMemberClubMember.getState().name())); // 비회원의 상태 확인
+                .andExpect(jsonPath("$.data.members[2].state").value(clubMember2.getState().name()));
     }
 
     @Test
@@ -926,57 +882,24 @@ class ApiV1ClubMemberControllerTest {
     void getClubMembers_stateFiltered() throws Exception {
         // given
         // 테스트 클럽 생성
-        Club club = clubService.createClub(
-                Club.builder()
-                        .name("테스트 그룹")
-                        .bio("테스트 그룹 설명")
-                        .category(ClubCategory.STUDY)
-                        .mainSpot("서울")
-                        .maximumCapacity(10)
-                        .eventType(EventType.ONE_TIME)
-                        .startDate(LocalDate.of(2023, 10, 1))
-                        .endDate(LocalDate.of(2023, 10, 31))
-                        .isPublic(true)
-                        .leaderId(1L)
-                        .build()
-        );
-        // 클럽에 호스트 멤버 추가
-        Member hostMember = memberService.findMemberById(1L)
-                .orElseThrow(() -> new IllegalStateException("호스트 멤버가 존재하지 않습니다."));
-        clubMemberService.addMemberToClub(
-                club.getId(),
-                hostMember,
-                ClubMemberRole.HOST
-        );
+        Long clubId = 1L; // 테스트를 위해 클럽 ID를 1로 고정
+        Club club = clubService.findClubById(clubId)
+                .orElseThrow(() -> new IllegalStateException("클럽이 존재하지 않습니다."));
 
-        // 추가할 멤버 (testInitData의 멤버 사용)
+
         Member member1 = memberService.findMemberById(2L).orElseThrow(
                 () -> new IllegalStateException("멤버가 존재하지 않습니다.")
         );
-
         Member member2 = memberService.findMemberById(3L).orElseThrow(
                 () -> new IllegalStateException("멤버가 존재하지 않습니다.")
         );
 
-        // 비회원 멤버 추가
-        Member nonMember = Member.builder()
-                .id(4L)
-                .nickname("비회원")
-                .password("password")
-                .memberType(MemberType.GUEST)
-                .tag("123456")
-                .build();
-
-        // 클럽에 멤버 추가
-        ClubMember clubMember1 = clubMemberService.addMemberToClub(club.getId(), member1, ClubMemberRole.PARTICIPANT);
-        ClubMember clubMember2 = clubMemberService.addMemberToClub(club.getId(), member2, ClubMemberRole.MANAGER);
-        ClubMember nonMemberClubMember = clubMemberService.addMemberToClub(club.getId(), nonMember, ClubMemberRole.PARTICIPANT);
-
-        assertThat(club.getClubMembers().size()).isEqualTo(4); // 클럽에 멤버가 4명 추가되었는지 확인
+        ClubMember clubMember1 = club.getClubMembers().get(1); // member1의 클럽 멤버
+        ClubMember clubMember2 = club.getClubMembers().get(2); // member2의 클럽 멤버
 
         // 클럽 멤버의 상태 변경
-        clubMember2.updateState(ClubMemberState.JOINING); // member2를 JOINING 상태로 변경
-        clubMemberRepository.save(clubMember2); // 상태 변경된 클럽 멤버 저장
+        clubMember1.updateState(ClubMemberState.INVITED); // member2를 JOINING 상태로 변경
+        clubMemberRepository.saveAndFlush(clubMember1); // 상태 변경된 클럽 멤버 저장
 
         // when
         ResultActions resultActions = mvc.perform(
@@ -992,36 +915,16 @@ class ApiV1ClubMemberControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value(200))
                 .andExpect(jsonPath("$.message").value("클럽 멤버 목록이 조회됐습니다."))
-                .andExpect(jsonPath("$.data.members.length()").value(3)) // 멤버가 3명인지 확인
+                .andExpect(jsonPath("$.data.members.length()").value(1)) // 멤버가 3명인지 확인
 
-                .andExpect(jsonPath("$.data.members[0].memberId").value(hostMember.getId()))
-                .andExpect(jsonPath("$.data.members[0].nickname").value(hostMember.getNickname()))
-                .andExpect(jsonPath("$.data.members[0].tag").value(hostMember.getTag()))
-                .andExpect(jsonPath("$.data.members[0].role").value(ClubMemberRole.HOST.name()))
-                .andExpect(jsonPath("$.data.members[0].email").value(hostMember.getEmail()))
-                .andExpect(jsonPath("$.data.members[0].memberType").value(hostMember.getMemberType().name()))
-                .andExpect(jsonPath("$.data.members[0].profileImageUrl").value("")) // 호스트는 이미지 URL이 없으므로 빈 문자열
-                .andExpect(jsonPath("$.data.members[0].state").value(club.getClubMembers().get(0).getState().name())) // 호스트의 상태 확인
-
-                .andExpect(jsonPath("$.data.members[1].clubMemberId").value(clubMember1.getId()))
-                .andExpect(jsonPath("$.data.members[1].memberId").value(member1.getId()))
-                .andExpect(jsonPath("$.data.members[1].nickname").value(member1.getNickname()))
-                .andExpect(jsonPath("$.data.members[1].tag").value(member1.getTag()))
-                .andExpect(jsonPath("$.data.members[1].role").value(ClubMemberRole.PARTICIPANT.name()))
-                .andExpect(jsonPath("$.data.members[1].email").value(member1.getEmail()))
-                .andExpect(jsonPath("$.data.members[1].memberType").value(member1.getMemberType().name()))
-                .andExpect(jsonPath("$.data.members[1].profileImageUrl").value(""))
-                .andExpect(jsonPath("$.data.members[1].state").value(clubMember1.getState().name()))
-
-                .andExpect(jsonPath("$.data.members[2].clubMemberId").value(nonMemberClubMember.getId()))
-                .andExpect(jsonPath("$.data.members[2].memberId").value(nonMember.getId()))
-                .andExpect(jsonPath("$.data.members[2].nickname").value(nonMember.getNickname()))
-                .andExpect(jsonPath("$.data.members[2].tag").value(nonMember.getTag()))
-                .andExpect(jsonPath("$.data.members[2].role").value(ClubMemberRole.PARTICIPANT.name()))
-                .andExpect(jsonPath("$.data.members[2].email").value("")) // 비회원은 이메일이 없으므로 빈 문자열
-                .andExpect(jsonPath("$.data.members[2].memberType").value(nonMember.getMemberType().name()))
-                .andExpect(jsonPath("$.data.members[2].profileImageUrl").value("")) // 비회원은 이미지 URL이 없으므로 빈 문자열
-                .andExpect(jsonPath("$.data.members[2].state").value(nonMemberClubMember.getState().name())); // 비회원의 상태 확인
+                .andExpect(jsonPath("$.data.members[0].memberId").value(member1.getId()))
+                .andExpect(jsonPath("$.data.members[0].nickname").value(member1.getNickname()))
+                .andExpect(jsonPath("$.data.members[0].tag").value(member1.getTag()))
+                .andExpect(jsonPath("$.data.members[0].role").value(clubMember1.getRole().name()))
+                .andExpect(jsonPath("$.data.members[0].email").value(member1.getEmail()))
+                .andExpect(jsonPath("$.data.members[0].memberType").value(member1.getMemberType().name()))
+                .andExpect(jsonPath("$.data.members[0].profileImageUrl").value("")) // 이미지 URL이 없으므로 빈 문자열
+                .andExpect(jsonPath("$.data.members[0].state").value(clubMember1.getState().name())); // 호스트의 상태 확인
     }
 
     @Test
@@ -1044,7 +947,7 @@ class ApiV1ClubMemberControllerTest {
                 .andExpect(handler().methodName("getClubMembers"))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.code").value(404))
-                .andExpect(jsonPath("$.message").value("클럽이 존재하지 않습니다."));
+                .andExpect(jsonPath("$.message").value("모임을 찾을 수 없습니다."));
     }
 
     @Test
@@ -1053,29 +956,9 @@ class ApiV1ClubMemberControllerTest {
     void getClubMembers_InvalidStateFilter() throws Exception {
         // given
         // 테스트 클럽 생성
-        Club club = clubService.createClub(
-                Club.builder()
-                        .name("테스트 그룹")
-                        .bio("테스트 그룹 설명")
-                        .category(ClubCategory.STUDY)
-                        .mainSpot("서울")
-                        .maximumCapacity(10)
-                        .eventType(EventType.ONE_TIME)
-                        .startDate(LocalDate.of(2023, 10, 1))
-                        .endDate(LocalDate.of(2023, 10, 31))
-                        .isPublic(true)
-                        .leaderId(1L)
-                        .build()
-        );
-
-        // 클럽에 호스트 멤버 추가
-        Member hostMember = memberService.findMemberById(1L)
-                .orElseThrow(() -> new IllegalStateException("호스트 멤버가 존재하지 않습니다."));
-        clubMemberService.addMemberToClub(
-                club.getId(),
-                hostMember,
-                ClubMemberRole.HOST
-        );
+        Long clubId = 1L; // 테스트를 위해 클럽 ID를 1로 고정
+        Club club = clubService.findClubById(clubId)
+                .orElseThrow(() -> new IllegalStateException("클럽이 존재하지 않습니다."));
 
         // when
         ResultActions resultActions = mvc.perform(
@@ -1099,43 +982,30 @@ class ApiV1ClubMemberControllerTest {
     void getClubMembers_WithdrawStateFilter() throws Exception {
         // given
         // 테스트 클럽 생성
-        Club club = clubService.createClub(
-                Club.builder()
-                        .name("테스트 그룹")
-                        .bio("테스트 그룹 설명")
-                        .category(ClubCategory.STUDY)
-                        .mainSpot("서울")
-                        .maximumCapacity(10)
-                        .eventType(EventType.ONE_TIME)
-                        .startDate(LocalDate.of(2023, 10, 1))
-                        .endDate(LocalDate.of(2023, 10, 31))
-                        .isPublic(true)
-                        .leaderId(1L)
-                        .build()
-        );
+        Long clubId = 1L; // 테스트를 위해 클럽 ID를 1로 고정
+        Club club = clubService.findClubById(clubId)
+                .orElseThrow(() -> new IllegalStateException("클럽이 존재하지 않습니다."));
 
-        // 클럽에 호스트 멤버 추가
         Member hostMember = memberService.findMemberById(1L)
                 .orElseThrow(() -> new IllegalStateException("호스트 멤버가 존재하지 않습니다."));
-        clubMemberService.addMemberToClub(
-                club.getId(),
-                hostMember,
-                ClubMemberRole.HOST
-        );
 
-        // 추가할 멤버 (testInitData의 멤버 사용)
         Member member1 = memberService.findMemberById(2L).orElseThrow(
                 () -> new IllegalStateException("멤버가 존재하지 않습니다.")
         );
 
-        // 클럽에 멤버 추가
-        ClubMember clubMember1 = clubMemberService.addMemberToClub(club.getId(), member1, ClubMemberRole.PARTICIPANT);
+        Member member2 = memberService.findMemberById(3L).orElseThrow(
+                () -> new IllegalStateException("멤버가 존재하지 않습니다.")
+        );
+
+        ClubMember clubMember1 = club.getClubMembers().get(1); // member1의 클럽 멤버
+        ClubMember clubMember2 = club.getClubMembers().get(2); // member2의 클럽 멤버
+
 
         // 클럽 멤버 상태를 WITHDRAWN으로 변경
         clubMember1.updateState(ClubMemberState.WITHDRAWN);
-        clubMemberRepository.save(clubMember1); // 상태 변경된 클럽 멤버 저장
+        clubMemberRepository.saveAndFlush(clubMember1); // 상태 변경된 클럽 멤버 저장
 
-        assertThat(club.getClubMembers().size()).isEqualTo(2); // 클럽에 멤버가 2명 추가되었는지 확인
+        assertThat(club.getClubMembers().size()).isEqualTo(3); // 클럽에 멤버가 2명 추가되었는지 확인
 
         // when
         ResultActions resultActions = mvc.perform(
@@ -1151,7 +1021,7 @@ class ApiV1ClubMemberControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value(200))
                 .andExpect(jsonPath("$.message").value("클럽 멤버 목록이 조회됐습니다."))
-                .andExpect(jsonPath("$.data.members.length()").value(1)) // 멤버가 1명(Host)인지 확인
+                .andExpect(jsonPath("$.data.members.length()").value(2)) // 멤버가 1명(Host)인지 확인
                 .andExpect(jsonPath("$.data.members[0].memberId").value(hostMember.getId()))
                 .andExpect(jsonPath("$.data.members[0].nickname").value(hostMember.getNickname()))
                 .andExpect(jsonPath("$.data.members[0].tag").value(hostMember.getTag()))
@@ -1159,7 +1029,17 @@ class ApiV1ClubMemberControllerTest {
                 .andExpect(jsonPath("$.data.members[0].email").value(hostMember.getEmail()))
                 .andExpect(jsonPath("$.data.members[0].memberType").value(hostMember.getMemberType().name()))
                 .andExpect(jsonPath("$.data.members[0].profileImageUrl").value("")) // 호스트는 이미지 URL이 없으므로 빈 문자열
-                .andExpect(jsonPath("$.data.members[0].state").value(club.getClubMembers().get(0).getState().name())); // 호스트의 상태 확인
+                .andExpect(jsonPath("$.data.members[0].state").value(club.getClubMembers().get(0).getState().name())) // 호스트의 상태 확인
+
+                .andExpect(jsonPath("$.data.members[1].clubMemberId").value(clubMember2.getId()))
+                .andExpect(jsonPath("$.data.members[1].memberId").value(member2.getId()))
+                .andExpect(jsonPath("$.data.members[1].nickname").value(member2.getNickname()))
+                .andExpect(jsonPath("$.data.members[1].tag").value(member2.getTag()))
+                .andExpect(jsonPath("$.data.members[1].role").value(clubMember2.getRole().name()))
+                .andExpect(jsonPath("$.data.members[1].email").value(member2.getEmail()))
+                .andExpect(jsonPath("$.data.members[1].memberType").value(member2.getMemberType().name()))
+                .andExpect(jsonPath("$.data.members[1].profileImageUrl").value(""))
+                .andExpect(jsonPath("$.data.members[1].state").value(clubMember2.getState().name())); // 참여자의 상태 확인
     }
 
     @Test
@@ -1547,7 +1427,6 @@ class ApiV1ClubMemberControllerTest {
                 .andExpect(jsonPath("$.code").value(404))
                 .andExpect(jsonPath("$.message").value("클럽이 존재하지 않습니다."));
     }
-
 
     @Test
     @DisplayName("가입 신청 거절")
