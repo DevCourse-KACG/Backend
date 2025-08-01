@@ -747,7 +747,7 @@ class ApiV1MyClubControllerTest {
 
     @Test
     @DisplayName("내 클럽 목록 반환")
-    @WithUserDetails(value = "hgd222@test.com") // 1번 멤버로 로그인
+    @WithUserDetails(value = "uny@test.com") // 6번 멤버로 로그인
     public void getMyClubs() throws Exception {
         // given
         Club club1 = clubService.createClub(
@@ -798,7 +798,7 @@ class ApiV1MyClubControllerTest {
         );
 
         // 클럽에 멤버를 초대 (1번을 초대)
-        Member invitedMember = memberService.findMemberById(1L)
+        Member invitedMember = memberService.findMemberById(6L)
                 .orElseThrow(() -> new IllegalStateException("초대된 멤버가 존재하지 않습니다."));
 
         clubMemberService.addMemberToClub(
@@ -856,7 +856,7 @@ class ApiV1MyClubControllerTest {
 
     @Test
     @DisplayName("내 클럽 목록 반환 - 클럽이 없는 경우 빈 목록 반환")
-    @WithUserDetails(value = "hgd222@test.com") // 1번 멤버로 로그인
+    @WithUserDetails(value ="uny@test.com") // 6번 멤버로 로그인
     public void getMyClubs_EmptyList() throws Exception {
         // when
         ResultActions resultActions = mvc.perform(
