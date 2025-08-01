@@ -1514,5 +1514,7 @@ class ApiV1ClubMemberControllerTest {
                 .andExpect(jsonPath("$.data.members[0].profileImageUrl").value("")) // 호스트는 이미지 URL이 없으므로 빈 문자열
                 .andExpect(jsonPath("$.data.members[0].state").value(club.getClubMembers().get(0).getState().name())); // 호스트의 상태 확인
     }
+
+
 }
 
