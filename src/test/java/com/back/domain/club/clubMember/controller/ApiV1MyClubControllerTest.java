@@ -353,9 +353,9 @@ class ApiV1MyClubControllerTest {
     }
 
     @Test
-    @DisplayName("모임 가입 신청")
+    @DisplayName("공개 모임 가입 신청")
     @WithUserDetails(value = "hgd222@test.com") // 1번 멤버로 로그인
-    public void applyForClub() throws Exception {
+    public void applyForPublicClub() throws Exception {
         // given
         Club club = clubService.createClub(
                 Club.builder()
@@ -390,7 +390,7 @@ class ApiV1MyClubControllerTest {
         // then
         resultActions
                 .andExpect(handler().handlerType(ApiV1MyClubController.class))
-                .andExpect(handler().methodName("applyForClub"))
+                .andExpect(handler().methodName("applyForPublicClub"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value(200))
                 .andExpect(jsonPath("$.message").value("클럽 가입 신청이 완료되었습니다."))
@@ -404,9 +404,9 @@ class ApiV1MyClubControllerTest {
     }
 
     @Test
-    @DisplayName("모임 가입 신청 - 이미 가입 중인 경우 예외 발생")
+    @DisplayName("공개 모임 가입 신청 - 이미 가입 중인 경우 예외 발생")
     @WithUserDetails(value = "hgd222@test.com") // 1번 멤버로 로그인
-    public void applyForClub_AlreadyJoined() throws Exception {
+    public void applyForPublicClub_AlreadyJoined() throws Exception {
         // given
         Club club = clubService.createClub(
                 Club.builder()
@@ -453,16 +453,16 @@ class ApiV1MyClubControllerTest {
         // then
         resultActions
                 .andExpect(handler().handlerType(ApiV1MyClubController.class))
-                .andExpect(handler().methodName("applyForClub"))
+                .andExpect(handler().methodName("applyForPublicClub"))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.code").value(400))
                 .andExpect(jsonPath("$.message").value("이미 가입 상태입니다."));
     }
 
     @Test
-    @DisplayName("모임 가입 신청 - 이미 가입 신청 중인 경우 예외 발생")
+    @DisplayName("공개 모임 가입 신청 - 이미 가입 신청 중인 경우 예외 발생")
     @WithUserDetails(value = "hgd222@test.com") // 1번 멤버로 로그인
-    public void applyForClub_AlreadyApplying() throws Exception {
+    public void applyForPublicClub_AlreadyApplying() throws Exception {
         // given
         Club club = clubService.createClub(
                 Club.builder()
@@ -509,16 +509,16 @@ class ApiV1MyClubControllerTest {
         // then
         resultActions
                 .andExpect(handler().handlerType(ApiV1MyClubController.class))
-                .andExpect(handler().methodName("applyForClub"))
+                .andExpect(handler().methodName("applyForPublicClub"))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.code").value(400))
                 .andExpect(jsonPath("$.message").value("이미 가입 신청 상태입니다."));
     }
 
     @Test
-    @DisplayName("가입 신청 - 초대된 상태일때 에러")
+    @DisplayName("공개 모임 가입 신청 - 초대된 상태일때 에러")
     @WithUserDetails(value = "hgd222@test.com") // 1번 멤버로 로그인
-    public void applyForClub_InvitedState() throws Exception {
+    public void applyForPublicClub_InvitedState() throws Exception {
         // given
         Club club = clubService.createClub(
                 Club.builder()
@@ -565,16 +565,16 @@ class ApiV1MyClubControllerTest {
         // then
         resultActions
                 .andExpect(handler().handlerType(ApiV1MyClubController.class))
-                .andExpect(handler().methodName("applyForClub"))
+                .andExpect(handler().methodName("applyForPublicClub"))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.code").value(400))
                 .andExpect(jsonPath("$.message").value("클럽 초대 상태입니다. 초대를 수락해주세요."));
     }
 
     @Test
-    @DisplayName("잘못된 클럽 ID로 모임 가입 신청 시도")
+    @DisplayName("잘못된 클럽 ID로 공개 모임 가입 신청 시도")
     @WithUserDetails(value = "hgd222@test.com") // 1번 멤버로 로그인
-    public void applyForClub_InvalidClubId() throws Exception {
+    public void applyForPublicClub_InvalidClubId() throws Exception {
         // when
         ResultActions resultActions = mvc.perform(
                         post("/api/v1/my-clubs/999/apply") // 존재하지 않는 클럽 ID
@@ -584,10 +584,54 @@ class ApiV1MyClubControllerTest {
         // then
         resultActions
                 .andExpect(handler().handlerType(ApiV1MyClubController.class))
-                .andExpect(handler().methodName("applyForClub"))
+                .andExpect(handler().methodName("applyForPublicClub"))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.code").value(404))
                 .andExpect(jsonPath("$.message").value("클럽이 존재하지 않습니다."));
+    }
+
+    @Test
+    @DisplayName("공개 모임 가입 신청 - 클럽이 비공개인 경우 예외 발생")
+    @WithUserDetails(value = "hgd222@test.com") // 1번 멤버로 로그인
+    public void applyForPublicClub_PrivateClub() throws Exception {
+        // given
+        Club club = clubService.createClub(
+                Club.builder()
+                        .name("비공개 그룹")
+                        .bio("비공개 그룹 설명")
+                        .category(ClubCategory.STUDY)
+                        .mainSpot("서울")
+                        .maximumCapacity(10)
+                        .eventType(EventType.ONE_TIME)
+                        .startDate(LocalDate.of(2023, 10, 1))
+                        .endDate(LocalDate.of(2023, 10, 31))
+                        .isPublic(false) // 비공개 클럽
+                        .leaderId(2L)
+                        .build()
+        );
+
+        // 클럽에 호스트 멤버 추가 (2번을 호스트로)
+        Member hostMember = memberService.findMemberById(2L)
+                .orElseThrow(() -> new IllegalStateException("호스트 멤버가 존재하지 않습니다."));
+        clubMemberService.addMemberToClub(
+                club.getId(),
+                hostMember,
+                ClubMemberRole.HOST
+        );
+
+        // when
+        ResultActions resultActions = mvc.perform(
+                        post("/api/v1/my-clubs/" + club.getId() + "/apply")
+                )
+                .andDo(print());
+
+        // then
+        resultActions
+                .andExpect(handler().handlerType(ApiV1MyClubController.class))
+                .andExpect(handler().methodName("applyForPublicClub"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value(400))
+                .andExpect(jsonPath("$.message").value("비공개 클럽입니다. 가입 신청이 불가능합니다."));
     }
 
 }
