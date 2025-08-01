@@ -24,6 +24,28 @@ public interface ClubMemberRepository extends JpaRepository<ClubMember, Long> {
     List<String> findExistingEmails(@Param("clubId") Long clubId,
                                     @Param("emails") List<String> emails);
 
+    @Query("""
+    SELECT cm.member.memberInfo.email
+    FROM ClubMember cm
+    WHERE cm.club.id = :clubId
+      AND cm.member.memberInfo.email IN :emails
+      AND cm.state != 'WITHDRAWN'
+""")
+    List<String> findExistingEmailsExcludingWithdraws(@Param("clubId") Long clubId,
+                                    @Param("emails") List<String> emails);
+
+    @Query("""
+    SELECT cm.member.memberInfo.email
+    FROM ClubMember cm
+    WHERE cm.club.id = :clubId
+      AND cm.member.memberInfo.email IN :emails
+      AND cm.state = 'WITHDRAWN'
+""")
+    List<String> findWithdrawnEmails(@Param("clubId") Long clubId,
+                                                      @Param("emails") List<String> emails);
+
+
+
     Optional<ClubMember> findByClubAndMember(Club club, Member member);
 
     List<ClubMember> findByClubAndState(Club club, ClubMemberState clubMemberState);

@@ -73,7 +73,7 @@ public class ClubMemberService {
                 .map(ClubMemberDtos.ClubMemberRegisterInfo::email)
                 .toList();
 
-        // 이미 가입된 멤버 이메일만 조회 (IN 쿼리)
+        // 이미 가입된 멤버 이메일 목록을 조회 (IN 쿼리)
         Set<String> existingEmails = new HashSet<>(
                 clubMemberRepository.findExistingEmails(clubId, requestEmails)
         );
@@ -102,6 +102,21 @@ public class ClubMemberService {
             club.addClubMember(clubMember);
             clubMemberRepository.save(clubMember);
         });
+
+        // 4. 탈퇴한 멤버 이메일 목록을 조회합니다.
+        List<String> withdrawnEmails = clubMemberRepository.findWithdrawnEmails(clubId, requestEmails);
+
+        // 5. 탈퇴한 멤버 이메일이 있다면, 해당 멤버를 클럽에 다시 추가합니다.
+        if (!withdrawnEmails.isEmpty()) {
+            List<ClubMember> withdrawnMembers = clubMemberRepository.findByClubAndState(club, ClubMemberState.WITHDRAWN);
+            for (ClubMember withdrawnMember : withdrawnMembers) {
+                if (withdrawnEmails.contains(withdrawnMember.getMember().getMemberInfo().getEmail())) {
+                    withdrawnMember.updateState(ClubMemberState.INVITED);
+                    clubMemberRepository.save(withdrawnMember);
+                }
+            }
+        }
+
     }
 
     /**
