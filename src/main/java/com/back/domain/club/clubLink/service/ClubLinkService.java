@@ -116,7 +116,7 @@ public class ClubLinkService {
 
         clubMemberRepository.save(clubMember);
 
-        return new RsData<>(200, "클럽에 성공적으로 가입되었습니다.", null);
+        return new RsData<>(200, "클럽 가입 신청이 성공적으로 완료되었습니다.", null);
     }
 
     //===============================기타 메서드================================

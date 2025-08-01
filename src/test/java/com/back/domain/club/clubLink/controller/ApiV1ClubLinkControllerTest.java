@@ -223,7 +223,7 @@ public class ApiV1ClubLinkControllerTest {
         mockMvc.perform(post("/api/v1/clubs/invitations/valid-token-123/apply"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value(200))
-                .andExpect(jsonPath("$.message").value("클럽에 성공적으로 가입되었습니다."));
+                .andExpect(jsonPath("$.message").value("클럽 가입 신청이 성공적으로 완료되었습니다."));
     }
 
     @Test
@@ -301,7 +301,13 @@ public class ApiV1ClubLinkControllerTest {
                 .build();
         clubLinkRepository.save(clubLink);
 
-        clubLinkService.applyToPrivateClubByToken(member, "applying-token");
+        ClubMember applyingMember = ClubMember.builder()
+                                .member(member)
+                                .club(club)
+                                .role(ClubMemberRole.PARTICIPANT)
+                                .state(ClubMemberState.APPLYING)
+                                .build();
+                clubMemberRepository.save(applyingMember);
 
         mockMvc.perform(post("/api/v1/clubs/invitations/applying-token/apply"))
                 .andExpect(status().isBadRequest())
@@ -339,9 +345,6 @@ public class ApiV1ClubLinkControllerTest {
     //================기타 메서드========================
 
     private Member findMemberByEmail(String email) {
-        return memberRepository.findAll().stream()
-                .filter(m -> m.getMemberInfo() != null && email.equals(m.getMemberInfo().getEmail()))
-                .findFirst()
-                .orElseThrow(() -> new IllegalArgumentException("멤버를 찾을 수 없습니다: " + email));
-    }
+        return memberRepository.findByMemberInfo_Email(email)
+                            .orElseThrow(() -> new IllegalArgumentException("멤버를 찾을 수 없습니다: " + email));    }
 }
