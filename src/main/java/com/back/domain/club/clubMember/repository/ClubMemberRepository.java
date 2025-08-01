@@ -15,35 +15,6 @@ import java.util.Optional;
 public interface ClubMemberRepository extends JpaRepository<ClubMember, Long> {
     List<ClubMember> findAllByClubId(Long clubId);
 
-    @Query("""
-    SELECT cm.member.memberInfo.email
-    FROM ClubMember cm
-    WHERE cm.club.id = :clubId
-      AND cm.member.memberInfo.email IN :emails
-""")
-    List<String> findExistingEmails(@Param("clubId") Long clubId,
-                                    @Param("emails") List<String> emails);
-
-    @Query("""
-    SELECT cm.member.memberInfo.email
-    FROM ClubMember cm
-    WHERE cm.club.id = :clubId
-      AND cm.member.memberInfo.email IN :emails
-      AND cm.state != 'WITHDRAWN'
-""")
-    List<String> findExistingEmailsExcludingWithdraws(@Param("clubId") Long clubId,
-                                    @Param("emails") List<String> emails);
-
-    @Query("""
-    SELECT cm.member.memberInfo.email
-    FROM ClubMember cm
-    WHERE cm.club.id = :clubId
-      AND cm.member.memberInfo.email IN :emails
-      AND cm.state = 'WITHDRAWN'
-""")
-    List<String> findWithdrawnEmails(@Param("clubId") Long clubId,
-                                                      @Param("emails") List<String> emails);
-
     // 요청 이메일 목록에 해당하는 ClubMember 정보를 한 번에 조회
     @Query("""
        SELECT cm
