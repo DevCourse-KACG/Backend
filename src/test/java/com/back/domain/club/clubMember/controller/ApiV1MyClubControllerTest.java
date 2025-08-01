@@ -745,4 +745,133 @@ class ApiV1MyClubControllerTest {
                 .andExpect(jsonPath("$.message").value("클럽 멤버 정보가 존재하지 않습니다."));
     }
 
+    @Test
+    @DisplayName("내 클럽 목록 반환")
+    @WithUserDetails(value = "uny@test.com") // 6번 멤버로 로그인
+    public void getMyClubs() throws Exception {
+        // given
+        Club club1 = clubService.createClub(
+                Club.builder()
+                        .name("테스트 그룹 1")
+                        .bio("테스트 그룹 1 설명")
+                        .category(ClubCategory.STUDY)
+                        .mainSpot("서울")
+                        .maximumCapacity(10)
+                        .eventType(EventType.ONE_TIME)
+                        .startDate(LocalDate.of(2023, 10, 1))
+                        .endDate(LocalDate.of(2023, 10, 31))
+                        .isPublic(true)
+                        .leaderId(2L)
+                        .build()
+        );
+
+        Club club2 = clubService.createClub(
+                Club.builder()
+                        .name("테스트 그룹 2")
+                        .bio("테스트 그룹 2 설명")
+                        .category(ClubCategory.SPORTS)
+                        .mainSpot("부산")
+                        .maximumCapacity(15)
+                        .eventType(EventType.LONG_TERM)
+                        .startDate(LocalDate.of(2023, 11, 1))
+                        .endDate(LocalDate.of(2023, 12, 31))
+                        .isPublic(false)
+                        .leaderId(3L)
+                        .build()
+        );
+
+        // 클럽에 호스트 멤버 추가 (2번을 호스트로)
+        Member hostMember1 = memberService.findMemberById(2L)
+                .orElseThrow(() -> new IllegalStateException("호스트 멤버가 존재하지 않습니다."));
+        clubMemberService.addMemberToClub(
+                club1.getId(),
+                hostMember1,
+                ClubMemberRole.HOST
+        );
+
+        Member hostMember2 = memberService.findMemberById(3L)
+                .orElseThrow(() -> new IllegalStateException("호스트 멤버가 존재하지 않습니다."));
+        clubMemberService.addMemberToClub(
+                club2.getId(),
+                hostMember2,
+                ClubMemberRole.HOST
+        );
+
+        // 클럽에 멤버를 초대 (1번을 초대)
+        Member invitedMember = memberService.findMemberById(6L)
+                .orElseThrow(() -> new IllegalStateException("초대된 멤버가 존재하지 않습니다."));
+
+        clubMemberService.addMemberToClub(
+                club1.getId(),
+                invitedMember,
+                ClubMemberRole.PARTICIPANT
+        );
+        clubMemberService.addMemberToClub(
+                club2.getId(),
+                invitedMember,
+                ClubMemberRole.MANAGER
+        );
+
+        // when
+        ResultActions resultActions = mvc.perform(
+                        get("/api/v1/my-clubs")
+                )
+                .andDo(print());
+
+        // then
+        resultActions
+                .andExpect(handler().handlerType(ApiV1MyClubController.class))
+                .andExpect(handler().methodName("getMyClubs"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value(200))
+                .andExpect(jsonPath("$.message").value("내 클럽 목록을 조회했습니다."))
+                .andExpect(jsonPath("$.data.clubs.length()").value(2)) // 2개의 클럽이 있어야 함
+
+                .andExpect(jsonPath("$.data.clubs[0].clubId").value(club1.getId()))
+                .andExpect(jsonPath("$.data.clubs[0].clubName").value(club1.getName()))
+                .andExpect(jsonPath("$.data.clubs[0].bio").value(club1.getBio()))
+                .andExpect(jsonPath("$.data.clubs[0].category").value(club1.getCategory().name()))
+                .andExpect(jsonPath("$.data.clubs[0].imageUrl").value(club1.getImageUrl()))
+                .andExpect(jsonPath("$.data.clubs[0].mainSpot").value(club1.getMainSpot()))
+                .andExpect(jsonPath("$.data.clubs[0].eventType").value(club1.getEventType().name()))
+                .andExpect(jsonPath("$.data.clubs[0].startDate").value(club1.getStartDate().toString()))
+                .andExpect(jsonPath("$.data.clubs[0].endDate").value(club1.getEndDate().toString()))
+                .andExpect(jsonPath("$.data.clubs[0].isPublic").value(club1.isPublic()))
+                .andExpect(jsonPath("$.data.clubs[0].myRole").value("PARTICIPANT"))
+                .andExpect(jsonPath("$.data.clubs[0].myState").value("INVITED"))
+
+                .andExpect(jsonPath("$.data.clubs[1].clubId").value(club2.getId()))
+                .andExpect(jsonPath("$.data.clubs[1].clubName").value(club2.getName()))
+                .andExpect(jsonPath("$.data.clubs[1].bio").value(club2.getBio()))
+                .andExpect(jsonPath("$.data.clubs[1].category").value(club2.getCategory().name()))
+                .andExpect(jsonPath("$.data.clubs[1].imageUrl").value(club2.getImageUrl()))
+                .andExpect(jsonPath("$.data.clubs[1].mainSpot").value(club2.getMainSpot()))
+                .andExpect(jsonPath("$.data.clubs[1].eventType").value(club2.getEventType().name()))
+                .andExpect(jsonPath("$.data.clubs[1].startDate").value(club2.getStartDate().toString()))
+                .andExpect(jsonPath("$.data.clubs[1].endDate").value(club2.getEndDate().toString()))
+                .andExpect(jsonPath("$.data.clubs[1].isPublic").value(club2.isPublic()))
+                .andExpect(jsonPath("$.data.clubs[1].myRole").value("MANAGER"))
+                .andExpect(jsonPath("$.data.clubs[1].myState").value("INVITED"));
+    }
+
+    @Test
+    @DisplayName("내 클럽 목록 반환 - 클럽이 없는 경우 빈 목록 반환")
+    @WithUserDetails(value ="uny@test.com") // 6번 멤버로 로그인
+    public void getMyClubs_EmptyList() throws Exception {
+        // when
+        ResultActions resultActions = mvc.perform(
+                        get("/api/v1/my-clubs")
+                )
+                .andDo(print());
+
+        // then
+        resultActions
+                .andExpect(handler().handlerType(ApiV1MyClubController.class))
+                .andExpect(handler().methodName("getMyClubs"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value(200))
+                .andExpect(jsonPath("$.message").value("내 클럽 목록을 조회했습니다."))
+                .andExpect(jsonPath("$.data.clubs.length()").value(0)); // 빈 목록이어야 함
+    }
+
 }
