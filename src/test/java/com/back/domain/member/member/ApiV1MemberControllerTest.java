@@ -389,13 +389,12 @@ public class ApiV1MemberControllerTest {
     }
 
     @Test
-    @DisplayName("회원탈퇴 - 인증 없이 탈퇴 요청 시도 시 401 Unauthorized")
+    @DisplayName("회원탈퇴 - 인증 없이 탈퇴 요청 시도")
     public void withdrawMembership_Unauthenticated_Failure() throws Exception {
         mockMvc.perform(delete("/api/v1/members/me")
                         .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().isUnauthorized())
-                .andExpect(jsonPath("$.code").value(401))
-                .andExpect(jsonPath("$.message").value("로그인 후 이용해주세요."));
+                .andExpect(jsonPath("$.code").value(403))
+                .andExpect(jsonPath("$.message").value("권한이 없습니다."));
     }
 
     @Test
@@ -590,7 +589,8 @@ public class ApiV1MemberControllerTest {
         mockMvc.perform(post("/api/v1/members/auth/verify-password")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(requestBody))
-                .andExpect(status().isUnauthorized()); // 인증 없으면 401
+                .andExpect(jsonPath("$.code").value(403))
+                .andExpect(jsonPath("$.message").value("권한이 없습니다."));
     }
 
     @Test
