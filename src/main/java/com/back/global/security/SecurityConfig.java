@@ -27,7 +27,8 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/favicon.ico").permitAll() // 파비콘 접근 허용 (검색 엔진 최적화)
                         .requestMatchers("/h2-console/**").permitAll() // H2 콘솔 접근 허용
-                        .anyRequest().permitAll()
+                        .requestMatchers("/api/v1/members/join", "/api/v1/members/login").permitAll() // 회원가입, 로그인 허용
+                        .anyRequest().authenticated() // 나머지 요청은 인증 필요
                 )
                 .csrf(AbstractHttpConfigurer::disable) // CSRF 보호 비활성화 (API 서버에서는 일반적으로 비활성화)
                 .formLogin(AbstractHttpConfigurer::disable)
