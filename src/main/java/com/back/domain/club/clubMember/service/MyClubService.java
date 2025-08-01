@@ -5,6 +5,8 @@ import com.back.domain.club.club.service.ClubService;
 import com.back.domain.club.clubMember.entity.ClubMember;
 import com.back.domain.club.clubMember.repository.ClubMemberRepository;
 import com.back.domain.member.member.entity.Member;
+import com.back.domain.member.member.service.MemberService;
+import com.back.global.enums.ClubMemberRole;
 import com.back.global.enums.ClubMemberState;
 import com.back.global.exception.ServiceException;
 import com.back.global.rq.Rq;
@@ -17,6 +19,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class MyClubService {
     private final ClubService clubService;
     private final ClubMemberRepository clubMemberRepository;
+    private final MemberService memberService;
     private final Rq rq;
 
     /**
@@ -48,6 +51,50 @@ public class MyClubService {
             club.getClubMembers().remove(clubMember); // 클럽에서 멤버 제거
             clubMemberRepository.delete(clubMember); // 초대 거절
         }
+
+        return club; // 클럽 반환
+    }
+
+    /**
+     * 클럽 가입 신청 메서드
+     * @param clubId 클럽 ID
+     * @return 클럽 정보
+     */
+    @Transactional
+    public Club applyForClub(Long clubId) {
+        // 멤버 가져오기
+        Member user = memberService.findMemberById(rq.getActor().getId())
+                .orElseThrow(() -> new ServiceException(404, "멤버가 존재하지 않습니다."));
+        // 클럽 ID로 클럽 가져오기
+        Club club = clubService.getClubById(clubId)
+                .orElseThrow(() -> new ServiceException(404, "클럽이 존재하지 않습니다."));
+
+        // 클럽이 비공개 상태인지 확인
+        if (!club.isPublic()) {
+            throw new ServiceException(403, "비공개 클럽입니다. 가입 신청이 불가능합니다.");
+        }
+
+        // 클럽 멤버 상태 확인
+        if (clubMemberRepository.existsByClubAndMember(club, user)) {
+            ClubMember existingMember = clubMemberRepository.findByClubAndMember(club, user)
+                    .orElseThrow(() -> new ServiceException(404, "클럽 멤버가 존재하지 않습니다."));
+
+            if (existingMember.getState() == ClubMemberState.JOINING)
+                throw new ServiceException(400, "이미 가입 상태입니다.");
+            else if (existingMember.getState() == ClubMemberState.APPLYING)
+                throw new ServiceException(400, "이미 가입 신청 상태입니다.");
+            else if (existingMember.getState() == ClubMemberState.INVITED)
+                throw new ServiceException(400, "클럽 초대 상태입니다. 초대를 수락해주세요.");
+        }
+
+        // 클럽 멤버 생성 및 저장
+        ClubMember clubMember = ClubMember.builder()
+                .member(user)
+                .role(ClubMemberRole.PARTICIPANT) // 기본 역할은 PARTICIPANT
+                .state(ClubMemberState.APPLYING) // 가입 신청 상태로 설정
+                .build();
+        club.addClubMember(clubMember); // 클럽에 멤버 추가
+        clubMemberRepository.save(clubMember); // 클럽 멤버 저장
 
         return club; // 클럽 반환
     }
