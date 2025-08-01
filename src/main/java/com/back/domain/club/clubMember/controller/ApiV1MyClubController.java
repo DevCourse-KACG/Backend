@@ -22,6 +22,20 @@ public class ApiV1MyClubController {
     private final MyClubService myClubService;
 
 
+    @GetMapping
+    @Operation(summary = "내 클럽 목록 조회")
+    public RsData<MyClubControllerDtos.MyClubList> getMyClubs() {
+        // 유저의 클럽 멤버 정보를 조회하는 서비스 메서드를 호출
+        MyClubControllerDtos.MyClubList myClubList = myClubService.getMyClubs();
+
+        // 조회된 클럽 멤버 정보를 응답으로 반환
+        return RsData.of(200,
+                "내 클럽 목록을 조회했습니다.",
+                myClubList
+        );
+    }
+
+
     @GetMapping("{clubId}")
     @Operation(summary = "클럽에서 내 정보 조회")
     public RsData<MyClubControllerDtos.MyInfoInClub> getMyClubInfo(

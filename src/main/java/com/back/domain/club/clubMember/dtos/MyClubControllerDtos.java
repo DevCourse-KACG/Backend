@@ -1,7 +1,12 @@
 package com.back.domain.club.clubMember.dtos;
 
+import com.back.global.enums.ClubCategory;
 import com.back.global.enums.ClubMemberRole;
 import com.back.global.enums.ClubMemberState;
+import com.back.global.enums.EventType;
+
+import java.time.LocalDate;
+import java.util.List;
 
 public class MyClubControllerDtos {
 
@@ -25,5 +30,26 @@ public class MyClubControllerDtos {
             String clubName,
             ClubMemberRole role,
             ClubMemberState state
-    ){}
+    ) {
+    }
+
+    public static record MyClubList(
+            List<ClubListItem> clubs
+    ) {}
+
+    public static record ClubListItem(
+            Long clubId,
+            String clubName,
+            String bio,
+            ClubCategory category,
+            String imageUrl,
+            String mainSpot,
+            EventType eventType,
+            LocalDate startDate,
+            LocalDate endDate,
+            Boolean isPublic,
+            ClubMemberRole myRole,
+            ClubMemberState myState
+    ) {
+    }
 }

@@ -2,6 +2,7 @@ package com.back.domain.club.clubMember.service;
 
 import com.back.domain.club.club.entity.Club;
 import com.back.domain.club.club.service.ClubService;
+import com.back.domain.club.clubMember.dtos.MyClubControllerDtos;
 import com.back.domain.club.clubMember.entity.ClubMember;
 import com.back.domain.club.clubMember.repository.ClubMemberRepository;
 import com.back.domain.member.member.entity.Member;
@@ -13,6 +14,8 @@ import com.back.global.rq.Rq;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -117,5 +120,38 @@ public class MyClubService {
         // 클럽 멤버 정보 조회
         return clubMemberRepository.findByClubAndMember(club, user)
                 .orElseThrow(() -> new ServiceException(404, "클럽 멤버 정보가 존재하지 않습니다."));
+    }
+
+    public MyClubControllerDtos.MyClubList getMyClubs() {
+        // 현재 로그인한 멤버 가져오기
+        Member user = memberService.findMemberById(rq.getActor().getId())
+                .orElseThrow(() -> new ServiceException(404, "멤버가 존재하지 않습니다."));
+
+        // 멤버가 속한 클럽 멤버 정보 조회
+        List<ClubMember> clubMembers = clubMemberRepository.findAllByMember(user);
+
+        // 클럽 멤버 정보를 기반으로 클럽 목록 생성
+        List<MyClubControllerDtos.ClubListItem> clubListItems = clubMembers.stream()
+                .map(clubMember -> {
+                    Club club = clubMember.getClub();
+                    return new MyClubControllerDtos.ClubListItem(
+                            club.getId(),
+                            club.getName(),
+                            club.getBio(),
+                            club.getCategory(),
+                            club.getImageUrl(),
+                            club.getMainSpot(),
+                            club.getEventType(),
+                            club.getStartDate(),
+                            club.getEndDate(),
+                            club.isPublic(),
+                            clubMember.getRole(),
+                            clubMember.getState()
+                    );
+                })
+                .toList();
+
+        // 클럽 목록을 MyClubList DTO로 반환
+        return new MyClubControllerDtos.MyClubList(clubListItems);
     }
 }
