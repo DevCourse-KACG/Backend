@@ -352,5 +352,242 @@ class ApiV1MyClubControllerTest {
                 .andExpect(jsonPath("$.message").value("클럽이 존재하지 않습니다."));
     }
 
+    @Test
+    @DisplayName("모임 가입 신청")
+    @WithUserDetails(value = "hgd222@test.com") // 1번 멤버로 로그인
+    public void applyForClub() throws Exception {
+        // given
+        Club club = clubService.createClub(
+                Club.builder()
+                        .name("테스트 그룹")
+                        .bio("테스트 그룹 설명")
+                        .category(ClubCategory.STUDY)
+                        .mainSpot("서울")
+                        .maximumCapacity(10)
+                        .eventType(EventType.ONE_TIME)
+                        .startDate(LocalDate.of(2023, 10, 1))
+                        .endDate(LocalDate.of(2023, 10, 31))
+                        .isPublic(true)
+                        .leaderId(2L)
+                        .build()
+        );
+
+        // 클럽에 호스트 멤버 추가 (2번을 호스트로)
+        Member hostMember = memberService.findMemberById(2L)
+                .orElseThrow(() -> new IllegalStateException("호스트 멤버가 존재하지 않습니다."));
+        clubMemberService.addMemberToClub(
+                club.getId(),
+                hostMember,
+                ClubMemberRole.HOST
+        );
+
+        // when
+        ResultActions resultActions = mvc.perform(
+                        post("/api/v1/my-clubs/" + club.getId() + "/apply")
+                )
+                .andDo(print());
+
+        // then
+        resultActions
+                .andExpect(handler().handlerType(ApiV1MyClubController.class))
+                .andExpect(handler().methodName("applyForClub"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value(200))
+                .andExpect(jsonPath("$.message").value("클럽 가입 신청이 완료되었습니다."))
+                .andExpect(jsonPath("$.data.clubId").value(club.getId()))
+                .andExpect(jsonPath("$.data.clubName").value(club.getName()));
+
+        // 추가 검증: 클럽 멤버 목록에 신청한 멤버가 포함되어 있는지 확인
+        assertThat(club.getClubMembers().get(1).getMember().getId()).isEqualTo(1L);
+        assertThat(club.getClubMembers().get(1).getRole()).isEqualTo(ClubMemberRole.PARTICIPANT);
+        assertThat(club.getClubMembers().get(1).getState()).isEqualTo(ClubMemberState.APPLYING);
+    }
+
+    @Test
+    @DisplayName("모임 가입 신청 - 이미 가입 중인 경우 예외 발생")
+    @WithUserDetails(value = "hgd222@test.com") // 1번 멤버로 로그인
+    public void applyForClub_AlreadyJoined() throws Exception {
+        // given
+        Club club = clubService.createClub(
+                Club.builder()
+                        .name("테스트 그룹")
+                        .bio("테스트 그룹 설명")
+                        .category(ClubCategory.STUDY)
+                        .mainSpot("서울")
+                        .maximumCapacity(10)
+                        .eventType(EventType.ONE_TIME)
+                        .startDate(LocalDate.of(2023, 10, 1))
+                        .endDate(LocalDate.of(2023, 10, 31))
+                        .isPublic(true)
+                        .leaderId(2L)
+                        .build()
+        );
+
+        // 클럽에 호스트 멤버 추가 (2번을 호스트로)
+        Member hostMember = memberService.findMemberById(2L)
+                .orElseThrow(() -> new IllegalStateException("호스트 멤버가 존재하지 않습니다."));
+        clubMemberService.addMemberToClub(
+                club.getId(),
+                hostMember,
+                ClubMemberRole.HOST
+        );
+
+        // 클럽에 이미 가입된 멤버 추가 (1번을 이미 가입 상태로 추가)
+        Member alreadyJoinedMember = memberService.findMemberById(1L)
+                .orElseThrow(() -> new IllegalStateException("이미 가입된 멤버가 존재하지 않습니다."));
+
+        ClubMember alreadyClubMember = clubMemberService.addMemberToClub(
+                club.getId(),
+                alreadyJoinedMember,
+                ClubMemberRole.PARTICIPANT
+        );
+
+        alreadyClubMember.updateState(ClubMemberState.JOINING); // 이미 가입 상태로 업데이트
+
+        // when
+        ResultActions resultActions = mvc.perform(
+                        post("/api/v1/my-clubs/" + club.getId() + "/apply")
+                )
+                .andDo(print());
+
+        // then
+        resultActions
+                .andExpect(handler().handlerType(ApiV1MyClubController.class))
+                .andExpect(handler().methodName("applyForClub"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value(400))
+                .andExpect(jsonPath("$.message").value("이미 가입 상태입니다."));
+    }
+
+    @Test
+    @DisplayName("모임 가입 신청 - 이미 가입 신청 중인 경우 예외 발생")
+    @WithUserDetails(value = "hgd222@test.com") // 1번 멤버로 로그인
+    public void applyForClub_AlreadyApplying() throws Exception {
+        // given
+        Club club = clubService.createClub(
+                Club.builder()
+                        .name("테스트 그룹")
+                        .bio("테스트 그룹 설명")
+                        .category(ClubCategory.STUDY)
+                        .mainSpot("서울")
+                        .maximumCapacity(10)
+                        .eventType(EventType.ONE_TIME)
+                        .startDate(LocalDate.of(2023, 10, 1))
+                        .endDate(LocalDate.of(2023, 10, 31))
+                        .isPublic(true)
+                        .leaderId(2L)
+                        .build()
+        );
+
+        // 클럽에 호스트 멤버 추가 (2번을 호스트로)
+        Member hostMember = memberService.findMemberById(2L)
+                .orElseThrow(() -> new IllegalStateException("호스트 멤버가 존재하지 않습니다."));
+        clubMemberService.addMemberToClub(
+                club.getId(),
+                hostMember,
+                ClubMemberRole.HOST
+        );
+
+        // 클럽에 가입 신청 중인 멤버 추가 (1번을 가입 신청 상태로 추가)
+        Member applyingMember = memberService.findMemberById(1L)
+                .orElseThrow(() -> new IllegalStateException("가입 신청 중인 멤버가 존재하지 않습니다."));
+
+        ClubMember applyingClubMember = clubMemberService.addMemberToClub(
+                club.getId(),
+                applyingMember,
+                ClubMemberRole.PARTICIPANT
+        );
+
+        applyingClubMember.updateState(ClubMemberState.APPLYING); // 가입 신청 상태로 업데이트
+
+        // when
+        ResultActions resultActions = mvc.perform(
+                        post("/api/v1/my-clubs/" + club.getId() + "/apply")
+                )
+                .andDo(print());
+
+        // then
+        resultActions
+                .andExpect(handler().handlerType(ApiV1MyClubController.class))
+                .andExpect(handler().methodName("applyForClub"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value(400))
+                .andExpect(jsonPath("$.message").value("이미 가입 신청 상태입니다."));
+    }
+
+    @Test
+    @DisplayName("가입 신청 - 초대된 상태일때 에러")
+    @WithUserDetails(value = "hgd222@test.com") // 1번 멤버로 로그인
+    public void applyForClub_InvitedState() throws Exception {
+        // given
+        Club club = clubService.createClub(
+                Club.builder()
+                        .name("테스트 그룹")
+                        .bio("테스트 그룹 설명")
+                        .category(ClubCategory.STUDY)
+                        .mainSpot("서울")
+                        .maximumCapacity(10)
+                        .eventType(EventType.ONE_TIME)
+                        .startDate(LocalDate.of(2023, 10, 1))
+                        .endDate(LocalDate.of(2023, 10, 31))
+                        .isPublic(true)
+                        .leaderId(2L)
+                        .build()
+        );
+
+        // 클럽에 호스트 멤버 추가 (2번을 호스트로)
+        Member hostMember = memberService.findMemberById(2L)
+                .orElseThrow(() -> new IllegalStateException("호스트 멤버가 존재하지 않습니다."));
+        clubMemberService.addMemberToClub(
+                club.getId(),
+                hostMember,
+                ClubMemberRole.HOST
+        );
+
+        // 클럽에 초대된 멤버 추가 (1번을 초대 상태로 추가)
+        Member invitedMember = memberService.findMemberById(1L)
+                .orElseThrow(() -> new IllegalStateException("초대된 멤버가 존재하지 않습니다."));
+
+        ClubMember invitedClubMember = clubMemberService.addMemberToClub(
+                club.getId(),
+                invitedMember,
+                ClubMemberRole.PARTICIPANT
+        );
+
+        invitedClubMember.updateState(ClubMemberState.INVITED); // 초대 상태로 업데이트
+
+        // when
+        ResultActions resultActions = mvc.perform(
+                        post("/api/v1/my-clubs/" + club.getId() + "/apply")
+                )
+                .andDo(print());
+
+        // then
+        resultActions
+                .andExpect(handler().handlerType(ApiV1MyClubController.class))
+                .andExpect(handler().methodName("applyForClub"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value(400))
+                .andExpect(jsonPath("$.message").value("클럽 초대 상태입니다. 초대를 수락해주세요."));
+    }
+
+    @Test
+    @DisplayName("잘못된 클럽 ID로 모임 가입 신청 시도")
+    @WithUserDetails(value = "hgd222@test.com") // 1번 멤버로 로그인
+    public void applyForClub_InvalidClubId() throws Exception {
+        // when
+        ResultActions resultActions = mvc.perform(
+                        post("/api/v1/my-clubs/999/apply") // 존재하지 않는 클럽 ID
+                )
+                .andDo(print());
+
+        // then
+        resultActions
+                .andExpect(handler().handlerType(ApiV1MyClubController.class))
+                .andExpect(handler().methodName("applyForClub"))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.code").value(404))
+                .andExpect(jsonPath("$.message").value("클럽이 존재하지 않습니다."));
+    }
 
 }
