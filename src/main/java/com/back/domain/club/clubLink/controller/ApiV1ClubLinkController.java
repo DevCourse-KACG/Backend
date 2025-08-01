@@ -8,10 +8,7 @@ import com.back.global.rsData.RsData;
 import io.swagger.v3.oas.annotations.Operation;
 import jakarta.validation.constraints.Positive;
 import lombok.RequiredArgsConstructor;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/v1/clubs")
@@ -28,5 +25,15 @@ public class ApiV1ClubLinkController {
         ClubLinkDtos.CreateClubLinkResponse response = clubLinkService.createClubLink(user, clubId);
 
         return new RsData<>(200, "클럽 초대 링크가 생성되었습니다.", response);
+    }
+
+    @GetMapping("/{clubId}/members/invitation-link")
+    @Operation(summary = "클럽 초대 링크 반환")
+    public RsData<ClubLinkDtos.CreateClubLinkResponse> getClubLink(@PathVariable @Positive Long clubId) {
+
+        Member user = rq.getActor();
+        ClubLinkDtos.CreateClubLinkResponse response = clubLinkService.getClubLink(user, clubId);
+
+        return new RsData<>(200, "클럽 초대 링크가 반환되었습니다.", response);
     }
 }
