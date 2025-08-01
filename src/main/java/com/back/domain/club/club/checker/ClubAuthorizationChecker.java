@@ -46,7 +46,7 @@ public class ClubAuthorizationChecker {
     }
 
     /**
-     * 모임 호스트 권한이 있는지 확인 (활성화된 모임에 대해서만)
+     * 모임 호스트 권한이 있는지 확인 (종료 안된 활성화된 모임에 대해서만)
      * @param clubId 모임 ID
      * @param memberId 로그인 유저 ID
      * @return 모임 호스트 권한 여부
@@ -59,7 +59,7 @@ public class ClubAuthorizationChecker {
     }
 
     /**
-     * 모임 매니저의 역할 확인 (활성화된 모임에 대해서만)
+     * 모임 매니저의 역할 확인 (종료 안된 활성화된 모임에 대해서만)
      * @param clubId 모임 ID
      * @param memberId 로그인 유저 ID
      * @return 모임 매니저 권한 여부
@@ -74,7 +74,7 @@ public class ClubAuthorizationChecker {
     }
 
     /**
-     * 모임 호스트 또는 매니저 권한 확인 (활성화된 모임에 대해서만)
+     * 모임 호스트 또는 매니저 권한 확인 (종료 안된 활성화된 모임에 대해서만)
      * @param clubId 모임 ID
      * @param memberId 로그인 유저 ID
      * @return 모임 호스트 또는 매니저 권한 여부
@@ -90,14 +90,14 @@ public class ClubAuthorizationChecker {
     }
 
     /**
-     * 모임 참여자 여부 확인
+     * 가입된(JOINING) 모임 참여자 여부 확인 (활성화된 모임에 대해서만)
      * @param clubId 모임 ID
      * @param memberId 로그인 유저 ID
      * @return 모임 참여자 여부
      */
     @Transactional(readOnly = true)
     public boolean isClubMember(Long clubId, Long memberId) {
-        Club club = clubService.getClub(clubId);
+        Club club = clubService.getActiveClub(clubId);
         Member member = memberService.getMember(memberId);
         return clubMemberService.existsByClubAndMember(club, member);
     }

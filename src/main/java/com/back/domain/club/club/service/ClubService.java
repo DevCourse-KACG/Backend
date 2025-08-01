@@ -89,7 +89,7 @@ public class ClubService {
                 .orElseThrow(() -> new NoSuchElementException(ClubErrorCode.CLUB_NOT_FOUND.getMessage()));
     }
     /**
-     * 모임 ID로 활성화된 모임 조회
+     * 모임 ID로 종료일 안지난 활성화된 모임 조회
      * @param clubId 모임 ID
      * @return 활성화된 모임 엔티티
      */

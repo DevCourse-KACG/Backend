@@ -13,16 +13,13 @@ import com.back.domain.club.clubMember.repository.ClubMemberRepository;
 import com.back.domain.member.friend.entity.Friend;
 import com.back.domain.member.friend.entity.FriendStatus;
 import com.back.domain.member.friend.repository.FriendRepository;
-import com.back.global.enums.MemberType;
+import com.back.global.enums.*;
 import com.back.domain.member.member.entity.Member;
 import com.back.domain.member.member.entity.MemberInfo;
 import com.back.domain.member.member.repository.MemberInfoRepository;
 import com.back.domain.member.member.repository.MemberRepository;
 import com.back.domain.schedule.schedule.entity.Schedule;
 import com.back.domain.schedule.schedule.repository.ScheduleRepository;
-import com.back.global.enums.ClubCategory;
-import com.back.global.enums.ClubMemberRole;
-import com.back.global.enums.EventType;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.ApplicationRunner;
@@ -107,10 +104,13 @@ public class TestInitData {
         members.put(member5.getNickname(), member5);
 
         Member member6 = createMember("유나영", "password6", "uny@test.com", "안녕하세요, 유나영입니다."); //가입 신청 테스트용
+        members.put(member6.getNickname(), member6);
 
         Member member7 = createMember("이채원", "password7", "lcw@test.com", "안녕하세요, 이채원입니다."); //가입 신청 테스트용
+        members.put(member7.getNickname(), member7);
 
         Member member8 = createMember("호윤호", "password8", "hyh@test.com", "안녕하세요, 호윤호입니다."); //가입 신청 테스트용
+        members.put(member8.getNickname(), member8);
 
         // 비회원
         Member guest1 = createMember("이덕혜", "password11", null, null);
@@ -187,8 +187,9 @@ public class TestInitData {
 
         ClubMember clubMember1 = ClubMember.builder()
                 .member(leader1)
-                .role(ClubMemberRole.HOST)
                 .club(club1)
+                .role(ClubMemberRole.HOST)
+                .state(ClubMemberState.JOINING)
                 .build();
         clubMemberRepository.save(clubMember1);
 
@@ -210,8 +211,9 @@ public class TestInitData {
 
         ClubMember clubMember2 = ClubMember.builder()
                 .member(leader1)
-                .role(ClubMemberRole.HOST)
                 .club(club2)
+                .role(ClubMemberRole.HOST)
+                .state(ClubMemberState.JOINING)
                 .build();
         clubMemberRepository.save(clubMember2);
 
@@ -233,8 +235,9 @@ public class TestInitData {
 
         ClubMember clubMember3 = ClubMember.builder()
                 .member(leader1)
-                .role(ClubMemberRole.HOST)
                 .club(club3)
+                .role(ClubMemberRole.HOST)
+                .state(ClubMemberState.JOINING)
                 .build();
         clubMemberRepository.save(clubMember3);
 
@@ -258,8 +261,9 @@ public class TestInitData {
 
         ClubMember clubMember4 = ClubMember.builder()
                 .member(leader2)
-                .role(ClubMemberRole.HOST)
                 .club(club4)
+                .role(ClubMemberRole.HOST)
+                .state(ClubMemberState.JOINING)
                 .build();
         clubMemberRepository.save(clubMember4);
 
@@ -282,8 +286,9 @@ public class TestInitData {
 
         ClubMember nClubMember1 = ClubMember.builder()
                 .member(leader2)
-                .role(ClubMemberRole.HOST)
                 .club(nClub1)
+                .role(ClubMemberRole.HOST)
+                .state(ClubMemberState.JOINING)
                 .build();
         clubMemberRepository.save(nClubMember1);
 
@@ -306,8 +311,9 @@ public class TestInitData {
 
         ClubMember nClubMember2 = ClubMember.builder()
                 .member(leader2)
-                .role(ClubMemberRole.HOST)
                 .club(nClub2)
+                .role(ClubMemberRole.HOST)
+                .state(ClubMemberState.JOINING)
                 .build();
         clubMemberRepository.save(nClubMember2);
     }
@@ -343,8 +349,9 @@ public class TestInitData {
 
             ClubMember clubMember = ClubMember.builder()
                     .member(member)
-                    .role(gm.role())
                     .club(club)
+                    .role(gm.role())
+                    .state(ClubMemberState.JOINING)
                     .build();
 
             clubMemberRepository.save(clubMember);

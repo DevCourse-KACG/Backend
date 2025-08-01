@@ -248,13 +248,13 @@ public class ClubMemberService {
     }
 
     /**
-     * 클럽과 멤버로 클럽 멤버 조회
+     * 클럽과 멤버로 가입 완료한 클럽 멤버 조회
      * @param club 모임 엔티티
      * @param member 멤버 엔티티
      * @return 클럽 멤버 엔티티
      */
     public ClubMember getClubMember(Club club, Member member) {
-        return clubMemberRepository.findByClubAndMember(club, member)
+        return clubMemberRepository.findByClubAndMemberAndState(club, member, ClubMemberState.JOINING)
                 .orElseThrow(() -> new AccessDeniedException("권한이 없습니다."));
     }
 
@@ -265,7 +265,8 @@ public class ClubMemberService {
      * @return 클럽 멤버 존재 여부
      */
     public boolean existsByClubAndMember(Club club, Member member) {
-        return clubMemberRepository.existsByClubAndMember(club, member);
+        return clubMemberRepository
+                .existsByClubAndMemberAndState(club, member, ClubMemberState.JOINING);
     }
 
     /**
