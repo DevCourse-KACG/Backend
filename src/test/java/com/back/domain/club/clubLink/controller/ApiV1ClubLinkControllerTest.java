@@ -342,6 +342,72 @@ public class ApiV1ClubLinkControllerTest {
                 .andExpect(jsonPath("$.message").value("이미 초대를 받은 상태입니다. 마이페이지에서 수락해주세요."));
     }
 
+    @Test
+    @DisplayName("초대 링크 조회 성공 - 유효한 토큰")
+    @WithUserDetails("uny@test.com")
+    void getClubInfoByInvitationToken_success() throws Exception {
+        // given
+        Club club = clubRepository.findById(2L).orElseThrow(); // 친구 모임
+        String token = "token-success-123";
+
+        ClubLink clubLink = ClubLink.builder()
+                .inviteCode(token)
+                .createdAt(LocalDateTime.now().minusDays(1))
+                .expiresAt(LocalDateTime.now().plusDays(1))
+                .club(club)
+                .build();
+        clubLinkRepository.save(clubLink);
+
+        // when & then
+        mockMvc.perform(get("/api/v1/clubs/invitations/{token}", token))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value(200))
+                .andExpect(jsonPath("$.message").value("클럽 정보가 반환되었습니다."))
+                .andExpect(jsonPath("$.data.clubId").value(club.getId()))
+                .andExpect(jsonPath("$.data.name").value(club.getName()))
+                .andExpect(jsonPath("$.data.imageUrl").value(club.getImageUrl()))
+                .andExpect(jsonPath("$.data.mainSpot").value(club.getMainSpot()))
+                .andExpect(jsonPath("$.data.eventType").value(club.getEventType().name()))
+                .andExpect(jsonPath("$.data.startDate").value(club.getStartDate().toString()))
+                .andExpect(jsonPath("$.data.endDate").value(club.getEndDate().toString()))
+                .andExpect(jsonPath("$.data.leaderId").value(club.getLeaderId()));
+    }
+
+    @Test
+    @DisplayName("초대 링크 조회 실패 - 존재하지 않는 토큰")
+    @WithUserDetails("uny@test.com")
+    void getClubInfoByInvitationToken_fail_invalidToken() throws Exception {
+        // when & then
+        mockMvc.perform(get("/api/v1/clubs/invitations/invalid-token-123"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value(400))
+                .andExpect(jsonPath("$.message").value("초대 토큰이 유효하지 않습니다."));
+    }
+
+    @Test
+    @DisplayName("초대 링크 조회 실패 - 만료된 토큰")
+    @WithUserDetails("uny@test.com")
+    void getClubInfoByInvitationToken_fail_expiredToken() throws Exception {
+        // given
+        Club club = clubRepository.findById(2L).orElseThrow();
+        String token = "expired-token-789";
+
+        ClubLink clubLink = ClubLink.builder()
+                .inviteCode(token)
+                .createdAt(LocalDateTime.now().minusDays(10))
+                .expiresAt(LocalDateTime.now().minusDays(1)) // 만료됨
+                .club(club)
+                .build();
+        clubLinkRepository.save(clubLink);
+
+        // when & then
+        mockMvc.perform(get("/api/v1/clubs/invitations/{token}", token))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value(400))
+                .andExpect(jsonPath("$.message").value("초대 토큰이 만료되었습니다."));
+    }
+
+
     //================기타 메서드========================
 
     private Member findMemberByEmail(String email) {
