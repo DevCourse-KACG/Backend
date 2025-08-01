@@ -87,9 +87,9 @@ public class ClubLinkService {
         ClubLink clubLink = validateInviteTokenOrThrow(token);
         Club club = clubLink.getClub();
 
-        List<ClubMember> existingMembers = clubMemberRepository.findAllByClubAndMember(club, user);
-        if (!existingMembers.isEmpty()) {
-            ClubMember existingMember = existingMembers.get(0);
+        Optional<ClubMember> existingMemberOtp = clubMemberRepository.findByClubAndMember(club, user);
+        if (existingMemberOtp.isPresent()) {
+            ClubMember existingMember = existingMemberOtp.get();
             return switch (existingMember.getState()) {
                 case JOINING -> ClubApplyResult.ALREADY_JOINED;
                 case APPLYING -> ClubApplyResult.ALREADY_APPLYING;
