@@ -259,29 +259,10 @@ class ApiV1ClubControllerTest {
     void updateClub() throws Exception {
         // given
         // 클럽 생성
-        Club club = clubService.createClub(
-                Club.builder()
-                .name("테스트 그룹")
-                .bio("테스트 그룹 설명")
-                .category(ClubCategory.STUDY)
-                .mainSpot("서울")
-                .maximumCapacity(10)
-                .eventType(EventType.ONE_TIME)
-                .startDate(LocalDate.of(2023, 10, 1))
-                .endDate(LocalDate.of(2023, 10, 31))
-                .isPublic(true)
-                .leaderId(1L)
-                .build()
-        );
+        Long clubId = 1L; // 테스트를 위해 클럽 ID를 1로 고정
 
-        // 클럽에 호스트 멤버 추가
-        Member hostMember = memberService.findMemberById(1L)
-                .orElseThrow(() -> new IllegalStateException("호스트 멤버가 존재하지 않습니다."));
-        clubMemberService.addMemberToClub(
-                club.getId(),
-                hostMember,
-                ClubMemberRole.HOST
-        );
+        Club club = clubService.findClubById(clubId)
+                .orElseThrow(() -> new IllegalStateException("클럽이 존재하지 않습니다."));
 
         // ⭐️ S3 업로더의 행동 정의: 어떤 파일이든 업로드 요청이 오면, 지정된 가짜 URL을 반환한다.
         String fakeImageUrl = "https://my-s3-bucket.s3.ap-northeast-2.amazonaws.com/club/1/profile/fake-image.jpg";
@@ -355,7 +336,7 @@ class ApiV1ClubControllerTest {
         assertThat(club.getLeaderId()).isEqualTo(1L);
         assertThat(club.isRecruitingStatus()).isFalse(); // 모집 상태가 false인지 확인
         assertThat(club.isState()).isTrue(); // 활성화 상태가 true인지 확인
-        assertThat(club.getClubMembers().size()).isEqualTo(1); // 구성원이 한명(호스트)인지 확인
+        assertThat(club.getClubMembers().size()).isEqualTo(3);
     }
 
     @Test
@@ -364,29 +345,16 @@ class ApiV1ClubControllerTest {
     void updateClubPart() throws Exception {
         // given
         // 클럽 생성
-        Club club = clubService.createClub(
-                Club.builder()
-                        .name("테스트 그룹")
-                        .bio("수정 안 할 테스트 그룹 설명")
-                        .category(ClubCategory.STUDY)
-                        .mainSpot("수정 안 할 서울")
-                        .maximumCapacity(10)
-                        .eventType(EventType.ONE_TIME)
-                        .startDate(LocalDate.of(2023, 10, 1))
-                        .endDate(LocalDate.of(2023, 10, 31))
-                        .isPublic(true)
-                        .leaderId(1L)
-                        .build()
-        );
+        Long clubId = 1L; // 테스트를 위해 클럽 ID를 1로 고정
+        Club club = clubService.findClubById(clubId)
+                .orElseThrow(() -> new IllegalStateException("클럽이 존재하지 않습니다."));
 
-        // 클럽에 호스트 멤버 추가
-        Member hostMember = memberService.findMemberById(1L)
-                .orElseThrow(() -> new IllegalStateException("호스트 멤버가 존재하지 않습니다."));
-        clubMemberService.addMemberToClub(
-                club.getId(),
-                hostMember,
-                ClubMemberRole.HOST
-        );
+        String originalBio = club.getBio(); // 원래 bio 값 저장
+        ClubCategory originalCategory = club.getCategory(); // 원래 category 값 저장
+        String originalMainSpot = club.getMainSpot(); // 원래 mainSpot 값 저장
+        EventType originalEventType = club.getEventType(); // 원래 eventType 값 저장
+        Long originalLeaderId = club.getLeaderId(); // 원래 leaderId 값 저장
+
 
         // ⭐️ S3 업로더의 행동 정의: 어떤 파일이든 업로드 요청이 오면, 지정된 가짜 URL을 반환한다.
         String fakeImageUrl = "https://my-s3-bucket.s3.ap-northeast-2.amazonaws.com/club/1/profile/fake-image.jpg";
@@ -444,19 +412,19 @@ class ApiV1ClubControllerTest {
         );
 
         assertThat(club.getName()).isEqualTo("수정된 테스트 그룹");
-        assertThat(club.getBio()).isEqualTo("수정 안 할 테스트 그룹 설명");
-        assertThat(club.getCategory()).isEqualTo(ClubCategory.STUDY);
-        assertThat(club.getMainSpot()).isEqualTo( "수정 안 할 서울");
+        assertThat(club.getBio()).isEqualTo(originalBio); // bio는 수정하지 않았으므로 원래 값과 동일
+        assertThat(club.getCategory()).isEqualTo(originalCategory); // category는 수정하지 않았으므로 원래 값과 동일
+        assertThat(club.getMainSpot()).isEqualTo(originalMainSpot); // mainSpot은 수정하지 않았으므로 원래 값과 동일
         assertThat(club.getMaximumCapacity()).isEqualTo(11);
         assertThat(club.getImageUrl()).isEqualTo(fakeImageUrl); // 이미지 URL이 가짜 URL과 일치하는지 확인
-        assertThat(club.getEventType()).isEqualTo(EventType.ONE_TIME);
+        assertThat(club.getEventType()).isEqualTo(originalEventType); // eventType은 수정하지 않았으므로 원래 값과 동일
         assertThat(club.getStartDate()).isEqualTo(LocalDate.of(2024, 10, 1));
         assertThat(club.getEndDate()).isEqualTo(LocalDate.of(2024, 10, 31));
         assertThat(club.isPublic()).isTrue();
-        assertThat(club.getLeaderId()).isEqualTo(1L);
+        assertThat(club.getLeaderId()).isEqualTo(originalLeaderId); // leaderId는 수정하지 않았으므로 원래 값과 동일
         assertThat(club.isRecruitingStatus()).isFalse(); // 모집 상태가 false인지 확인
         assertThat(club.isState()).isTrue(); // 활성화 상태가 true인지 확인
-        assertThat(club.getClubMembers().size()).isEqualTo(1); // 구성원이 한명(호스트)인지 확인
+        assertThat(club.getClubMembers().size()).isEqualTo(3);
     }
 
     @Test
@@ -506,47 +474,19 @@ class ApiV1ClubControllerTest {
         resultActions
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.code").value(404))
-                .andExpect(jsonPath("$.message").value("해당 ID의 클럽을 찾을 수 없습니다."));
+                .andExpect(jsonPath("$.message").value("모임을 찾을 수 없습니다."));
     }
 
     @Test
     @DisplayName("클럽 수정 - 권한 없는 유저")
-    @WithUserDetails(value = "chs4s@test.com") //2번 유저로 로그인
+    @WithUserDetails(value = "lyh3@test.com") //3번 유저로 로그인
     void updateClubWithoutPermission() throws Exception {
         // given
         // 클럽 생성
-        Club club = clubService.createClub(
-                Club.builder()
-                        .name("테스트 그룹")
-                        .bio("테스트 그룹 설명")
-                        .category(ClubCategory.STUDY)
-                        .mainSpot("서울")
-                        .maximumCapacity(10)
-                        .eventType(EventType.ONE_TIME)
-                        .startDate(LocalDate.of(2023, 10, 1))
-                        .endDate(LocalDate.of(2023, 10, 31))
-                        .isPublic(true)
-                        .leaderId(1L)
-                        .build()
-        );
+        Long clubId = 1L; // 테스트를 위해 클럽 ID를 1로 고정
+        Club club = clubService.findClubById(clubId)
+                .orElseThrow(() -> new IllegalStateException("클럽이 존재하지 않습니다."));
 
-        // 클럽에 호스트 멤버 추가
-        Member hostMember = memberService.findMemberById(1L)
-                .orElseThrow(() -> new IllegalStateException("호스트 멤버가 존재하지 않습니다."));
-        clubMemberService.addMemberToClub(
-                club.getId(),
-                hostMember,
-                ClubMemberRole.HOST
-        );
-
-        // 클럽에 2번 유저를 멤버로 추가
-        Member member = memberService.findMemberById(2L)
-                .orElseThrow(() -> new IllegalStateException("멤버가 존재하지 않습니다."));
-        clubMemberService.addMemberToClub(
-                club.getId(),
-                member,
-                ClubMemberRole.PARTICIPANT // 2번 유저는 PARTICIPANT 역할
-        );
 
         // 1. 가짜 이미지 파일(MockMultipartFile) 생성
         MockMultipartFile imagePart = new MockMultipartFile(

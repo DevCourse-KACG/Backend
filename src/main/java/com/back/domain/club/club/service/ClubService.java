@@ -277,4 +277,8 @@ public class ClubService {
                                 .orElse("Unknown Leader")
                 ));
     }
+
+    public Optional<Club> findClubById(Long clubId) {
+        return clubRepository.findById(clubId);
+    }
 }
