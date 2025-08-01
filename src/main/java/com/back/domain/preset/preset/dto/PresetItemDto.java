@@ -1,6 +1,5 @@
 package com.back.domain.preset.preset.dto;
 
-import com.back.domain.preset.preset.entity.Preset;
 import com.back.domain.preset.preset.entity.PresetItem;
 import com.back.global.enums.CheckListItemCategory;
 

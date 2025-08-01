@@ -1,8 +1,6 @@
 package com.back.domain.checkList.checkList.dto;
 
-import com.back.domain.schedule.schedule.dto.ScheduleDto;
 import jakarta.validation.Valid;
-import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 
 import java.util.List;
