@@ -79,9 +79,11 @@ public class ApiV1ClubMemberController {
 
     @PatchMapping("/{memberId}/approval")
     @Operation(summary = "클럽 가입 신청 승인")
+    @PreAuthorize("@clubAuthorizationChecker.isActiveClubHost(#clubId, #user.id)")
     public RsData<Void> approveMemberApplication(
             @PathVariable Long clubId,
-            @PathVariable Long memberId
+            @PathVariable Long memberId,
+            @AuthenticationPrincipal SecurityUser user
     ) {
         clubMemberService.handleMemberApplication(clubId, memberId, true);
 
@@ -90,9 +92,11 @@ public class ApiV1ClubMemberController {
 
     @DeleteMapping("/{memberId}/approval")
     @Operation(summary = "클럽 가입 신청 거절")
+    @PreAuthorize("@clubAuthorizationChecker.isActiveClubHost(#clubId, #user.id)")
     public RsData<Void> rejectMemberApplication(
             @PathVariable Long clubId,
-            @PathVariable Long memberId
+            @PathVariable Long memberId,
+            @AuthenticationPrincipal SecurityUser user
     ) {
         clubMemberService.handleMemberApplication(clubId, memberId, false);
 

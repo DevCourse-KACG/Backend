@@ -259,9 +259,6 @@ public class ClubMemberService {
      */
     @Transactional
     public void handleMemberApplication(Long clubId, Long memberId, boolean approve) {
-        // 권한 확인 : 현재 로그인한 유저가 클럽 호스트인지 확인
-        clubService.validateHostPermission(clubId);
-
         Club club = clubService.getClubById(clubId)
                 .orElseThrow(() -> new ServiceException(404, "클럽이 존재하지 않습니다."));
         Member member = memberService.findMemberById(memberId)
