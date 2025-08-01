@@ -99,6 +99,12 @@ public class MyClubService {
         return club; // 클럽 반환
     }
 
+    /**
+     * 현재 로그인한 멤버의 클럽 정보 조회 메서드
+     * @param clubId 클럽 ID
+     * @return 클럽 멤버 정보
+     */
+    @Transactional(readOnly = true)
     public ClubMember getMyClubInfo(Long clubId) {
         // 현재 로그인한 멤버 가져오기
         Member user = memberService.findMemberById(rq.getActor().getId())
