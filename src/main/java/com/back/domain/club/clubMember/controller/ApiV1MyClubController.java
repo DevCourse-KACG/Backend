@@ -20,7 +20,7 @@ import org.springframework.web.bind.annotation.*;
 public class ApiV1MyClubController {
     private final MyClubService myClubService;
 
-    @PostMapping("{clubId}/join")
+    @PatchMapping("{clubId}/join")
     @Operation(summary = "클럽 초대 수락")
     public RsData<MyClubControllerDtos.SimpleClubInfo> acceptClubInvitation(
             @PathVariable Long clubId

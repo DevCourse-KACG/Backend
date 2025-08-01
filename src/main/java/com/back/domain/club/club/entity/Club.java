@@ -169,5 +169,10 @@ public class Club {
         this.isPublic = isPublic;
     }
 
+    public void removeClubMember(ClubMember clubMember) {
+      this.clubMembers.remove(clubMember);
+      clubMember.setClub(null); // 양방향 연관관계 해제
+    }
+
 
 }

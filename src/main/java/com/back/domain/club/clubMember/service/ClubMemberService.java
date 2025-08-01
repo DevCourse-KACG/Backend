@@ -267,4 +267,43 @@ public class ClubMemberService {
     public boolean existsByClubAndMember(Club club, Member member) {
         return clubMemberRepository.existsByClubAndMember(club, member);
     }
+
+    /**
+     * 클럽 가입 신청을 승인하거나 거절합니다.
+     * @param clubId 클럽 ID
+     * @param memberId 멤버 ID
+     * @param approve true면 승인, false면 거절
+     */
+    @Transactional
+    public void handleMemberApplication(Long clubId, Long memberId, boolean approve) {
+        // 권한 확인 : 현재 로그인한 유저가 클럽 호스트인지 확인
+        clubService.validateHostPermission(clubId);
+
+        Club club = clubService.getClubById(clubId)
+                .orElseThrow(() -> new ServiceException(404, "클럽이 존재하지 않습니다."));
+        Member member = memberService.findMemberById(memberId)
+                .orElseThrow(() -> new ServiceException(404, "멤버가 존재하지 않습니다."));
+        ClubMember clubMember = clubMemberRepository.findByClubAndMember(club, member)
+                .orElseThrow(() -> new ServiceException(400, "가입 신청 상태가 아닙니다."));
+
+        // 현재 상태가 APPLYING이 아닌 경우 예외 처리
+        if (clubMember.getState() != ClubMemberState.APPLYING) {
+            if(clubMember.getState() == ClubMemberState.JOINING)
+                throw new ServiceException(400, "이미 가입 상태입니다.");
+            else
+                throw new ServiceException(400, "가입 신청 상태가 아닙니다.");
+        }
+
+        // 승인 또는 거절 처리
+        if (approve) {
+            clubMember.updateState(ClubMemberState.JOINING);
+            clubMemberRepository.save(clubMember);
+        } else {
+            clubMemberRepository.delete(clubMember);
+            // 거절 시 클럽에서 멤버 제거
+            club.removeClubMember(clubMember);
+        }
+
+
+    }
 }

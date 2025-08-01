@@ -27,8 +27,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDate;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
@@ -92,7 +91,7 @@ class ApiV1MyClubControllerTest {
 
         // when
         ResultActions resultActions = mvc.perform(
-                        post("/api/v1/my-clubs/" + club.getId() + "/join")
+                        patch("/api/v1/my-clubs/" + club.getId() + "/join")
                 )
                 .andDo(print());
 
@@ -205,7 +204,7 @@ class ApiV1MyClubControllerTest {
 
         // when
         ResultActions resultActions = mvc.perform(
-                        post("/api/v1/my-clubs/" + club.getId() + "/join")
+                        patch("/api/v1/my-clubs/" + club.getId() + "/join")
                 )
                 .andDo(print());
 
@@ -261,7 +260,7 @@ class ApiV1MyClubControllerTest {
 
         // when
         ResultActions resultActions = mvc.perform(
-                        post("/api/v1/my-clubs/" + club.getId() + "/join")
+                        patch("/api/v1/my-clubs/" + club.getId() + "/join")
                 )
                 .andDo(print());
 
@@ -319,7 +318,7 @@ class ApiV1MyClubControllerTest {
 
         // when
         ResultActions resultActions = mvc.perform(
-                        post("/api/v1/my-clubs/" + club.getId() + "/join")
+                        patch("/api/v1/my-clubs/" + club.getId() + "/join")
                 )
                 .andDo(print());
 
@@ -339,7 +338,7 @@ class ApiV1MyClubControllerTest {
     public void acceptClubInvitation_InvalidClubId() throws Exception {
         // when
         ResultActions resultActions = mvc.perform(
-                        post("/api/v1/my-clubs/999/join") // 존재하지 않는 클럽 ID
+                        patch("/api/v1/my-clubs/999/join") // 존재하지 않는 클럽 ID
                 )
                 .andDo(print());
 
