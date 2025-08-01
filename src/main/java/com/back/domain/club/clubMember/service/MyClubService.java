@@ -60,6 +60,7 @@ public class MyClubService {
      * @param clubId 클럽 ID
      * @return 클럽 정보
      */
+    @Transactional
     public Club applyForClub(Long clubId) {
         // 멤버 가져오기
         Member user = memberService.findMemberById(rq.getActor().getId())
