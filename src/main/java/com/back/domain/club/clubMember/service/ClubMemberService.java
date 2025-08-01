@@ -18,10 +18,11 @@ import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.HashSet;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -63,45 +64,67 @@ public class ClubMemberService {
      */
     @Transactional
     public void addMembersToClub(Long clubId, ClubMemberDtos.ClubMemberRegisterRequest reqBody) {
-        Club club = clubService.getClubById(clubId).orElseThrow(() -> new ServiceException(404, "클럽이 존재하지 않습니다."));
+        Club club = clubService.getClubById(clubId)
+                .orElseThrow(() -> new ServiceException(404, "클럽이 존재하지 않습니다."));
 
-        // 권한 확인 : 현재 로그인한 유저가 클럽 호스트인지 확인
+        // 권한 확인
         clubService.validateHostPermission(clubId);
 
-        // 요청된 이메일 추출
-        List<String> requestEmails = reqBody.members().stream()
-                .map(ClubMemberDtos.ClubMemberRegisterInfo::email)
-                .toList();
+        // 1. 요청 데이터에서 이메일 기준 중복 제거 (나중에 들어온 정보가 우선)
+        Map<String, ClubMemberDtos.ClubMemberRegisterInfo> uniqueMemberInfoByEmail = reqBody.members().stream()
+                .collect(Collectors.toMap(
+                        ClubMemberDtos.ClubMemberRegisterInfo::email,
+                        info -> info,
+                        (existing, replacement) -> replacement // 키가 중복될 경우, 기존 값(existing)을 새로운 값(replacement)으로 덮어씀
+                ));
 
-        // 이미 가입된 멤버 이메일만 조회 (IN 쿼리)
-        Set<String> existingEmails = new HashSet<>(
-                clubMemberRepository.findExistingEmails(clubId, requestEmails)
-        );
+        // 2. 요청된 이메일 목록을 한 번에 조회하여 Map으로 변환 (효율적인 탐색을 위해)
+        List<String> requestEmails = new ArrayList<>(uniqueMemberInfoByEmail.keySet());
+        Map<String, ClubMember> existingMembersByEmail = clubMemberRepository.findClubMembersByClubIdAndEmails(clubId, requestEmails)
+                .stream()
+                .collect(Collectors.toMap(cm -> cm.getMember().getMemberInfo().getEmail(), cm -> cm));
 
-        // 1. 실제로 추가될 새로운 멤버 목록을 먼저 필터링합니다.
-        List<ClubMemberDtos.ClubMemberRegisterInfo> newMembersToAdd = reqBody.members().stream()
-                .distinct()
-                .filter(memberInfo -> !existingEmails.contains(memberInfo.email()))
-                .toList();
+        // 3. 신규 추가/상태 변경할 멤버 목록 준비
+        List<ClubMember> membersToSave = new ArrayList<>();
+        List<ClubMemberDtos.ClubMemberRegisterInfo> newMemberRequests = new ArrayList<>();
 
-        // 2. 멤버를 추가하기 전에 정원 초과 여부를 먼저 확인합니다.
-        if (club.getClubMembers().size() + newMembersToAdd.size() > club.getMaximumCapacity()) {
+        uniqueMemberInfoByEmail.values().forEach(memberInfo -> {
+            ClubMember existingMember = existingMembersByEmail.get(memberInfo.email());
+
+            if (existingMember != null) {
+                if (existingMember.getState() == ClubMemberState.WITHDRAWN) {
+                    existingMember.updateState(ClubMemberState.INVITED);
+                    // 요청된 역할로 업데이트
+                    existingMember.updateRole(ClubMemberRole.fromString(memberInfo.role().toUpperCase()));
+                    membersToSave.add(existingMember);
+                }
+            } else {
+                newMemberRequests.add(memberInfo);
+            }
+        });
+
+        // 4. 정원 초과 여부 검사 (효율적인 COUNT 쿼리 사용)
+        long currentActiveMembers = clubMemberRepository.countActiveMembersByClubId(clubId);
+        if (currentActiveMembers + newMemberRequests.size() > club.getMaximumCapacity()) {
             throw new ServiceException(400, "클럽의 최대 멤버 수를 초과했습니다.");
         }
 
-        // 3. 유효성 검사를 통과한 경우에만 멤버를 추가합니다.
-        newMembersToAdd.forEach(memberInfo -> {
+        // 5. 새로운 멤버 엔티티 생성
+        for (ClubMemberDtos.ClubMemberRegisterInfo memberInfo : newMemberRequests) {
             Member member = memberService.findMemberByEmail(memberInfo.email());
-
-            ClubMember clubMember = ClubMember.builder()
+            ClubMember newClubMember = ClubMember.builder()
                     .member(member)
                     .role(ClubMemberRole.fromString(memberInfo.role().toUpperCase()))
                     .state(ClubMemberState.INVITED)
                     .build();
+            club.addClubMember(newClubMember); // 양방향 연관관계 설정
+            membersToSave.add(newClubMember);
+        }
 
-            club.addClubMember(clubMember);
-            clubMemberRepository.save(clubMember);
-        });
+        // 6. 변경/추가된 모든 멤버 정보를 한 번에 저장 (Batch Insert/Update)
+        if (!membersToSave.isEmpty()) {
+            clubMemberRepository.saveAll(membersToSave);
+        }
     }
 
     /**
