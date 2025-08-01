@@ -9,16 +9,22 @@ import com.back.domain.checkList.checkList.repository.CheckListRepository;
 import com.back.domain.checkList.itemAssign.entity.ItemAssign;
 import com.back.domain.club.club.entity.Club;
 import com.back.domain.club.club.repository.ClubRepository;
+import com.back.domain.club.club.service.ClubService;
 import com.back.domain.club.clubMember.entity.ClubMember;
+import com.back.domain.club.clubMember.repository.ClubMemberRepository;
+import com.back.domain.club.clubMember.service.ClubMemberValidService;
 import com.back.domain.member.member.entity.Member;
 import com.back.domain.member.member.repository.MemberRepository;
+import com.back.domain.member.member.service.MemberService;
 import com.back.domain.schedule.schedule.entity.Schedule;
 import com.back.domain.schedule.schedule.repository.ScheduleRepository;
 import com.back.global.enums.ClubMemberRole;
 import com.back.global.enums.ClubMemberState;
+import com.back.global.exception.ServiceException;
 import com.back.global.rq.Rq;
 import com.back.global.rsData.RsData;
 import com.back.standard.util.Ut;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -33,31 +39,25 @@ public class CheckListService {
   private final CheckListRepository checkListRepository;
   private final ScheduleRepository scheduleRepository;
   private final ClubRepository clubRepository;
-  private final MemberRepository memberRepository;
   private final Rq rq;
 
-  @Value("${custom.jwt.secretKey}")
-  private String secretKey;
+  // 체커에 사용되는 메서드
+  public CheckList getActiveCheckListById(Long checkListId) {
+    // 활성화된 체크리스트 조회
+    return checkListRepository
+        .findActiveCheckListById(checkListId)
+        .orElseThrow(() -> new NoSuchElementException("체크리스트를 찾을 수 없습니다"));
+  }
 
   @Transactional
   public RsData<CheckListDto> write(CheckListWriteReqDto checkListWriteReqDto) {
-    RsData<Map<String, Object>> jwtRsData = getJwtData();
-
-    // JWT 데이터가 유효하지 않은 경우 RsData 반환
-    if (jwtRsData.code() != 200) {
-      return RsData.of(jwtRsData.code(), jwtRsData.message());
-    }
-    // JWT에서 멤버 ID 추출
-    Map<String, Object> jwtData = jwtRsData.data();
-    long memberId = ((Number) jwtData.get("id")).longValue();
-    Optional<Member> otnMember = memberRepository.findById(memberId);
-    if (otnMember.isEmpty()) return RsData.of(404, "멤버를 찾을 수 없습니다");
-    Member member = otnMember.get();
+    Member member = Optional.ofNullable(rq.getActor()).orElseThrow(() -> new ServiceException(404, "멤버를 찾을 수 없습니다"));
 
     // 전달 받은 checkListWriteReqDto에서 scheduleId로 Schedule 엔티티 조회
     Optional<Schedule> otnSchedule = scheduleRepository.findById(checkListWriteReqDto.scheduleId());
     if (otnSchedule.isEmpty()) return RsData.of(404, "일정을 찾을 수 없습니다");
     Schedule schedule = otnSchedule.get();
+
 
     // Schedule에 CheckList가 이미 존재하는 경우 RsData 반환
     if (schedule.getCheckList() != null) return RsData.of(409, "이미 체크리스트가 존재합니다");
@@ -67,7 +67,7 @@ public class CheckListService {
         .filter(clubMember ->
             clubMember.getMember().getId().equals(member.getId())).findFirst();
 
-    // 클럽 멤버가 아닌 경우 RsData 반환
+    // 클럽 멤버가 아니거나 가입중이 아닌 경우 RsData 반환
     if (otnClubMember.isEmpty() || !otnClubMember.get().getState().equals(ClubMemberState.JOINING)) return RsData.of(403, "클럽 멤버가 아닙니다");
 
     if (otnClubMember.get().getRole().equals(ClubMemberRole.PARTICIPANT)) return RsData.of(403, "호스트 또는 관리자만 체크리스트를 생성할 수 있습니다");
@@ -117,15 +117,7 @@ public class CheckListService {
   }
 
   public RsData<CheckListDto> getCheckList(Long checkListId) {
-    RsData<Map<String, Object>> jwtRsData = getJwtData();
-
-    // JWT 데이터가 유효하지 않은 경우 RsData 반환
-    if (jwtRsData.code() != 200) {
-      return RsData.of(jwtRsData.code(), jwtRsData.message());
-    }
-    // JWT에서 멤버 ID 추출
-    Map<String, Object> jwtData = jwtRsData.data();
-    long memberId = ((Number) jwtData.get("id")).longValue();
+    Member member = Optional.ofNullable(rq.getActor()).orElseThrow(() -> new ServiceException(404, "멤버를 찾을 수 없습니다"));
 
     // 체크리스트 ID로 체크리스트 조회
     Optional<CheckList> otnCheckList = checkListRepository.findById(checkListId);
@@ -139,7 +131,7 @@ public class CheckListService {
 
     // 체크리스트의 연동된 일정의 클럽 멤버 조회
     Optional<ClubMember> otnClubMember = checkList.getSchedule().getClub().getClubMembers().stream()
-        .filter(clubMember -> clubMember.getMember().getId().equals(memberId)).findFirst();
+        .filter(clubMember -> clubMember.getMember().getId().equals(member.getId())).findFirst();
 
     // 클럽 멤버가 아닌 경우 RsData 반환
     if (otnClubMember.isEmpty() || !otnClubMember.get().getState().equals(ClubMemberState.JOINING)) return RsData.of(403, "클럽 멤버가 아닙니다");
@@ -152,18 +144,7 @@ public class CheckListService {
 
   @Transactional
   public RsData<CheckListDto> updateCheckList(Long checkListId, CheckListUpdateReqDto checkListUpdateReqDto) {
-    RsData<Map<String, Object>> jwtRsData = getJwtData();
-
-    // JWT 데이터가 유효하지 않은 경우 RsData 반환
-    if (jwtRsData.code() != 200) {
-      return RsData.of(jwtRsData.code(), jwtRsData.message());
-    }
-    // JWT에서 멤버 ID 추출
-    Map<String, Object> jwtData = jwtRsData.data();
-    long memberId = ((Number) jwtData.get("id")).longValue();
-    Optional<Member> otnMember = memberRepository.findById(memberId);
-    if (otnMember.isEmpty()) return RsData.of(404, "멤버를 찾을 수 없습니다");
-    Member member = otnMember.get();
+    Member member = Optional.ofNullable(rq.getActor()).orElseThrow(() -> new ServiceException(404, "멤버를 찾을 수 없습니다"));
 
     // 체크리스트 ID로 체크리스트 조회
     Optional<CheckList> otnCheckList = checkListRepository.findById(checkListId);
@@ -225,18 +206,7 @@ public class CheckListService {
 
   @Transactional
   public RsData<CheckListDto> deleteCheckList(Long checkListId) {
-    RsData<Map<String, Object>> jwtRsData = getJwtData();
-
-    // JWT 데이터가 유효하지 않은 경우 RsData 반환
-    if (jwtRsData.code() != 200) {
-      return RsData.of(jwtRsData.code(), jwtRsData.message());
-    }
-    // JWT에서 멤버 ID 추출
-    Map<String, Object> jwtData = jwtRsData.data();
-    long memberId = ((Number) jwtData.get("id")).longValue();
-    Optional<Member> otnMember = memberRepository.findById(memberId);
-    if (otnMember.isEmpty()) return RsData.of(404, "멤버를 찾을 수 없습니다");
-    Member member = otnMember.get();
+    Member member = Optional.ofNullable(rq.getActor()).orElseThrow(() -> new ServiceException(404, "멤버를 찾을 수 없습니다"));
 
     // 체크리스트 ID로 체크리스트 조회
     Optional<CheckList> otnCheckList = checkListRepository.findById(checkListId);
@@ -265,18 +235,7 @@ public class CheckListService {
   }
 
   public RsData<List<CheckListDto>> getCheckListByGroupId(Long groupId) {
-    RsData<Map<String, Object>> jwtRsData = getJwtData();
-
-    // JWT 데이터가 유효하지 않은 경우 RsData 반환
-    if (jwtRsData.code() != 200) {
-      return RsData.of(jwtRsData.code(), jwtRsData.message());
-    }
-    // JWT에서 멤버 ID 추출
-    Map<String, Object> jwtData = jwtRsData.data();
-    long memberId = ((Number) jwtData.get("id")).longValue();
-    Optional<Member> otnMember = memberRepository.findById(memberId);
-    if (otnMember.isEmpty()) return RsData.of(404, "멤버를 찾을 수 없습니다");
-    Member member = otnMember.get();
+    Member member = Optional.ofNullable(rq.getActor()).orElseThrow(() -> new ServiceException(404, "멤버를 찾을 수 없습니다"));
 
     // 클럽 ID로 클럽 조회
     Optional<Club> otnClub = clubRepository.findById(groupId);
@@ -306,38 +265,6 @@ public class CheckListService {
         .map(CheckListDto::new)
         .collect(Collectors.toList());
     return RsData.of(200, "체크리스트 목록 조회 성공", checkListDtos);
-  }
-
-  RsData<Map<String, Object>> getJwtData() {
-    // JWT 토큰을 헤더에서 가져오기
-    String jwtToken = rq.getHeader("Authorization", null);
-
-    // JWT 토큰이 null인 경우 RsData 반환
-    if (jwtToken == null) return RsData.of(404, "AccessToken을 찾을 수 없습니다");
-    // JWT 토큰이 "Bearer "로 시작하지 않는 경우 RsData 반환
-    if (!jwtToken.startsWith("Bearer ")) return RsData.of(404, "AccessToken이 잘못되었습니다");
-
-    // JWT 토큰에서 "Bearer " 접두사를 제거
-    String cleanToken = jwtToken.substring(7);
-
-    // JWT 토큰이 유효하지 않은 경우 처리
-    boolean jwtIsValid = Ut.jwt.isValid(secretKey, cleanToken);
-
-    // JWT가 유효하지 않은 경우 RsData 반환
-    if (!jwtIsValid) return RsData.of(499, "AccessToken 만료");
-
-    // JWT 토큰에서 페이로드 추출
-    Map<String, Object> jwtData = Ut.jwt.payload(secretKey, cleanToken);
-    return RsData.of(200, "토큰 검증 성공", jwtData);
-
-  }
-
-  // 체커에 사용되는 메서드
-  public CheckList getActiveCheckListById(Long checkListId) {
-    // 활성화된 체크리스트 조회
-    return checkListRepository
-            .findActiveCheckListById(checkListId)
-            .orElseThrow(() -> new NoSuchElementException("체크리스트를 찾을 수 없습니다"));
   }
 
 }

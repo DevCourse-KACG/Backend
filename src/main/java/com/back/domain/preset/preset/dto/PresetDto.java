@@ -1,6 +1,5 @@
 package com.back.domain.preset.preset.dto;
 
-import com.back.domain.member.member.entity.Member;
 import com.back.domain.preset.preset.entity.Preset;
 
 import java.util.List;

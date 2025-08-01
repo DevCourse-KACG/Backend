@@ -1,10 +1,11 @@
 package com.back.domain.checkList.checkList.dto;
 
 import com.back.domain.checkList.checkList.entity.CheckList;
-import com.back.domain.preset.preset.entity.Preset;
 import com.back.domain.schedule.schedule.dto.ScheduleDto;
 
+import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 
 public record CheckListDto(
     Long id,
@@ -17,7 +18,9 @@ public record CheckListDto(
         checkList.getId(),
         checkList.isActive(),
         new ScheduleDto(checkList.getSchedule()),
-        checkList.getCheckListItems().stream()
+        Optional.ofNullable(checkList.getCheckListItems())
+            .orElse(Collections.emptyList())
+            .stream()
             .map(CheckListItemDto::new)
             .toList()
     );
