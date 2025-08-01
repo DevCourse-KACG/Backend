@@ -271,7 +271,7 @@ public class ApiV1CheckListControllerTest {
                 .content(requestBody))
         .andExpect(status().isNotFound())
         .andExpect(jsonPath("$.code").value(404))
-        .andExpect(jsonPath("$.message").value("일정을 찾을 수 없습니다"))
+        .andExpect(jsonPath("$.message").value("일정을 찾을 수 없습니다."))
         .andDo(print());
   }
 
@@ -351,7 +351,7 @@ public class ApiV1CheckListControllerTest {
                 .content(requestBody))
         .andExpect(status().isForbidden())
         .andExpect(jsonPath("$.code").value(403))
-        .andExpect(jsonPath("$.message").value("호스트 또는 관리자만 체크리스트를 생성할 수 있습니다"))
+        .andExpect(jsonPath("$.message").value("권한이 없습니다."))
         .andDo(print());
   }
 
@@ -435,7 +435,7 @@ public class ApiV1CheckListControllerTest {
             get("/api/v1/checklists/" + schedule2.getCheckList().getId()))
         .andExpect(status().isForbidden())
         .andExpect(jsonPath("$.code").value(403))
-        .andExpect(jsonPath("$.message").value("클럽 멤버가 아닙니다"))
+        .andExpect(jsonPath("$.message").value("권한이 없습니다."))
         .andDo(print());
   }
 
@@ -605,7 +605,7 @@ public class ApiV1CheckListControllerTest {
                 .content(requestBody))
         .andExpect(status().isForbidden())
         .andExpect(jsonPath("$.code").value(403))
-        .andExpect(jsonPath("$.message").value("호스트 또는 관리자만 체크리스트를 수정할 수 있습니다"))
+        .andExpect(jsonPath("$.message").value("권한이 없습니다."))
         .andDo(print());
   }
 
@@ -647,7 +647,7 @@ public class ApiV1CheckListControllerTest {
             delete("/api/v1/checklists/" + schedule2.getCheckList().getId()))
         .andExpect(status().isForbidden())
         .andExpect(jsonPath("$.code").value(403))
-        .andExpect(jsonPath("$.message").value("클럽 멤버가 아닙니다"))
+        .andExpect(jsonPath("$.message").value("권한이 없습니다."))
         .andDo(print());
   }
 
@@ -671,7 +671,7 @@ public class ApiV1CheckListControllerTest {
             delete("/api/v1/checklists/" + schedule2.getCheckList().getId()))
         .andExpect(status().isForbidden())
         .andExpect(jsonPath("$.code").value(403))
-        .andExpect(jsonPath("$.message").value("호스트 또는 관리자만 체크리스트를 삭제할 수 있습니다"))
+        .andExpect(jsonPath("$.message").value("권한이 없습니다."))
         .andDo(print());
   }
   @Test
@@ -694,7 +694,7 @@ public class ApiV1CheckListControllerTest {
             get("/api/v1/checklists/group/9999")) // 존재하지 않는 클럽 ID
         .andExpect(status().isNotFound())
         .andExpect(jsonPath("$.code").value(404))
-        .andExpect(jsonPath("$.message").value("클럽을 찾을 수 없습니다"))
+        .andExpect(jsonPath("$.message").value("모임을 찾을 수 없습니다."))
         .andDo(print());
   }
 
@@ -709,7 +709,7 @@ public class ApiV1CheckListControllerTest {
             get("/api/v1/checklists/group/" + club.getId()))
         .andExpect(status().isForbidden())
         .andExpect(jsonPath("$.code").value(403))
-        .andExpect(jsonPath("$.message").value("클럽 멤버가 아닙니다"))
+        .andExpect(jsonPath("$.message").value("권한이 없습니다."))
         .andDo(print());
   }
 
