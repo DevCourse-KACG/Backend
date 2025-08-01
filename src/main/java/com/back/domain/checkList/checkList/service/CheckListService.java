@@ -55,12 +55,12 @@ public class CheckListService {
 
     // 전달 받은 checkListWriteReqDto에서 scheduleId로 Schedule 엔티티 조회
     Optional<Schedule> otnSchedule = scheduleRepository.findById(checkListWriteReqDto.scheduleId());
-    if (otnSchedule.isEmpty()) return RsData.of(404, "일정을 찾을 수 없습니다");
+//    if (otnSchedule.isEmpty()) return RsData.of(404, "일정을 찾을 수 없습니다");
     Schedule schedule = otnSchedule.get();
 
 
     // Schedule에 CheckList가 이미 존재하는 경우 RsData 반환
-    if (schedule.getCheckList() != null) return RsData.of(409, "이미 체크리스트가 존재합니다");
+//    if (schedule.getCheckList() != null) return RsData.of(409, "이미 체크리스트가 존재합니다");
 
     // Schedule 엔티티에서 클럽 조회 멤버 조회
     Optional<ClubMember> otnClubMember = schedule.getClub().getClubMembers().stream()
@@ -123,11 +123,11 @@ public class CheckListService {
     Optional<CheckList> otnCheckList = checkListRepository.findById(checkListId);
 
     // 체크리스트가 존재하지 않는 경우 RsData 반환
-    if (otnCheckList.isEmpty()) return RsData.of(404, "체크리스트를 찾을 수 없습니다");
+//    if (otnCheckList.isEmpty()) return RsData.of(404, "체크리스트를 찾을 수 없습니다");
     CheckList checkList = otnCheckList.get();
 
     // 체크리스트의 연동된 일정이 존재하지 않는 경우 RsData 반환
-    if (checkList.getSchedule() == null) return RsData.of(404, "체크리스트에 연동된 일정이 없습니다");
+//    if (checkList.getSchedule() == null) return RsData.of(404, "체크리스트에 연동된 일정이 없습니다");
 
     // 체크리스트의 연동된 일정의 클럽 멤버 조회
     Optional<ClubMember> otnClubMember = checkList.getSchedule().getClub().getClubMembers().stream()
@@ -150,11 +150,11 @@ public class CheckListService {
     Optional<CheckList> otnCheckList = checkListRepository.findById(checkListId);
 
     // 체크리스트가 존재하지 않는 경우 RsData 반환
-    if (otnCheckList.isEmpty()) return RsData.of(404, "체크리스트를 찾을 수 없습니다");
+//    if (otnCheckList.isEmpty()) return RsData.of(404, "체크리스트를 찾을 수 없습니다");
     CheckList checkList = otnCheckList.get();
 
     // 체크리스트의 연동된 일정이 존재하지 않는 경우 RsData 반환
-    if (checkList.getSchedule() == null) return RsData.of(404, "체크리스트에 연동된 일정이 없습니다");
+//    if (checkList.getSchedule() == null) return RsData.of(404, "체크리스트에 연동된 일정이 없습니다");
 
     // 체크리스트의 연동된 일정의 클럽 멤버 조회
     Optional<ClubMember> otnClubMember = checkList.getSchedule().getClub().getClubMembers().stream()
@@ -212,11 +212,11 @@ public class CheckListService {
     Optional<CheckList> otnCheckList = checkListRepository.findById(checkListId);
 
     // 체크리스트가 존재하지 않는 경우 RsData 반환
-    if (otnCheckList.isEmpty()) return RsData.of(404, "체크리스트를 찾을 수 없습니다");
+//    if (otnCheckList.isEmpty()) return RsData.of(404, "체크리스트를 찾을 수 없습니다");
     CheckList checkList = otnCheckList.get();
 
     // 체크리스트의 연동된 일정이 존재하지 않는 경우 RsData 반환
-    if (checkList.getSchedule() == null) return RsData.of(404, "체크리스트에 연동된 일정이 없습니다");
+//    if (checkList.getSchedule() == null) return RsData.of(404, "체크리스트에 연동된 일정이 없습니다");
 
     // 체크리스트의 연동된 일정의 클럽 멤버 조회
     Optional<ClubMember> otnClubMember = checkList.getSchedule().getClub().getClubMembers().stream()
