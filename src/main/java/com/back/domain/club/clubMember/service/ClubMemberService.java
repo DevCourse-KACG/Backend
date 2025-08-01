@@ -67,9 +67,6 @@ public class ClubMemberService {
         Club club = clubService.getClubById(clubId)
                 .orElseThrow(() -> new ServiceException(404, "클럽이 존재하지 않습니다."));
 
-        // 권한 확인
-        clubService.validateHostPermission(clubId);
-
         // 1. 요청 데이터에서 이메일 기준 중복 제거 (나중에 들어온 정보가 우선)
         Map<String, ClubMemberDtos.ClubMemberRegisterInfo> uniqueMemberInfoByEmail = reqBody.members().stream()
                 .collect(Collectors.toMap(
@@ -134,14 +131,9 @@ public class ClubMemberService {
      */
     @Transactional
     public void withdrawMemberFromClub(Long clubId, Long memberId) {
-        // 권한 확인 : 현재 로그인한 유저가 클럽 호스트인지 확인
-        // 또는 탈퇴할 멤버 본인인지 확인
+        // 호스트 본인이 탈퇴하려는 경우 예외 처리
         Member user = memberService.findMemberById(rq.getActor().getId())
                 .orElseThrow(() -> new ServiceException(404, "유저가 존재하지 않습니다."));
-        if(!clubMemberValidService.checkMemberRole(clubId, user.getId(), new ClubMemberRole[]{ClubMemberRole.HOST}) && !user.getId().equals(memberId))
-            throw new ServiceException(403, "권한이 없습니다.");
-
-        // 호스트 본인이 탈퇴하려는 경우 예외 처리
         if (user.getId().equals(memberId)) {
             throw new ServiceException(400, "호스트는 탈퇴할 수 없습니다.");
         }
@@ -151,7 +143,7 @@ public class ClubMemberService {
         Member member = memberService.findMemberById(memberId)
                 .orElseThrow(() -> new ServiceException(404, "멤버가 존재하지 않습니다."));
         ClubMember clubMember = clubMemberRepository.findByClubAndMember(club, member)
-                .orElseThrow(() -> new ServiceException(404, "멤버가 존재하지 않습니다."));
+                .orElseThrow(() -> new ServiceException(404, "클럽 멤버가 존재하지 않습니다."));
 
         // 클럽에서 멤버 탈퇴
         clubMember.updateState(ClubMemberState.WITHDRAWN);
@@ -166,9 +158,6 @@ public class ClubMemberService {
      */
     @Transactional
     public void changeMemberRole(Long clubId, Long memberId, @NotBlank String role) {
-        // 권한 확인 : 현재 로그인한 유저가 클럽 호스트인지 확인
-        clubService.validateHostPermission(clubId);
-
         Club club = clubService.getClubById(clubId)
                 .orElseThrow(() -> new ServiceException(404, "클럽이 존재하지 않습니다."));
         Member member = memberService.findMemberById(memberId)
@@ -186,7 +175,6 @@ public class ClubMemberService {
             throw new ServiceException(400, "호스트 권한은 직접 부여할 수 없습니다.");
         }
 
-
         // 역할 변경
         clubMember.updateRole(ClubMemberRole.fromString(role.toUpperCase()));
         clubMemberRepository.save(clubMember);
@@ -203,12 +191,6 @@ public class ClubMemberService {
         // 클럽 확인
         Club club = clubService.getClubById(clubId)
                 .orElseThrow(() -> new ServiceException(404, "클럽이 존재하지 않습니다."));
-
-        // 권한 확인 : 현재 로그인한 유저가 클럽 멤버인지 확인
-        Member user = rq.getActor();
-        if(!clubMemberValidService.isClubMember(clubId, user.getId()))
-            throw new ServiceException(403, "권한이 없습니다.");
-
 
         // 클럽멤버 목록 반환
         List<ClubMember> clubMembers;
@@ -277,9 +259,6 @@ public class ClubMemberService {
      */
     @Transactional
     public void handleMemberApplication(Long clubId, Long memberId, boolean approve) {
-        // 권한 확인 : 현재 로그인한 유저가 클럽 호스트인지 확인
-        clubService.validateHostPermission(clubId);
-
         Club club = clubService.getClubById(clubId)
                 .orElseThrow(() -> new ServiceException(404, "클럽이 존재하지 않습니다."));
         Member member = memberService.findMemberById(memberId)

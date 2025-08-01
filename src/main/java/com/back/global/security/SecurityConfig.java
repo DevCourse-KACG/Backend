@@ -33,6 +33,10 @@ public class SecurityConfig {
                                 "/api/v1/members/auth/guest-register",
                                 "/api/v1/members/auth/guest-login"
                         ).permitAll() // 회원가입, 로그인 허용
+                        .requestMatchers(
+                                "/api/v1/clubs/{clubId}",
+                                "/api/v1/clubs/public"
+                        ).permitAll() // 클럽 정보 조회 및 공개 클럽 목록 접근 허용
                         .anyRequest().authenticated() // 나머지 요청은 인증 필요
                 )
                 .csrf(AbstractHttpConfigurer::disable) // CSRF 보호 비활성화 (API 서버에서는 일반적으로 비활성화)
