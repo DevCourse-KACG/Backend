@@ -1,11 +1,13 @@
 package com.back.domain.schedule.schedule.service;
 
 import com.back.domain.club.club.entity.Club;
+import com.back.domain.club.club.error.ClubErrorCode;
 import com.back.domain.club.club.repository.ClubRepository;
 import com.back.domain.schedule.schedule.dto.DateTimeRange;
 import com.back.domain.schedule.schedule.dto.ScheduleCreateReqBody;
 import com.back.domain.schedule.schedule.dto.ScheduleUpdateReqBody;
 import com.back.domain.schedule.schedule.entity.Schedule;
+import com.back.domain.schedule.schedule.error.ScheduleErrorCode;
 import com.back.domain.schedule.schedule.repository.ScheduleRepository;
 import com.back.global.exception.ServiceException;
 import lombok.RequiredArgsConstructor;
@@ -35,9 +37,6 @@ public class ScheduleService {
         DateTimeRange dateTimeRange = getDateTimeRange(startDate, endDate);
         LocalDateTime startDateTime = dateTimeRange.startDateTime();
         LocalDateTime endDateTime = dateTimeRange.endDateTime();
-
-        clubRepository.findById(clubId)
-                .orElseThrow(() -> new NoSuchElementException("%d번 모임은 존재하지 않습니다.".formatted(clubId)));
 
         // 활성화된 일정 중, 범위 내에 있는 목록을 시작 날짜 기준으로 오름차순 정렬하여 조회
         return scheduleRepository
@@ -73,7 +72,7 @@ public class ScheduleService {
     public Schedule getScheduleById(Long scheduleId) {
         return scheduleRepository
                 .findById(scheduleId)
-                .orElseThrow(() -> new NoSuchElementException("%d번 일정은 존재하지 않습니다.".formatted(scheduleId)));
+                .orElseThrow(() -> new NoSuchElementException(ScheduleErrorCode.SCHEDULE_NOT_FOUND.getMessage()));
     }
 
     /**
@@ -85,7 +84,7 @@ public class ScheduleService {
     public Schedule getActiveScheduleById(Long scheduleId) {
         return scheduleRepository
                 .findActiveScheduleById(scheduleId)
-                .orElseThrow(() -> new NoSuchElementException("%d번 일정은 존재하지 않습니다.".formatted(scheduleId)));
+                .orElseThrow(() -> new NoSuchElementException(ScheduleErrorCode.SCHEDULE_NOT_FOUND.getMessage()));
     }
 
     /**
@@ -97,7 +96,7 @@ public class ScheduleService {
     public Schedule getLatestClubSchedule(Long clubId) {
         return scheduleRepository
                 .findFirstByClubIdOrderByIdDesc(clubId)
-                .orElseThrow(() -> new NoSuchElementException("%d번 모임의 일정은 존재하지 않습니다.".formatted(clubId)));
+                .orElseThrow(() -> new NoSuchElementException(ScheduleErrorCode.SCHEDULE_NOT_FOUND.getMessage()));
     }
 
     /**
@@ -117,12 +116,7 @@ public class ScheduleService {
      */
     @Transactional
     public Schedule createSchedule(ScheduleCreateReqBody reqBody) {
-        // 변경 필요 (임시 조회용)
-        // 조회 + 모임 (종료일 지난 모임, 삭제된 모임 등) 검증 로직 호출
-        // 또는 clubRepository.findByIdAndStatsTrueAndEndDateAfter
-        Club club = clubRepository
-                .findById(reqBody.clubId())
-                .orElseThrow(() -> new NoSuchElementException("%d번 모임은 존재하지 않습니다.".formatted(reqBody.clubId())));
+        Club club = getClubOrThrow(reqBody.clubId());
 
         // 날짜 유효성 검증
         validateDate(reqBody.startDate(), reqBody.endDate());
@@ -214,5 +208,16 @@ public class ScheduleService {
             endDateTime = currentMonth.atEndOfMonth().atTime(23, 59, 59);
         }
         return new DateTimeRange(startDateTime, endDateTime);
+    }
+
+    /**
+     * 모임 조회
+     * @param clubId
+     * @return club
+     */
+    private Club getClubOrThrow(Long clubId) {
+        return clubRepository
+                .findById(clubId)
+                .orElseThrow(() -> new NoSuchElementException(ClubErrorCode.CLUB_NOT_FOUND.getMessage()));
     }
 }
