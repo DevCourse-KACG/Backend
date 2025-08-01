@@ -39,11 +39,9 @@ public class ApiV1ClubLinkController {
 
     @PostMapping("/invitations/{token}/apply")
     @Operation(summary = "로그인 유저 - 초대 링크를 통한 비공개 클럽 가입 신청")
-    public RsData<String> applyToClubByInvitationToken(@PathVariable @Positive String token) {
+    public RsData<Object> applyToClubByInvitationToken(@PathVariable @Positive String token) {
         Member user = rq.getActor();
 
-        clubLinkService.applyToClubByToken(user, token);
-
-        return new RsData<>(200, "로그인 유저의 비공개 클럽 가입 신청이 완료되었습니다.", null);
+        return clubLinkService.applyToPrivateClubByToken(user, token);
     }
 }
