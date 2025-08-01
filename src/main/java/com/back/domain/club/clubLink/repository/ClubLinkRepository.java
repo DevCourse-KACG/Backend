@@ -14,4 +14,6 @@ public interface ClubLinkRepository extends CrudRepository<ClubLink, Integer> {
     List<ClubLink> findAll();
 
     Optional<ClubLink> findByClubAndExpiresAtAfter(Club club, LocalDateTime attr0);
+
+    Optional<ClubLink> findByInviteCode(String inviteCode);
 }

@@ -36,4 +36,12 @@ public class ApiV1ClubLinkController {
 
         return new RsData<>(200, "클럽 초대 링크가 반환되었습니다.", response);
     }
+
+    @PostMapping("/invitations/{token}/apply")
+    @Operation(summary = "로그인 유저 - 초대 링크를 통한 비공개 클럽 가입 신청")
+    public RsData<Object> applyToClubByInvitationToken(@PathVariable String token) {
+        Member user = rq.getActor();
+
+        return clubLinkService.applyToPrivateClubByToken(user, token);
+    }
 }

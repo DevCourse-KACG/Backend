@@ -46,4 +46,6 @@ public interface MemberRepository extends JpaRepository<Member, Long> {
       and cm.club.id = :clubId
 """)
     Optional<Member> findByGuestNicknameInClub(String nickname, @Param("clubId") Long clubId);
+
+    Optional<Member> findByMemberInfo_Email(String email);
 }

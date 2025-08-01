@@ -44,4 +44,8 @@ public class ClubLink {
         this.expiresAt = expiresAt;
         this.club = club;
     }
+
+    public boolean isExpired() {
+        return expiresAt.isBefore(LocalDateTime.now());
+    }
 }
