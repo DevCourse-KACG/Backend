@@ -5,8 +5,12 @@ import com.back.domain.club.club.repository.ClubRepository;
 import com.back.domain.club.clubLink.entity.ClubLink;
 import com.back.domain.club.clubLink.repository.ClubLinkRepository;
 import com.back.domain.club.clubLink.service.ClubLinkService;
+import com.back.domain.club.clubMember.entity.ClubMember;
 import com.back.domain.club.clubMember.repository.ClubMemberRepository;
+import com.back.domain.member.member.entity.Member;
 import com.back.domain.member.member.repository.MemberRepository;
+import com.back.global.enums.ClubMemberRole;
+import com.back.global.enums.ClubMemberState;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.DisplayName;
@@ -55,7 +59,8 @@ public class ApiV1ClubLinkControllerTest {
 
     @Test
     @DisplayName("초대 링크 생성 - 링크 생성 성공")
-    @WithUserDetails(value = "hgd222@test.com") // 1번 멤버로 로그인
+    @WithUserDetails(value = "hgd222@test.com")
+        // 1번 멤버로 로그인
     void createClubLink_Success() throws Exception {
 
         MvcResult result = mockMvc.perform(post("/api/v1/clubs/1/members/invitation-link"))
@@ -115,7 +120,8 @@ public class ApiV1ClubLinkControllerTest {
 
     @Test
     @DisplayName("초대 링크 생성 - 기존 유효한 링크가 존재할 경우 해당 링크 반환")
-    @WithUserDetails("hgd222@test.com") // HOST 또는 MANAGER 권한을 가진 사용자
+    @WithUserDetails("hgd222@test.com")
+        // HOST 또는 MANAGER 권한을 가진 사용자
     void createClubLink_ExistingLink_Returned() throws Exception {
         // given
         Club club = clubRepository.findById(1L).orElseThrow();
@@ -141,7 +147,8 @@ public class ApiV1ClubLinkControllerTest {
 
     @Test
     @DisplayName("초대 링크 조회 성공 - 유효한 초대 링크가 존재하면 반환")
-    @WithUserDetails("hgd222@test.com") // HOST 또는 MANAGER
+    @WithUserDetails("hgd222@test.com")
+        // HOST 또는 MANAGER
     void getExistingClubLink_success() throws Exception {
         // given
         Club club = clubRepository.findById(1L).orElseThrow();
@@ -180,7 +187,7 @@ public class ApiV1ClubLinkControllerTest {
 
     @Test
     @DisplayName("초대 링크 조회 실패 - 권한 없는 멤버일 경우 예외 발생")
-    @WithUserDetails("lyh3@test.com") // MEMBER 권한만 있음
+    @WithUserDetails("lyh3@test.com")// MEMBER 권한만 있음
     void getExistingClubLink_fail_noPermission() throws Exception {
         mockMvc.perform(get("/api/v1/clubs/1/members/invitation-link"))
                 .andExpect(status().isBadRequest())
@@ -198,4 +205,143 @@ public class ApiV1ClubLinkControllerTest {
                 .andExpect(jsonPath("$.message").value("해당 id의 클럽을 찾을 수 없습니다."));
     }
 
+    @Test
+    @DisplayName("초대 링크 가입 신청 성공 - 유효한 토큰, 미가입자")
+    @WithUserDetails("uny@test.com")
+        // 홍길동 로그인
+    void applyToPrivateClub_success() throws Exception {
+        Club club = clubRepository.findById(2L).orElseThrow(); // 2L: "친구 모임"
+
+        ClubLink clubLink = ClubLink.builder()
+                .inviteCode("valid-token-123")
+                .createdAt(LocalDateTime.now().minusDays(1))
+                .expiresAt(LocalDateTime.now().plusDays(7))
+                .club(club)
+                .build();
+        clubLinkRepository.save(clubLink);
+
+        mockMvc.perform(post("/api/v1/clubs/invitations/valid-token-123/apply"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value(200))
+                .andExpect(jsonPath("$.message").value("클럽에 성공적으로 가입되었습니다."));
+    }
+
+    @Test
+    @DisplayName("초대 링크 실패 - 유효하지 않은 토큰")
+    @WithUserDetails("hgd222@test.com")
+    void applyToPrivateClub_fail_invalidToken() throws Exception {
+        mockMvc.perform(post("/api/v1/clubs/invitations/invalid-token/apply"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value(400))
+                .andExpect(jsonPath("$.message").value("초대 토큰이 유효하지 않습니다."));
+    }
+
+    @Test
+    @DisplayName("초대 링크 실패 - 토큰 만료")
+    @WithUserDetails("hgd222@test.com")
+    void applyToPrivateClub_fail_expiredToken() throws Exception {
+        Club club = clubRepository.findById(2L).orElseThrow(); // "친구 모임"
+
+        ClubLink clubLink = ClubLink.builder()
+                .inviteCode("expired-token-456")
+                .createdAt(LocalDateTime.now().minusDays(10))
+                .expiresAt(LocalDateTime.now().minusDays(1)) // 만료
+                .club(club)
+                .build();
+        clubLinkRepository.save(clubLink);
+
+        mockMvc.perform(post("/api/v1/clubs/invitations/expired-token-456/apply"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value(400))
+                .andExpect(jsonPath("$.message").value("초대 토큰이 만료되었습니다."));
+    }
+
+    @Test
+    @DisplayName("초대 링크 실패 - 이미 가입 상태 (JOINING)")
+    @WithUserDetails("chs4s@test.com")
+        // 김철수 로그인
+    void applyToPrivateClub_fail_alreadyJoined() throws Exception {
+        Club club = clubRepository.findById(2L).orElseThrow(); // "친구 모임"
+        Member member = findMemberByEmail("chs4s@test.com");
+
+        ClubLink clubLink = ClubLink.builder()
+                .inviteCode("joined-token")
+                .createdAt(LocalDateTime.now())
+                .expiresAt(LocalDateTime.now().plusDays(1))
+                .club(club)
+                .build();
+        clubLinkRepository.save(clubLink);
+
+        ClubMember joinedMember = ClubMember.builder()
+                .member(member)
+                .club(club)
+                .role(ClubMemberRole.PARTICIPANT)
+                .state(ClubMemberState.JOINING)
+                .build();
+        clubMemberRepository.save(joinedMember);
+
+        mockMvc.perform(post("/api/v1/clubs/invitations/joined-token/apply"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value("이미 이 클럽에 가입되어 있습니다."));
+    }
+
+    @Test
+    @DisplayName("초대 링크 실패 - 이미 신청 상태 (APPLYING)")
+    @WithUserDetails("lcw@test.com")
+        // 이채원 로그인
+    void applyToPrivateClub_fail_applying() throws Exception {
+        Club club = clubRepository.findById(2L).orElseThrow(); // "친구 모임"
+        Member member = findMemberByEmail("lcw@test.com");
+
+        ClubLink clubLink = ClubLink.builder()
+                .inviteCode("applying-token")
+                .createdAt(LocalDateTime.now())
+                .expiresAt(LocalDateTime.now().plusDays(1))
+                .club(club)
+                .build();
+        clubLinkRepository.save(clubLink);
+
+        clubLinkService.applyToPrivateClubByToken(member, "applying-token");
+
+        mockMvc.perform(post("/api/v1/clubs/invitations/applying-token/apply"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value("이미 이 클럽에 가입 신청 중입니다."));
+    }
+
+    @Test
+    @DisplayName("초대 링크 실패 - 이미 초대 상태 (INVITED)")
+    @WithUserDetails("hyh@test.com")
+    void applyToPrivateClub_fail_invited() throws Exception {
+        Club club = clubRepository.findById(2L).orElseThrow();
+        Member member = findMemberByEmail("hyh@test.com");
+
+        ClubLink clubLink = ClubLink.builder()
+                .inviteCode("invited-token")
+                .createdAt(LocalDateTime.now())
+                .expiresAt(LocalDateTime.now().plusDays(1))
+                .club(club)
+                .build();
+        clubLinkRepository.save(clubLink);
+
+        ClubMember invitedMember = ClubMember.builder()
+                .member(member)
+                .club(club)
+                .role(ClubMemberRole.PARTICIPANT)
+                .state(ClubMemberState.INVITED)
+                .build();
+        clubMemberRepository.save(invitedMember);
+
+        mockMvc.perform(post("/api/v1/clubs/invitations/invited-token/apply"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value("이미 초대를 받은 상태입니다. 마이페이지에서 수락해주세요."));
+    }
+
+    //================기타 메서드========================
+
+    private Member findMemberByEmail(String email) {
+        return memberRepository.findAll().stream()
+                .filter(m -> m.getMemberInfo() != null && email.equals(m.getMemberInfo().getEmail()))
+                .findFirst()
+                .orElseThrow(() -> new IllegalArgumentException("멤버를 찾을 수 없습니다: " + email));
+    }
 }

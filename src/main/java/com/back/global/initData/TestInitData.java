@@ -106,6 +106,12 @@ public class TestInitData {
         Member member5 = createMember("박민수", "password5", "pms4@test.com", "안녕하세요. 박민수입니다.");
         members.put(member5.getNickname(), member5);
 
+        Member member6 = createMember("유나영", "password6", "uny@test.com", "안녕하세요, 유나영입니다."); //가입 신청 테스트용
+
+        Member member7 = createMember("이채원", "password7", "lcw@test.com", "안녕하세요, 이채원입니다."); //가입 신청 테스트용
+
+        Member member8 = createMember("호윤호", "password8", "hyh@test.com", "안녕하세요, 호윤호입니다."); //가입 신청 테스트용
+
         // 비회원
         Member guest1 = createMember("이덕혜", "password11", null, null);
         members.put(guest1.getNickname(), guest1);
