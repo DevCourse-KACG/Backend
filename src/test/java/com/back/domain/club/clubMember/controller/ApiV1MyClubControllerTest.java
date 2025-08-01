@@ -684,11 +684,11 @@ class ApiV1MyClubControllerTest {
                 .andExpect(handler().methodName("getMyClubInfo"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value(200))
-                .andExpect(jsonPath("$.message").value("클럽 정보 조회 성공"))
+                .andExpect(jsonPath("$.message").value("클럽 멤버 정보를 조회했습니다."))
                 .andExpect(jsonPath("$.data.clubId").value(club.getId()))
                 .andExpect(jsonPath("$.data.clubName").value(club.getName()))
                 .andExpect(jsonPath("$.data.role").value("PARTICIPANT"))
-                .andExpect(jsonPath("$.data.state").value("JOINING"));
+                .andExpect(jsonPath("$.data.state").value("INVITED"));
     }
 
     @Test
@@ -742,7 +742,7 @@ class ApiV1MyClubControllerTest {
                 .andExpect(handler().methodName("getMyClubInfo"))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.code").value(404))
-                .andExpect(jsonPath("$.message").value("가입된 클럽이 아닙니다."));
+                .andExpect(jsonPath("$.message").value("클럽 멤버 정보가 존재하지 않습니다."));
     }
 
 }
