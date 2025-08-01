@@ -10,27 +10,21 @@ import com.back.domain.checkList.itemAssign.entity.ItemAssign;
 import com.back.domain.club.club.entity.Club;
 import com.back.domain.club.club.repository.ClubRepository;
 import com.back.domain.club.clubMember.entity.ClubMember;
-import com.back.domain.club.clubMember.repository.ClubMemberRepository;
 import com.back.domain.member.member.entity.Member;
 import com.back.domain.member.member.repository.MemberRepository;
 import com.back.domain.schedule.schedule.entity.Schedule;
 import com.back.domain.schedule.schedule.repository.ScheduleRepository;
 import com.back.global.enums.ClubMemberRole;
 import com.back.global.enums.ClubMemberState;
-import com.back.global.exception.ServiceException;
 import com.back.global.rq.Rq;
 import com.back.global.rsData.RsData;
 import com.back.standard.util.Ut;
-import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -336,6 +330,14 @@ public class CheckListService {
     Map<String, Object> jwtData = Ut.jwt.payload(secretKey, cleanToken);
     return RsData.of(200, "토큰 검증 성공", jwtData);
 
+  }
+
+  // 체커에 사용되는 메서드
+  public CheckList getActiveCheckListById(Long checkListId) {
+    // 활성화된 체크리스트 조회
+    return checkListRepository
+            .findActiveCheckListById(checkListId)
+            .orElseThrow(() -> new NoSuchElementException("체크리스트를 찾을 수 없습니다"));
   }
 
 }
