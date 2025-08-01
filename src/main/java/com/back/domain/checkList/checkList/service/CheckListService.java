@@ -30,10 +30,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -42,13 +39,15 @@ public class CheckListService {
   private final CheckListRepository checkListRepository;
   private final ScheduleRepository scheduleRepository;
   private final ClubRepository clubRepository;
-  private final MemberRepository memberRepository;
-  private final MemberService memberService;
-  private final ClubMemberValidService clubMemberValidService;
   private final Rq rq;
 
-  @Value("${custom.jwt.secretKey}")
-  private String secretKey;
+  // 체커에 사용되는 메서드
+  public CheckList getActiveCheckListById(Long checkListId) {
+    // 활성화된 체크리스트 조회
+    return checkListRepository
+        .findActiveCheckListById(checkListId)
+        .orElseThrow(() -> new NoSuchElementException("체크리스트를 찾을 수 없습니다"));
+  }
 
   @Transactional
   public RsData<CheckListDto> write(CheckListWriteReqDto checkListWriteReqDto) {

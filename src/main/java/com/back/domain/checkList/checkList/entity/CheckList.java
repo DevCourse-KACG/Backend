@@ -1,7 +1,5 @@
 package com.back.domain.checkList.checkList.entity;
 
-import com.back.domain.member.member.entity.Member;
-import com.back.domain.preset.preset.entity.PresetItem;
 import com.back.domain.schedule.schedule.entity.Schedule;
 import jakarta.persistence.*;
 import jdk.jfr.Description;

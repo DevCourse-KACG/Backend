@@ -2,17 +2,14 @@ package com.back.domain.preset.preset.controller;
 
 import com.back.domain.preset.preset.dto.PresetDto;
 import com.back.domain.preset.preset.dto.PresetWriteReqDto;
-import com.back.domain.preset.preset.entity.Preset;
-import com.back.domain.preset.preset.entity.PresetItem;
+
 import com.back.domain.preset.preset.service.PresetService;
 import com.back.global.rsData.RsData;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import lombok.Value;
 import org.springframework.http.ResponseEntity;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;

@@ -1,7 +1,6 @@
 package com.back.domain.preset.preset.service;
 
 import com.back.domain.member.member.entity.Member;
-import com.back.domain.member.member.repository.MemberRepository;
 import com.back.domain.preset.preset.dto.PresetDto;
 import com.back.domain.preset.preset.dto.PresetWriteReqDto;
 import com.back.domain.preset.preset.entity.Preset;
@@ -10,14 +9,11 @@ import com.back.domain.preset.preset.repository.PresetRepository;
 import com.back.global.exception.ServiceException;
 import com.back.global.rq.Rq;
 import com.back.global.rsData.RsData;
-import com.back.standard.util.Ut;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -25,11 +21,7 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class PresetService {
   private final PresetRepository presetRepository;
-  private final MemberRepository memberRepository;
   private final Rq rq;
-
-  @Value("${custom.jwt.secretKey}")
-  private String secretKey;
 
   @Transactional
   public RsData<PresetDto> write(PresetWriteReqDto presetWriteReqDto) {

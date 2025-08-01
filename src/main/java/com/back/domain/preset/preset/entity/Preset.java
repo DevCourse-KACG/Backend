@@ -5,7 +5,6 @@ import jakarta.persistence.*;
 import jdk.jfr.Description;
 import lombok.*;
 
-import java.util.ArrayList;
 import java.util.List;
 
 @Entity

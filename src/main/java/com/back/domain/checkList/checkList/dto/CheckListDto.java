@@ -1,7 +1,6 @@
 package com.back.domain.checkList.checkList.dto;
 
 import com.back.domain.checkList.checkList.entity.CheckList;
-import com.back.domain.preset.preset.entity.Preset;
 import com.back.domain.schedule.schedule.dto.ScheduleDto;
 
 import java.util.Collections;

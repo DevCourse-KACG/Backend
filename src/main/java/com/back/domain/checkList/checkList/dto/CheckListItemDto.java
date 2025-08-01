@@ -2,7 +2,6 @@ package com.back.domain.checkList.checkList.dto;
 
 import com.back.domain.checkList.checkList.entity.CheckListItem;
 import com.back.domain.checkList.itemAssign.dto.ItemAssignDto;
-import com.back.domain.preset.preset.entity.PresetItem;
 import com.back.global.enums.CheckListItemCategory;
 
 import java.util.Collections;
