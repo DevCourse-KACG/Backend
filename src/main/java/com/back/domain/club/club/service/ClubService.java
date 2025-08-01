@@ -2,6 +2,7 @@ package com.back.domain.club.club.service;
 
 import com.back.domain.club.club.dtos.ClubControllerDtos;
 import com.back.domain.club.club.entity.Club;
+import com.back.domain.club.club.error.ClubErrorCode;
 import com.back.domain.club.club.repository.ClubRepository;
 import com.back.domain.club.clubMember.entity.ClubMember;
 import com.back.domain.club.clubMember.service.ClubMemberValidService;
@@ -68,8 +69,34 @@ public class ClubService {
         return clubRepository.findById(clubId);
     }
 
-    public Optional<Club> getValidAndActiveClub(Long clubId) {
-        return clubRepository.findValidAndActiveClub(clubId);
+    /**
+     * 모임 ID로 모임 조회
+     * @param clubId 모임 ID
+     * @return 모임 엔티티
+     */
+    public Club getClub(Long clubId) {
+        return clubRepository.findById(clubId)
+                .orElseThrow(() -> new NoSuchElementException(ClubErrorCode.CLUB_NOT_FOUND.getMessage()));
+    }
+
+    /**
+     * 모임 ID로 활성화된 모임 조회
+     * @param clubId 모임 ID
+     * @return 활성화된 모임 엔티티
+     */
+    public Club getActiveClub(Long clubId) {
+        return clubRepository.findByIdAndStateIsTrue(clubId)
+                .orElseThrow(() -> new NoSuchElementException(ClubErrorCode.CLUB_NOT_FOUND.getMessage()));
+    }
+    /**
+     * 모임 ID로 활성화된 모임 조회
+     * @param clubId 모임 ID
+     * @return 활성화된 모임 엔티티
+     */
+    public Club getValidAndActiveClub(Long clubId) {
+        return clubRepository
+                .findValidAndActiveClub(clubId)
+                .orElseThrow(() -> new NoSuchElementException(ClubErrorCode.CLUB_NOT_FOUND.getMessage()));
     }
 
     /**

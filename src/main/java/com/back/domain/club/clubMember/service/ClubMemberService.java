@@ -14,6 +14,7 @@ import com.back.global.exception.ServiceException;
 import com.back.global.rq.Rq;
 import jakarta.validation.constraints.NotBlank;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -221,5 +222,26 @@ public class ClubMemberService {
 
         return new ClubMemberDtos.ClubMemberResponse(memberInfos);
 
+    }
+
+    /**
+     * 클럽과 멤버로 클럽 멤버 조회
+     * @param club 모임 엔티티
+     * @param member 멤버 엔티티
+     * @return 클럽 멤버 엔티티
+     */
+    public ClubMember getClubMember(Club club, Member member) {
+        return clubMemberRepository.findByClubAndMember(club, member)
+                .orElseThrow(() -> new AccessDeniedException("권한이 없습니다."));
+    }
+
+    /**
+     * 클럽과 멤버로 클럽 멤버 존재 여부 확인
+     * @param club 모임 엔티티
+     * @param member 멤버 엔티티
+     * @return 클럽 멤버 존재 여부
+     */
+    public boolean existsByClubAndMember(Club club, Member member) {
+        return clubMemberRepository.existsByClubAndMember(club, member);
     }
 }

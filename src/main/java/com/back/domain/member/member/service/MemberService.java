@@ -28,6 +28,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.util.Map;
+import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -355,6 +356,16 @@ public class MemberService {
 
     public Optional<Member> findMemberById(Long id) {
         return memberRepository.findById(id);
+    }
+
+    /**
+     * 멤버 ID로 멤버 조회
+     * @param memberId 멤버 ID
+     * @return 멤버 엔티티
+     */
+    public Member getMember(Long memberId) {
+        return memberRepository.findById(memberId)
+                .orElseThrow(() -> new NoSuchElementException("멤버가 존재하지 않습니다."));
     }
 
     public String generateAccessToken(Member member) {
