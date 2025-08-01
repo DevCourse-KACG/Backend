@@ -1,5 +1,6 @@
 package com.back.domain.club.clubLink.service;
 
+import com.back.domain.club.club.dtos.ClubControllerDtos;
 import com.back.domain.club.club.entity.Club;
 import com.back.domain.club.club.repository.ClubRepository;
 import com.back.domain.club.clubLink.dtos.ClubLinkDtos;
@@ -8,10 +9,11 @@ import com.back.domain.club.clubLink.repository.ClubLinkRepository;
 import com.back.domain.club.clubMember.entity.ClubMember;
 import com.back.domain.club.clubMember.repository.ClubMemberRepository;
 import com.back.domain.member.member.entity.Member;
+import com.back.domain.member.member.repository.MemberRepository;
+import com.back.global.enums.ClubApplyResult;
 import com.back.global.enums.ClubMemberRole;
 import com.back.global.enums.ClubMemberState;
 import com.back.global.exception.ServiceException;
-import com.back.global.rsData.RsData;
 import jakarta.validation.constraints.Positive;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -28,6 +30,7 @@ public class ClubLinkService {
     private final ClubRepository clubRepository;
     private final ClubMemberRepository clubMemberRepository;
     private final ClubLinkRepository clubLinkRepository;
+    private final MemberRepository memberRepository;
 
     @Transactional
     public ClubLinkDtos.CreateClubLinkResponse createClubLink(Member user, Long clubId) {
@@ -79,34 +82,22 @@ public class ClubLinkService {
         return new ClubLinkDtos.CreateClubLinkResponse(existingLink.getInviteCode());
     }
 
-    @Transactional
-    public RsData<Object> applyToPrivateClubByToken(Member user, String token) {
-        //토큰 유효성 확인
-        ClubLink clubLink = clubLinkRepository.findByInviteCode(token)
-                .orElseThrow(() -> new ServiceException(400, "초대 토큰이 유효하지 않습니다."));
-
-        //토큰 만료 확인
-        if (clubLink.isExpired()) {
-            return new RsData<>(400, "초대 토큰이 만료되었습니다.", null);
-        }
-
+    public ClubApplyResult applyToPrivateClub(Member user, String token) {
+        // 토큰 유효성 체크
+        ClubLink clubLink = validateInviteTokenOrThrow(token);
         Club club = clubLink.getClub();
 
-        // 이미 가입한 경우 체크
-        Optional<ClubMember> existingMemberOpt = clubMemberRepository.findByClubAndMember(club, user);
-
-        if (existingMemberOpt.isPresent()) {
-            ClubMember existingMember = existingMemberOpt.get();
-
+        Optional<ClubMember> existingMemberOtp = clubMemberRepository.findByClubAndMember(club, user);
+        if (existingMemberOtp.isPresent()) {
+            ClubMember existingMember = existingMemberOtp.get();
             return switch (existingMember.getState()) {
-                case JOINING -> new RsData<>(400, "이미 이 클럽에 가입되어 있습니다.", null);
-                case APPLYING -> new RsData<>(400, "이미 이 클럽에 가입 신청 중입니다.", null);
-                case INVITED -> new RsData<>(400, "이미 초대를 받은 상태입니다. 마이페이지에서 수락해주세요.", null);
-                default -> new RsData<>(400, "해당 상태에서는 가입할 수 없습니다.", null);
+                case JOINING -> ClubApplyResult.ALREADY_JOINED;
+                case APPLYING -> ClubApplyResult.ALREADY_APPLYING;
+                case INVITED -> ClubApplyResult.ALREADY_INVITED;
+                default -> throw new ServiceException(400, "해당 상태에서는 가입할 수 없습니다.");
             };
         }
 
-        // 가입 처리
         ClubMember clubMember = ClubMember.builder()
                 .member(user)
                 .role(ClubMemberRole.PARTICIPANT)
@@ -116,7 +107,28 @@ public class ClubLinkService {
 
         clubMemberRepository.save(clubMember);
 
-        return new RsData<>(200, "클럽 가입 신청이 성공적으로 완료되었습니다.", null);
+        return ClubApplyResult.SUCCESS;
+    }
+
+    public ClubControllerDtos.SimpleClubInfoResponse getClubInfoByInvitationToken(String token) {
+        ClubLink clubLink = validateInviteTokenOrThrow(token);
+        Club club = clubLink.getClub();
+
+        Member leader = memberRepository.findById(club.getLeaderId())
+                .orElseThrow(() -> new ServiceException(400, "해당 아이디의 모임장을 찾을 수 없습니다."));
+
+        return new ClubControllerDtos.SimpleClubInfoResponse(
+                    club.getId(),
+                    club.getName(),
+                    club.getCategory().name(),
+                    club.getImageUrl(),
+                    club.getMainSpot(),
+                    club.getEventType().name(),
+                    club.getStartDate().toString(),
+                    club.getEndDate().toString(),
+                    club.getLeaderId(),
+                    leader.getNickname()
+            );
     }
 
     //===============================기타 메서드================================
@@ -133,5 +145,15 @@ public class ClubLinkService {
                 List.of(ClubMemberRole.MANAGER, ClubMemberRole.HOST))) {
             throw new ServiceException(400, "호스트나 매니저만 초대 링크를 관리할 수 있습니다.");
         }
+    }
+
+    // 토큰 유효성 검사, 유효하면 ClubLink 반환, 아니면 예외 발생
+    public ClubLink validateInviteTokenOrThrow(String token) {
+        ClubLink clubLink = clubLinkRepository.findByInviteCode(token)
+                .orElseThrow(() -> new ServiceException(400, "초대 토큰이 유효하지 않습니다."));
+        if (clubLink.isExpired()) {
+            throw new ServiceException(400, "초대 토큰이 만료되었습니다.");
+        }
+        return clubLink;
     }
 }

@@ -187,10 +187,6 @@ public class ApiV1MemberController {
 
         Member user = rq.getActor();
 
-        if (user == null) {
-            throw new ServiceException(401, "인증이 필요합니다.");
-        }
-
         MemberPasswordResponse response = memberService.checkPasswordValidity(user.getId(), dto.password());
 
         return RsData.of(200,
