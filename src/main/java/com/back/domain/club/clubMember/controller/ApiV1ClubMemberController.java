@@ -65,4 +65,26 @@ public class ApiV1ClubMemberController {
         return RsData.of(200, "클럽 멤버 목록이 조회됐습니다.", clubMemberResponse);
     }
 
+    @PatchMapping("/{memberId}/approval")
+    @Operation(summary = "클럽 가입 신청 승인")
+    public RsData<Void> approveMemberApplication(
+            @PathVariable Long clubId,
+            @PathVariable Long memberId
+    ) {
+        clubMemberService.handleMemberApplication(clubId, memberId, true);
+
+        return RsData.of(200, "가입 신청이 승인됐습니다.", null);
+    }
+
+    @DeleteMapping("/{memberId}/approval")
+    @Operation(summary = "클럽 가입 신청 거절")
+    public RsData<Void> rejectMemberApplication(
+            @PathVariable Long clubId,
+            @PathVariable Long memberId
+    ) {
+        clubMemberService.handleMemberApplication(clubId, memberId, false);
+
+        return RsData.of(200, "가입 신청이 거절됐습니다.", null);
+    }
+
 }

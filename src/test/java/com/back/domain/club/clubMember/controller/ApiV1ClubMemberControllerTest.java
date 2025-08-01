@@ -1518,7 +1518,7 @@ class ApiV1ClubMemberControllerTest {
     @Test
     @DisplayName("가입 신청 수락")
     @WithUserDetails(value = "hgd222@test.com") // 1번 멤버로 로그인
-    void acceptJoinRequest() throws Exception {
+    void approveMemberApplication() throws Exception {
         // given
         // 테스트 클럽 생성
         Club club = clubService.createClub(
@@ -1567,10 +1567,10 @@ class ApiV1ClubMemberControllerTest {
         // then
         resultActions
                 .andExpect(handler().handlerType(ApiV1ClubMemberController.class))
-                .andExpect(handler().methodName("acceptJoinRequest"))
+                .andExpect(handler().methodName("approveMemberApplication"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value(200))
-                .andExpect(jsonPath("$.message").value("가입 신청이 수락되었습니다."));
+                .andExpect(jsonPath("$.message").value("가입 신청이 승인됐습니다."));
 
         // 클럽 멤버의 상태가 JOINING으로 변경되었는지 확인
         ClubMember updatedClubMember = clubMemberRepository.findById(clubMember1.getId())
@@ -1581,7 +1581,7 @@ class ApiV1ClubMemberControllerTest {
     @Test
     @DisplayName("가입 신청 수락 - 신청하지 않은 멤버")
     @WithUserDetails(value = "hgd222@test.com") // 1번 멤버로 로그인
-    void acceptJoinRequest_NotAppliedMember() throws Exception {
+    void approveMemberApplication_NotAppliedMember() throws Exception {
         // given
         // 테스트 클럽 생성
         Club club = clubService.createClub(
@@ -1625,7 +1625,7 @@ class ApiV1ClubMemberControllerTest {
         // then
         resultActions
                 .andExpect(handler().handlerType(ApiV1ClubMemberController.class))
-                .andExpect(handler().methodName("acceptJoinRequest"))
+                .andExpect(handler().methodName("approveMemberApplication"))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.code").value(400))
                 .andExpect(jsonPath("$.message").value("가입 신청 상태가 아닙니다."));
@@ -1634,7 +1634,7 @@ class ApiV1ClubMemberControllerTest {
     @Test
     @DisplayName("가입 신청 수락 - 이미 가입 상태인 멤버")
     @WithUserDetails(value = "hgd222@test.com") // 1번 멤버로 로그인
-    void acceptJoinRequest_AlreadyJoinedMember() throws Exception {
+    void approveMemberApplication_AlreadyJoinedMember() throws Exception {
         // given
         // 테스트 클럽 생성
         Club club = clubService.createClub(
@@ -1683,7 +1683,7 @@ class ApiV1ClubMemberControllerTest {
         // then
         resultActions
                 .andExpect(handler().handlerType(ApiV1ClubMemberController.class))
-                .andExpect(handler().methodName("acceptJoinRequest"))
+                .andExpect(handler().methodName("approveMemberApplication"))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.code").value(400))
                 .andExpect(jsonPath("$.message").value("이미 가입 상태입니다."));
@@ -1692,7 +1692,7 @@ class ApiV1ClubMemberControllerTest {
     @Test
     @DisplayName("가입 신청 수락 - 탈퇴 상태인 멤버")
     @WithUserDetails(value = "hgd222@test.com") // 1번 멤버로 로그인
-    void acceptJoinRequest_WithdrawnMember() throws Exception {
+    void approveMemberApplication_WithdrawnMember() throws Exception {
         // given
         // 테스트 클럽 생성
         Club club = clubService.createClub(
@@ -1741,7 +1741,7 @@ class ApiV1ClubMemberControllerTest {
         // then
         resultActions
                 .andExpect(handler().handlerType(ApiV1ClubMemberController.class))
-                .andExpect(handler().methodName("acceptJoinRequest"))
+                .andExpect(handler().methodName("approveMemberApplication"))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.code").value(400))
                 .andExpect(jsonPath("$.message").value("가입 신청 상태가 아닙니다."));
@@ -1750,7 +1750,7 @@ class ApiV1ClubMemberControllerTest {
     @Test
     @DisplayName("가입 신청 수락 - 초대됨 상태인 멤버")
     @WithUserDetails(value = "hgd222@test.com") // 1번 멤버로 로그인
-    void acceptJoinRequest_InvitedMember() throws Exception {
+    void approveMemberApplication_InvitedMember() throws Exception {
         // given
         // 테스트 클럽 생성
         Club club = clubService.createClub(
@@ -1799,7 +1799,7 @@ class ApiV1ClubMemberControllerTest {
         // then
         resultActions
                 .andExpect(handler().handlerType(ApiV1ClubMemberController.class))
-                .andExpect(handler().methodName("acceptJoinRequest"))
+                .andExpect(handler().methodName("approveMemberApplication"))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.code").value(400))
                 .andExpect(jsonPath("$.message").value("가입 신청 상태가 아닙니다."));
@@ -1808,7 +1808,7 @@ class ApiV1ClubMemberControllerTest {
     @Test
     @DisplayName("가입 신청 수락 - 권한 없는 멤버")
     @WithUserDetails(value = "hgd222@test.com") // 1번 멤버로 로그인
-    void acceptJoinRequest_UnauthorizedMember() throws Exception {
+    void approveMemberApplication_UnauthorizedMember() throws Exception {
         // given
         // 테스트 클럽 생성
         Club club = clubService.createClub(
@@ -1835,6 +1835,16 @@ class ApiV1ClubMemberControllerTest {
                 ClubMemberRole.HOST
         );
 
+        // 클럽에 호스트가 아닌 멤버 추가
+        Member nonHostMember = memberService.findMemberById(1L).orElseThrow(
+                () -> new IllegalStateException("호스트가 아닌 멤버가 존재하지 않습니다.")
+        );
+        clubMemberService.addMemberToClub(
+                club.getId(),
+                nonHostMember,
+                ClubMemberRole.PARTICIPANT
+        );
+
         // 추가할 멤버 (testInitData의 멤버 사용)
         Member member1 = memberService.findMemberById(3L).orElseThrow(
                 () -> new IllegalStateException("멤버가 존재하지 않습니다.")
@@ -1845,7 +1855,7 @@ class ApiV1ClubMemberControllerTest {
         clubMember1.updateState(ClubMemberState.APPLYING); // 가입 신청 상태로 변경
         clubMemberRepository.save(clubMember1); // 상태 변경된 클럽 멤버 저장
 
-        assertThat(club.getClubMembers().size()).isEqualTo(2); // 클럽에 멤버가 2명 추가되었는지 확인
+        assertThat(club.getClubMembers().size()).isEqualTo(3); // 클럽에 멤버가 2명 추가되었는지 확인
 
         // when
         ResultActions resultActions = mvc.perform(
@@ -1857,16 +1867,16 @@ class ApiV1ClubMemberControllerTest {
         // then
         resultActions
                 .andExpect(handler().handlerType(ApiV1ClubMemberController.class))
-                .andExpect(handler().methodName("acceptJoinRequest"))
+                .andExpect(handler().methodName("approveMemberApplication"))
                 .andExpect(status().isForbidden())
                 .andExpect(jsonPath("$.code").value(403))
-                .andExpect(jsonPath("$.message").value("권한이 없습니다. 클럽 호스트만 가입 신청을 수락할 수 있습니다."));
+                .andExpect(jsonPath("$.message").value("권한이 없습니다."));
     }
 
     @Test
     @DisplayName("가입 신청 수락 - 클럽이 존재하지 않는 경우")
     @WithUserDetails(value = "hgd222@test.com") // 1번 멤버로 로그인
-    void acceptJoinRequest_ClubNotFound() throws Exception {
+    void approveMemberApplication_ClubNotFound() throws Exception {
         // given
         long invalidClubId = 9999L; // 존재하지 않는 클럽 ID
 
@@ -1885,7 +1895,7 @@ class ApiV1ClubMemberControllerTest {
         // then
         resultActions
                 .andExpect(handler().handlerType(ApiV1ClubMemberController.class))
-                .andExpect(handler().methodName("acceptJoinRequest"))
+                .andExpect(handler().methodName("approveMemberApplication"))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.code").value(404))
                 .andExpect(jsonPath("$.message").value("클럽이 존재하지 않습니다."));
@@ -1936,7 +1946,7 @@ class ApiV1ClubMemberControllerTest {
 
         // when
         ResultActions resultActions = mvc.perform(
-                        patch("/api/v1/clubs/" + club.getId() + "/members/" + member1.getId() + "/rejection")
+                    delete("/api/v1/clubs/" + club.getId() + "/members/" + member1.getId() + "/approval")
                                 .contentType(MediaType.APPLICATION_JSON)
                 )
                 .andDo(print());
@@ -1944,10 +1954,10 @@ class ApiV1ClubMemberControllerTest {
         // then
         resultActions
                 .andExpect(handler().handlerType(ApiV1ClubMemberController.class))
-                .andExpect(handler().methodName("rejectJoinRequest"))
+                .andExpect(handler().methodName("rejectMemberApplication"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value(200))
-                .andExpect(jsonPath("$.message").value("가입 신청이 거절되었습니다."));
+                .andExpect(jsonPath("$.message").value("가입 신청이 거절됐습니다."));
 
         // 클럽 멤버가 삭제됐는지 확인
         assertThat(club.getClubMembers().size()).isEqualTo(1); // 클럽에 멤버가 1명(호스트) 남아있는지 확인
