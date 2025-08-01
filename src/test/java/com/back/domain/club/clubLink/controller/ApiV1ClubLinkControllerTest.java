@@ -24,6 +24,7 @@ import java.time.LocalDateTime;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -53,7 +54,7 @@ public class ApiV1ClubLinkControllerTest {
     private MockMvc mockMvc;
 
     @Test
-    @DisplayName("초대 링크 - 링크 생성 성공")
+    @DisplayName("초대 링크 생성 - 링크 생성 성공")
     @WithUserDetails(value = "hgd222@test.com") // 1번 멤버로 로그인
     void createClubLink_Success() throws Exception {
 
@@ -109,11 +110,11 @@ public class ApiV1ClubLinkControllerTest {
         mockMvc.perform(post("/api/v1/clubs/1/members/invitation-link"))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.code").value(400))
-                .andExpect(jsonPath("$.message").value("호스트나 매니저만 초대 링크를 생성할 수 있습니다."));
+                .andExpect(jsonPath("$.message").value("호스트나 매니저만 초대 링크를 관리할 수 있습니다."));
     }
 
     @Test
-    @DisplayName("초대 링크 - 기존 유효한 링크가 존재할 경우 해당 링크 반환")
+    @DisplayName("초대 링크 생성 - 기존 유효한 링크가 존재할 경우 해당 링크 반환")
     @WithUserDetails("hgd222@test.com") // HOST 또는 MANAGER 권한을 가진 사용자
     void createClubLink_ExistingLink_Returned() throws Exception {
         // given
@@ -137,4 +138,64 @@ public class ApiV1ClubLinkControllerTest {
                 .andExpect(jsonPath("$.message").value("클럽 초대 링크가 생성되었습니다."))
                 .andExpect(jsonPath("$.data.link").value(org.hamcrest.Matchers.containsString(existingCode)));
     }
+
+    @Test
+    @DisplayName("초대 링크 조회 성공 - 유효한 초대 링크가 존재하면 반환")
+    @WithUserDetails("hgd222@test.com") // HOST 또는 MANAGER
+    void getExistingClubLink_success() throws Exception {
+        // given
+        Club club = clubRepository.findById(1L).orElseThrow();
+        String inviteCode = "valid-code-456";
+
+        ClubLink clubLink = ClubLink.builder()
+                .inviteCode(inviteCode)
+                .createdAt(LocalDateTime.now().minusDays(1))
+                .expiresAt(LocalDateTime.now().plusDays(7))
+                .club(club)
+                .build();
+        clubLinkRepository.save(clubLink);
+
+        // when & then
+        mockMvc.perform(get("/api/v1/clubs/1/members/invitation-link"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value(200))
+                .andExpect(jsonPath("$.message").value("클럽 초대 링크가 반환되었습니다."))
+                .andExpect(jsonPath("$.data.link").value(org.hamcrest.Matchers.containsString(inviteCode)));
+    }
+
+    @Test
+    @DisplayName("초대 링크 조회 실패 - 유효한 링크가 없을 때 예외 발생")
+    @WithUserDetails("hgd222@test.com")
+    void getExistingClubLink_fail_noLink() throws Exception {
+        // given
+        Club club = clubRepository.findById(1L).orElseThrow();
+        clubLinkRepository.deleteAll(); // 링크 제거
+
+        // when & then
+        mockMvc.perform(get("/api/v1/clubs/1/members/invitation-link"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value(400))
+                .andExpect(jsonPath("$.message").value("활성화된 초대 링크를 찾을 수 없습니다."));
+    }
+
+    @Test
+    @DisplayName("초대 링크 조회 실패 - 권한 없는 멤버일 경우 예외 발생")
+    @WithUserDetails("lyh3@test.com") // MEMBER 권한만 있음
+    void getExistingClubLink_fail_noPermission() throws Exception {
+        mockMvc.perform(get("/api/v1/clubs/1/members/invitation-link"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value(400))
+                .andExpect(jsonPath("$.message").value("호스트나 매니저만 초대 링크를 관리할 수 있습니다."));
+    }
+
+    @Test
+    @DisplayName("초대 링크 조회 실패 - 존재하지 않는 클럽 ID")
+    @WithUserDetails("hgd222@test.com")
+    void getExistingClubLink_fail_clubNotFound() throws Exception {
+        mockMvc.perform(get("/api/v1/clubs/9999999/members/invitation-link"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value(400))
+                .andExpect(jsonPath("$.message").value("해당 id의 클럽을 찾을 수 없습니다."));
+    }
+
 }
