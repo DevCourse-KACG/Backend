@@ -274,6 +274,7 @@ public class ClubMemberService {
      * @param memberId 멤버 ID
      * @param approve true면 승인, false면 거절
      */
+    @Transactional
     public void handleMemberApplication(Long clubId, Long memberId, boolean approve) {
         // 권한 확인 : 현재 로그인한 유저가 클럽 호스트인지 확인
         clubService.validateHostPermission(clubId);
