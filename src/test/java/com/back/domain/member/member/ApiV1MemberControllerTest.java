@@ -395,7 +395,7 @@ public class ApiV1MemberControllerTest {
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isUnauthorized())
                 .andExpect(jsonPath("$.code").value(401))
-                .andExpect(jsonPath("$.message").value("인증이 필요합니다."));
+                .andExpect(jsonPath("$.message").value("로그인 후 이용해주세요."));
     }
 
     @Test
