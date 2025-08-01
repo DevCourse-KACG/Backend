@@ -29,6 +29,7 @@ import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.test.context.support.WithUserDetails;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
@@ -350,6 +351,7 @@ public class ApiV1MemberControllerTest {
 
     @Test
     @DisplayName("로그아웃 - 정상 처리")
+    @WithUserDetails(value = "hgd222@test.com")
     public void logout() throws Exception {
         memberFixture.createMember(1);
 
@@ -393,8 +395,8 @@ public class ApiV1MemberControllerTest {
     public void withdrawMembership_Unauthenticated_Failure() throws Exception {
         mockMvc.perform(delete("/api/v1/members/me")
                         .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(jsonPath("$.code").value(403))
-                .andExpect(jsonPath("$.message").value("권한이 없습니다."));
+                .andExpect(jsonPath("$.code").value(401))
+                .andExpect(jsonPath("$.message").value("로그인 후 이용해주세요."));
     }
 
     @Test
@@ -422,6 +424,7 @@ public class ApiV1MemberControllerTest {
 
     @Test
     @DisplayName("access token 재발급 - 정상")
+    @WithUserDetails(value = "hgd222@test.com")
     public void reGenerateAccessToken_success() throws Exception {
         //회원 생성
         Member member = memberFixture.createMember(1);
@@ -454,6 +457,7 @@ public class ApiV1MemberControllerTest {
 
     @Test
     @DisplayName("Access Token 재발급 실패 - 잘못된 또는 만료된 refreshToken")
+    @WithUserDetails(value = "hgd222@test.com")
     public void reGenerateAccessToken_fail_invalidOrExpiredRefreshToken() throws Exception {
         String invalidRefreshToken = "invalid_or_expired_refresh_token";
 
@@ -473,6 +477,7 @@ public class ApiV1MemberControllerTest {
 
     @Test
     @DisplayName("로그아웃 실패 - 잘못된 accessToken 으로 요청")
+    @WithUserDetails(value = "hgd222@test.com")
     public void logout_fail_invalidAccessToken() throws Exception {
         Cookie invalidAccessTokenCookie = new Cookie("accessToken", "invalid_access_token_value");
 
@@ -589,8 +594,8 @@ public class ApiV1MemberControllerTest {
         mockMvc.perform(post("/api/v1/members/auth/verify-password")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(requestBody))
-                .andExpect(jsonPath("$.code").value(403))
-                .andExpect(jsonPath("$.message").value("권한이 없습니다."));
+                .andExpect(jsonPath("$.code").value(401))
+                .andExpect(jsonPath("$.message").value("로그인 후 이용해주세요."));
     }
 
     @Test
