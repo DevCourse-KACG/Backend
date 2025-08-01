@@ -207,10 +207,6 @@ public class ClubService {
     }
 
     public void deleteClub(Long clubId) {
-
-        // 권한 확인 : 현재 로그인한 유저가 클럽 호스트인지 확인
-        validateHostPermission(clubId);
-
         Club club = clubRepository.findById(clubId)
                 .orElseThrow(() -> new ServiceException(404, "해당 ID의 클럽을 찾을 수 없습니다."));
 

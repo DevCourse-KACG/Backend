@@ -8,7 +8,6 @@ import com.back.domain.member.member.entity.Member;
 import com.back.domain.member.member.service.MemberService;
 import com.back.global.aws.S3Service;
 import com.back.global.enums.ClubCategory;
-import com.back.global.enums.ClubMemberRole;
 import com.back.global.enums.EventType;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -536,28 +535,10 @@ class ApiV1ClubControllerTest {
     void deleteClub() throws Exception {
         // given
         // 클럽 생성
-        Club club = clubService.createClub(
-                Club.builder()
-                        .name("테스트 그룹")
-                        .bio("테스트 그룹 설명")
-                        .category(ClubCategory.STUDY)
-                        .mainSpot("서울")
-                        .maximumCapacity(10)
-                        .eventType(EventType.ONE_TIME)
-                        .startDate(LocalDate.of(2023, 10, 1))
-                        .endDate(LocalDate.of(2023, 10, 31))
-                        .isPublic(true)
-                        .leaderId(1L)
-                        .build()
-        );
-        // 클럽에 호스트 멤버 추가
-        Member hostMember = memberService.findMemberById(1L)
-                .orElseThrow(() -> new IllegalStateException("호스트 멤버가 존재하지 않습니다."));
-        clubMemberService.addMemberToClub(
-                club.getId(),
-                hostMember,
-                ClubMemberRole.HOST
-        );
+        Long clubId = 1L; // 테스트를 위해 클럽 ID를 1로 고정
+        Club club = clubService.findClubById(clubId)
+                .orElseThrow(() -> new IllegalStateException("클럽이 존재하지 않습니다."));
+
 
         // when
         ResultActions resultActions = mvc.perform(
@@ -603,47 +584,19 @@ class ApiV1ClubControllerTest {
         resultActions
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.code").value(404))
-                .andExpect(jsonPath("$.message").value("클럽이 존재하지 않습니다."));
+                .andExpect(jsonPath("$.message").value("모임을 찾을 수 없습니다."));
     }
 
     @Test
     @DisplayName("클럽 정보 삭제 - 권한 없는 유저")
-    @WithUserDetails(value = "chs4s@test.com") //2번 유저로 로그인
+    @WithUserDetails(value = "lyh3@test.com") //3번 유저로 로그인
     void deleteClubWithoutPermission() throws Exception {
         // given
         // 클럽 생성
-        Club club = clubService.createClub(
-                Club.builder()
-                        .name("테스트 그룹")
-                        .bio("테스트 그룹 설명")
-                        .category(ClubCategory.STUDY)
-                        .mainSpot("서울")
-                        .maximumCapacity(10)
-                        .eventType(EventType.ONE_TIME)
-                        .startDate(LocalDate.of(2023, 10, 1))
-                        .endDate(LocalDate.of(2023, 10, 31))
-                        .isPublic(true)
-                        .leaderId(1L)
-                        .build()
-        );
+        Long clubId = 1L; // 테스트를 위해 클럽 ID를 1로 고정
+        Club club = clubService.findClubById(clubId)
+                .orElseThrow(() -> new IllegalStateException("클럽이 존재하지 않습니다."));
 
-        // 클럽에 호스트 멤버 추가
-        Member hostMember = memberService.findMemberById(1L)
-                .orElseThrow(() -> new IllegalStateException("호스트 멤버가 존재하지 않습니다."));
-        clubMemberService.addMemberToClub(
-                club.getId(),
-                hostMember,
-                ClubMemberRole.HOST
-        );
-
-        // 클럽에 2번 유저를 멤버로 추가
-        Member member = memberService.findMemberById(2L)
-                .orElseThrow(() -> new IllegalStateException("멤버가 존재하지 않습니다."));
-        clubMemberService.addMemberToClub(
-                club.getId(),
-                member,
-                ClubMemberRole.PARTICIPANT // 2번 유저는 PARTICIPANT 역할
-        );
 
         // when
         ResultActions resultActions = mvc.perform(
