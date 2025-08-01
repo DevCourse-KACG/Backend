@@ -215,7 +215,7 @@ class ApiV1ClubMemberControllerTest {
         assertThat(club.getClubMembers().get(0).getMember().getEmail()).isEqualTo(hostMember.getEmail());
         assertThat(club.getClubMembers().get(0).getRole()).isEqualTo(ClubMemberRole.HOST);
         assertThat(club.getClubMembers().get(1).getMember().getEmail()).isEqualTo(member1.getEmail());
-        assertThat(club.getClubMembers().get(1).getRole()).isEqualTo(ClubMemberRole.PARTICIPANT); // 가장 먼저 추가된 역할이 유지됨
+        assertThat(club.getClubMembers().get(1).getRole()).isEqualTo(ClubMemberRole.MANAGER); // 나중에 추가한 역할이 유지됨
     }
 
     @Test

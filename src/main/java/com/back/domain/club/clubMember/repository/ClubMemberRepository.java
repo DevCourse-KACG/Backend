@@ -44,6 +44,24 @@ public interface ClubMemberRepository extends JpaRepository<ClubMember, Long> {
     List<String> findWithdrawnEmails(@Param("clubId") Long clubId,
                                                       @Param("emails") List<String> emails);
 
+    // 요청 이메일 목록에 해당하는 ClubMember 정보를 한 번에 조회
+    @Query("""
+       SELECT cm
+       FROM ClubMember cm
+       WHERE cm.club.id = :clubId
+              AND cm.member.memberInfo.email
+              IN :emails
+    """)
+    List<ClubMember> findClubMembersByClubIdAndEmails(@Param("clubId") Long clubId, @Param("emails") List<String> emails);
+
+    //정원 체크를 위한 현재 활동 멤버 수 조회 (탈퇴 제외)
+    @Query("""
+    SELECT COUNT(cm)
+    FROM ClubMember cm
+    WHERE cm.club.id = :clubId
+        AND cm.state != 'WITHDRAWN'
+    """)
+    long countActiveMembersByClubId(@Param("clubId") Long clubId);
 
 
     Optional<ClubMember> findByClubAndMember(Club club, Member member);
