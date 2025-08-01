@@ -311,7 +311,7 @@ public class ApiV1ClubLinkControllerTest {
 
         mockMvc.perform(post("/api/v1/clubs/invitations/applying-token/apply"))
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.message").value("이미 이 클럽에 가입 신청 중입니다."));
+                .andExpect(jsonPath("$.message").value("이미 가입 신청 중입니다."));
     }
 
     @Test
