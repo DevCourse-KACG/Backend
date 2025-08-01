@@ -64,4 +64,5 @@ public class ApiV1ClubMemberController {
 
         return RsData.of(200, "클럽 멤버 목록이 조회됐습니다.", clubMemberResponse);
     }
+
 }

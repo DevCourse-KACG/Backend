@@ -1892,6 +1892,67 @@ class ApiV1ClubMemberControllerTest {
     }
 
 
+    @Test
+    @DisplayName("가입 신청 거절")
+    @WithUserDetails(value = "hgd222@test.com") // 1번 멤버로 로그인
+    void rejectJoinRequest() throws Exception {
+        // given
+        // 테스트 클럽 생성
+        Club club = clubService.createClub(
+                Club.builder()
+                        .name("테스트 그룹")
+                        .bio("테스트 그룹 설명")
+                        .category(ClubCategory.STUDY)
+                        .mainSpot("서울")
+                        .maximumCapacity(10)
+                        .eventType(EventType.ONE_TIME)
+                        .startDate(LocalDate.of(2023, 10, 1))
+                        .endDate(LocalDate.of(2023, 10, 31))
+                        .isPublic(true)
+                        .leaderId(1L)
+                        .build()
+        );
+
+        // 클럽에 호스트 멤버 추가
+        Member hostMember = memberService.findMemberById(1L)
+                .orElseThrow(() -> new IllegalStateException("호스트 멤버가 존재하지 않습니다."));
+        clubMemberService.addMemberToClub(
+                club.getId(),
+                hostMember,
+                ClubMemberRole.HOST
+        );
+
+        // 추가할 멤버 (testInitData의 멤버 사용)
+        Member member1 = memberService.findMemberById(2L).orElseThrow(
+                () -> new IllegalStateException("멤버가 존재하지 않습니다.")
+        );
+
+        // 클럽에 멤버 추가 (가입 신청 상태로)
+        ClubMember clubMember1 = clubMemberService.addMemberToClub(club.getId(), member1, ClubMemberRole.PARTICIPANT);
+        clubMember1.updateState(ClubMemberState.APPLYING); // 가입 신청 상태로 변경
+        clubMemberRepository.save(clubMember1); // 상태 변경된 클럽 멤버 저장
+
+        assertThat(club.getClubMembers().size()).isEqualTo(2); // 클럽에 멤버가 2명 추가되었는지 확인
+
+        // when
+        ResultActions resultActions = mvc.perform(
+                        patch("/api/v1/clubs/" + club.getId() + "/members/" + member1.getId() + "/rejection")
+                                .contentType(MediaType.APPLICATION_JSON)
+                )
+                .andDo(print());
+
+        // then
+        resultActions
+                .andExpect(handler().handlerType(ApiV1ClubMemberController.class))
+                .andExpect(handler().methodName("rejectJoinRequest"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value(200))
+                .andExpect(jsonPath("$.message").value("가입 신청이 거절되었습니다."));
+
+        // 클럽 멤버가 삭제됐는지 확인
+        assertThat(club.getClubMembers().size()).isEqualTo(1); // 클럽에 멤버가 1명(호스트) 남아있는지 확인
+        assertThat(clubMemberRepository.existsById(clubMember1.getId())).isFalse(); // 클럽 멤버가 삭제되었는지 확인
+    }
 
 
 }
