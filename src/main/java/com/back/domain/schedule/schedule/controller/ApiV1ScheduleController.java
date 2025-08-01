@@ -12,6 +12,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
@@ -26,11 +27,13 @@ public class ApiV1ScheduleController {
     private final ScheduleService scheduleService;
 
     @GetMapping("/clubs/{clubId}")
-    @Operation(summary = "모임의 일정 목록 조회")
+    @Operation(summary = "모임의 일정 목록 조회", description = "모임의 일정 목록 조회는 모임의 참여자만 가능")
+    @PreAuthorize("@clubAuthorizationChecker.isClubMember(#clubId, #user.getId())")
     public RsData<List<ScheduleDto>> getClubSchedules(
             @PathVariable Long clubId,
             @RequestParam(value = "startDate", required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate startDate,
-            @RequestParam(value = "endDate", required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate endDate
+            @RequestParam(value = "endDate", required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate endDate,
+            @AuthenticationPrincipal SecurityUser user
     ) {
         List<Schedule> schedule = scheduleService.getClubSchedules(clubId, startDate, endDate);
         List<ScheduleDto> scheduleDtos = schedule.stream()
@@ -44,13 +47,14 @@ public class ApiV1ScheduleController {
         );
     }
 
-
     @GetMapping("/{scheduleId}")
-    @Operation(summary = "일정 조회")
+    @Operation(summary = "일정 조회", description = "일정 조회는 모임의 참여자만 가능")
+    @PreAuthorize("@scheduleAuthorizationChecker.isClubMember(#scheduleId, #user.getId())")
     public RsData<ScheduleDto> getSchedule(
-            @PathVariable Long scheduleId
+            @PathVariable Long scheduleId,
+            @AuthenticationPrincipal SecurityUser user
     ) {
-        Schedule schedule = scheduleService.getScheduleById(scheduleId);
+        Schedule schedule = scheduleService.getActiveScheduleById(scheduleId);
         return RsData.of(
                 200,
                 "%s번 일정이 조회되었습니다.".formatted(scheduleId),
@@ -59,9 +63,11 @@ public class ApiV1ScheduleController {
     }
 
     @PostMapping
-    @Operation(summary = "일정 생성")
+    @Operation(summary = "일정 생성", description = "일정 생성은 호스트 권한이 있는 사용자만 가능")
+    @PreAuthorize("@clubAuthorizationChecker.isActiveClubHost(#reqBody.clubId, #user.getId())")
     public RsData<ScheduleDto> createSchedule(
-            @Valid @RequestBody ScheduleCreateReqBody reqBody
+            @Valid @RequestBody ScheduleCreateReqBody reqBody,
+            @AuthenticationPrincipal SecurityUser user
     ) {
         Schedule schedule = scheduleService.createSchedule(reqBody);
 
@@ -73,12 +79,14 @@ public class ApiV1ScheduleController {
     }
 
     @PutMapping("{scheduleId}")
-    @Operation(summary = "일정 수정")
+    @Operation(summary = "일정 수정", description = "일정 수정은 호스트 또는 매니저 권한이 있는 사용자만 가능")
+    @PreAuthorize("@scheduleAuthorizationChecker.isActiveClubManagerOrHost(#scheduleId, #user.getId())")
     public RsData<ScheduleDto> modifySchedule(
             @PathVariable Long scheduleId,
-            @Valid @RequestBody ScheduleUpdateReqBody reqBody
+            @Valid @RequestBody ScheduleUpdateReqBody reqBody,
+            @AuthenticationPrincipal SecurityUser user
     ) {
-        Schedule schedule = scheduleService.getScheduleById(scheduleId);
+        Schedule schedule = scheduleService.getActiveScheduleById(scheduleId);
         scheduleService.modifySchedule(schedule, reqBody);
 
         return RsData.of(
@@ -90,10 +98,12 @@ public class ApiV1ScheduleController {
 
     @DeleteMapping("{scheduleId}")
     @Operation(summary = "일정 삭제")
+    @PreAuthorize("@scheduleAuthorizationChecker.isActiveClubHost(#scheduleId, #user.getId())")
     public RsData<Void> deleteSchedule(
-            @PathVariable Long scheduleId
+            @PathVariable Long scheduleId,
+            @AuthenticationPrincipal SecurityUser user
     ) {
-        Schedule schedule = scheduleService.getScheduleById(scheduleId);
+        Schedule schedule = scheduleService.getActiveScheduleById(scheduleId);
         scheduleService.deleteSchedule(schedule);
 
         return RsData.of(
