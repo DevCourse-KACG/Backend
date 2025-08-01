@@ -4,6 +4,7 @@ import com.back.domain.preset.preset.dto.PresetDto;
 import com.back.domain.preset.preset.dto.PresetWriteReqDto;
 
 import com.back.domain.preset.preset.service.PresetService;
+import com.back.global.enums.ClubCategory;
 import com.back.global.rsData.RsData;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -41,6 +42,16 @@ public class ApiV1PresetController {
   @Operation(summary = "프리셋 목록 조회")
   public ResponseEntity<RsData<List<PresetDto>>> getPresetList() {
     RsData<List<PresetDto>> presetList = presetService.getPresetList();
+
+    return ResponseEntity.status(presetList.code()).body(presetList);
+  }
+
+  @GetMapping("/platform")
+  @Operation(summary = "특정 모임 카테고리의 프리셋 목록")
+  public ResponseEntity<RsData<List<PresetDto>>> getPresetListByCategory(
+          @RequestParam ClubCategory category
+          ) {
+    RsData<List<PresetDto>> presetList = presetService.getPresetsByCategory(category);
 
     return ResponseEntity.status(presetList.code()).body(presetList);
   }
