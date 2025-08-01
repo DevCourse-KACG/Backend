@@ -182,9 +182,6 @@ public class ClubService {
         Club club = clubRepository.findById(clubId)
                 .orElseThrow(() -> new ServiceException(404, "해당 ID의 클럽을 찾을 수 없습니다."));
 
-        // 권한 확인 : 현재 로그인한 유저가 클럽 호스트인지 확인
-        validateHostPermission(clubId);
-
         // 클럽 정보 업데이트
         String name = dto.name() != null ? dto.name() : club.getName();
         String bio = dto.bio() != null ? dto.bio() : club.getBio();
