@@ -115,5 +115,42 @@ public class ApiV1MyClubController {
         );
     }
 
+    @DeleteMapping("{clubId}/apply")
+    @Operation(summary = "클럽 가입 신청 취소")
+    public RsData<MyClubControllerDtos.SimpleClubInfo> cancelClubApplication(
+            @PathVariable Long clubId
+    ) {
+        // 클럽 가입 신청 취소 로직을 처리하는 서비스 메서드를 호출
+        Club selectedClub = myClubService.cancelClubApplication(clubId);
+
+        // 성공적으로 클럽 가입 신청을 취소한 경우 응답 반환
+        return RsData.of(
+                200,
+                "클럽 가입 신청을 취소했습니다.",
+                new MyClubControllerDtos.SimpleClubInfo(
+                        selectedClub.getId(),
+                        selectedClub.getName()
+                )
+        );
+    }
+
+//    @DeleteMapping("{clubId}/withdraw")
+//    @Operation(summary = "클럽 탈퇴")
+//    public RsData<MyClubControllerDtos.SimpleClubInfo> withdrawFromClub(
+//            @PathVariable Long clubId
+//    ) {
+//        // 클럽 탈퇴 로직을 처리하는 서비스 메서드를 호출
+//        Club selectedClub = myClubService.withdrawFromClub(clubId);
+//
+//        // 성공적으로 클럽에서 탈퇴한 경우 응답 반환
+//        return RsData.of(
+//                200,
+//                "클럽에서 탈퇴했습니다.",
+//                new MyClubControllerDtos.SimpleClubInfo(
+//                        selectedClub.getId(),
+//                        selectedClub.getName()
+//                )
+//        );
+//    }
 
 }
