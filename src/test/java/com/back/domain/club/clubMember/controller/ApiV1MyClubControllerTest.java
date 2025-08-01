@@ -393,7 +393,7 @@ class ApiV1MyClubControllerTest {
                 .andExpect(handler().methodName("applyForPublicClub"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value(200))
-                .andExpect(jsonPath("$.message").value("클럽 가입 신청이 완료되었습니다."))
+                .andExpect(jsonPath("$.message").value("클럽 가입 신청을 완료했습니다."))
                 .andExpect(jsonPath("$.data.clubId").value(club.getId()))
                 .andExpect(jsonPath("$.data.clubName").value(club.getName()));
 
@@ -629,8 +629,8 @@ class ApiV1MyClubControllerTest {
         resultActions
                 .andExpect(handler().handlerType(ApiV1MyClubController.class))
                 .andExpect(handler().methodName("applyForPublicClub"))
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.code").value(400))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.code").value(403))
                 .andExpect(jsonPath("$.message").value("비공개 클럽입니다. 가입 신청이 불가능합니다."));
     }
 

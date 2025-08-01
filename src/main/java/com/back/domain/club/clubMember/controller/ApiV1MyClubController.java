@@ -22,7 +22,7 @@ public class ApiV1MyClubController {
 
     @PostMapping("{clubId}/join")
     @Operation(summary = "클럽 초대 수락")
-    public RsData<MyClubControllerDtos.AcceptClubInvitationResponse> acceptClubInvitation(
+    public RsData<MyClubControllerDtos.SimpleClubInfo> acceptClubInvitation(
             @PathVariable Long clubId
     ) {
         // 클럽 초대 수락 로직을 처리하는 서비스 메서드를 호출
@@ -32,7 +32,7 @@ public class ApiV1MyClubController {
         return RsData.of(
                 200,
                 "클럽 초대를 수락했습니다.",
-                new MyClubControllerDtos.AcceptClubInvitationResponse(
+                new MyClubControllerDtos.SimpleClubInfo(
                         selectedClub.getId(),
                         selectedClub.getName()
                 )
@@ -41,7 +41,7 @@ public class ApiV1MyClubController {
 
     @DeleteMapping("{clubId}/invitation")
     @Operation(summary = "클럽 초대 거절")
-    public RsData<MyClubControllerDtos.AcceptClubInvitationResponse> rejectClubInvitation(
+    public RsData<MyClubControllerDtos.SimpleClubInfo> rejectClubInvitation(
             @PathVariable Long clubId
     ) {
         // 클럽 초대 거절 로직을 처리하는 서비스 메서드를 호출
@@ -51,7 +51,26 @@ public class ApiV1MyClubController {
         return RsData.of(
                 200,
                 "클럽 초대를 거절했습니다.",
-                new MyClubControllerDtos.AcceptClubInvitationResponse(
+                new MyClubControllerDtos.SimpleClubInfo(
+                        selectedClub.getId(),
+                        selectedClub.getName()
+                )
+        );
+    }
+
+    @PostMapping("{clubId}/apply")
+    @Operation(summary = "클럽 가입 신청")
+    public RsData<MyClubControllerDtos.SimpleClubInfo> applyForPublicClub(
+            @PathVariable Long clubId
+    ) {
+        // 클럽 가입 신청 로직을 처리하는 서비스 메서드를 호출
+        Club selectedClub = myClubService.applyForClub(clubId);
+
+        // 성공적으로 클럽 가입 신청을 한 경우 응답 반환
+        return RsData.of(
+                200,
+                "클럽 가입 신청을 완료했습니다.",
+                new MyClubControllerDtos.SimpleClubInfo(
                         selectedClub.getId(),
                         selectedClub.getName()
                 )
