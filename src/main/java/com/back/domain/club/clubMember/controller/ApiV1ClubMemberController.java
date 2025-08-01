@@ -3,10 +3,13 @@ package com.back.domain.club.clubMember.controller;
 import com.back.domain.club.clubMember.dtos.ClubMemberDtos;
 import com.back.domain.club.clubMember.service.ClubMemberService;
 import com.back.global.rsData.RsData;
+import com.back.global.security.SecurityUser;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 /**
@@ -22,9 +25,12 @@ public class ApiV1ClubMemberController {
 
     @PostMapping
     @Operation(summary = "클럽에 멤버 추가")
+    @PreAuthorize("@clubAuthorizationChecker.isActiveClubHost(#clubId, #user.id)")
     public RsData<Void> addMembersToClub(
             @PathVariable Long clubId,
-            @RequestBody @Valid ClubMemberDtos.ClubMemberRegisterRequest reqBody
+            @RequestBody @Valid ClubMemberDtos.ClubMemberRegisterRequest reqBody,
+            @AuthenticationPrincipal SecurityUser user
+
     ) {
         clubMemberService.addMembersToClub(clubId, reqBody);
 

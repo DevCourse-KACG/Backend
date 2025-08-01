@@ -59,37 +59,19 @@ class ApiV1ClubMemberControllerTest {
     void addMemberToClub() throws Exception {
         // given
         // 테스트 클럽 생성
-        Club club = clubService.createClub(
-                Club.builder()
-                        .name("테스트 그룹")
-                        .bio("테스트 그룹 설명")
-                        .category(ClubCategory.STUDY)
-                        .mainSpot("서울")
-                        .maximumCapacity(10)
-                        .eventType(EventType.ONE_TIME)
-                        .startDate(LocalDate.of(2023, 10, 1))
-                        .endDate(LocalDate.of(2023, 10, 31))
-                        .isPublic(true)
-                        .leaderId(1L)
-                        .build()
-        );
+        Long clubId = 1L; // 테스트를 위해 클럽 ID를 1로 고정
+        Club club = clubService.findClubById(clubId)
+                .orElseThrow(() -> new IllegalStateException("클럽이 존재하지 않습니다."));
 
-        // 클럽에 호스트 멤버 추가
         Member hostMember = memberService.findMemberById(1L)
                 .orElseThrow(() -> new IllegalStateException("호스트 멤버가 존재하지 않습니다."));
-        clubMemberService.addMemberToClub(
-                club.getId(),
-                hostMember,
-                ClubMemberRole.HOST
-        );
-
 
         // 추가할 멤버 (testInitData의 멤버 사용)
-        Member member1 = memberService.findMemberById(2L).orElseThrow(
+        Member member1 = memberService.findMemberById(4L).orElseThrow(
                 () -> new IllegalStateException("멤버가 존재하지 않습니다.")
         );
 
-        Member member2 = memberService.findMemberById(3L).orElseThrow(
+        Member member2 = memberService.findMemberById(5L).orElseThrow(
                 () -> new IllegalStateException("멤버가 존재하지 않습니다.")
         );
 
@@ -130,13 +112,13 @@ class ApiV1ClubMemberControllerTest {
                 () -> new IllegalStateException("클럽이 존재하지 않습니다.")
         );
 
-        assertThat(club.getClubMembers().size()).isEqualTo(3); // 멤버가 총 3명 인지 확인 (호스트 포함)
+        assertThat(club.getClubMembers().size()).isEqualTo(5); // 멤버가 총 3명 인지 확인 (호스트 포함)
         assertThat(club.getClubMembers().get(0).getMember().getEmail()).isEqualTo(hostMember.getEmail());
         assertThat(club.getClubMembers().get(0).getRole()).isEqualTo(ClubMemberRole.HOST);
-        assertThat(club.getClubMembers().get(1).getMember().getEmail()).isEqualTo(member1.getEmail());
-        assertThat(club.getClubMembers().get(1).getRole()).isEqualTo(ClubMemberRole.PARTICIPANT);
-        assertThat(club.getClubMembers().get(2).getMember().getEmail()).isEqualTo(member2.getEmail());
-        assertThat(club.getClubMembers().get(2).getRole()).isEqualTo(ClubMemberRole.PARTICIPANT);
+        assertThat(club.getClubMembers().get(4).getMember().getEmail()).isEqualTo(member1.getEmail());
+        assertThat(club.getClubMembers().get(4).getRole()).isEqualTo(ClubMemberRole.PARTICIPANT);
+        assertThat(club.getClubMembers().get(3).getMember().getEmail()).isEqualTo(member2.getEmail());
+        assertThat(club.getClubMembers().get(3).getRole()).isEqualTo(ClubMemberRole.PARTICIPANT);
     }
 
     @Test
@@ -145,32 +127,13 @@ class ApiV1ClubMemberControllerTest {
     void addMemberToClub_DuplicateMember() throws Exception {
         // given
         // 테스트 클럽 생성
-        Club club = clubService.createClub(
-                Club.builder()
-                        .name("테스트 그룹")
-                        .bio("테스트 그룹 설명")
-                        .category(ClubCategory.STUDY)
-                        .mainSpot("서울")
-                        .maximumCapacity(10)
-                        .eventType(EventType.ONE_TIME)
-                        .startDate(LocalDate.of(2023, 10, 1))
-                        .endDate(LocalDate.of(2023, 10, 31))
-                        .isPublic(true)
-                        .leaderId(1L)
-                        .build()
-        );
+        Long clubId = 1L; // 테스트를 위해 클럽 ID를 1로 고정
+        Club club = clubService.findClubById(clubId)
+                .orElseThrow(() -> new IllegalStateException("클럽이 존재하지 않습니다."));
 
-        // 클럽에 호스트 멤버 추가
-        Member hostMember = memberService.findMemberById(1L)
-                .orElseThrow(() -> new IllegalStateException("호스트 멤버가 존재하지 않습니다."));
-        clubMemberService.addMemberToClub(
-                club.getId(),
-                hostMember,
-                ClubMemberRole.HOST
-        );
 
         // 추가할 멤버 (testInitData의 멤버 사용)
-        Member member1 = memberService.findMemberById(2L).orElseThrow(
+        Member member1 = memberService.findMemberById(4L).orElseThrow(
                 () -> new IllegalStateException("멤버가 존재하지 않습니다.")
         );
 
@@ -211,11 +174,9 @@ class ApiV1ClubMemberControllerTest {
                 () -> new IllegalStateException("클럽이 존재하지 않습니다.")
         );
 
-        assertThat(club.getClubMembers().size()).isEqualTo(2); // 중복된 멤버는 하나만 추가
-        assertThat(club.getClubMembers().get(0).getMember().getEmail()).isEqualTo(hostMember.getEmail());
-        assertThat(club.getClubMembers().get(0).getRole()).isEqualTo(ClubMemberRole.HOST);
-        assertThat(club.getClubMembers().get(1).getMember().getEmail()).isEqualTo(member1.getEmail());
-        assertThat(club.getClubMembers().get(1).getRole()).isEqualTo(ClubMemberRole.MANAGER); // 나중에 추가한 역할이 유지됨
+        assertThat(club.getClubMembers().size()).isEqualTo(4); // 중복된 멤버는 하나만 추가
+        assertThat(club.getClubMembers().get(3).getMember().getEmail()).isEqualTo(member1.getEmail());
+        assertThat(club.getClubMembers().get(3).getRole()).isEqualTo(ClubMemberRole.MANAGER); // 나중에 추가한 역할이 유지됨
     }
 
     @Test
@@ -224,40 +185,19 @@ class ApiV1ClubMemberControllerTest {
     void addMemberToClub_AlreadyAddedMember() throws Exception {
         // given
         // 테스트 클럽 생성
-        Club club = clubService.createClub(
-                Club.builder()
-                        .name("테스트 그룹")
-                        .bio("테스트 그룹 설명")
-                        .category(ClubCategory.STUDY)
-                        .mainSpot("서울")
-                        .maximumCapacity(10)
-                        .eventType(EventType.ONE_TIME)
-                        .startDate(LocalDate.of(2023, 10, 1))
-                        .endDate(LocalDate.of(2023, 10, 31))
-                        .isPublic(true)
-                        .leaderId(1L)
-                        .build()
-        );
+        Long clubId = 1L; // 테스트를 위해 클럽 ID를 1로 고정
+        Club club = clubService.findClubById(clubId)
+                .orElseThrow(() -> new IllegalStateException("클럽이 존재하지 않습니다."));
 
-        // 클럽에 호스트 멤버 추가
         Member hostMember = memberService.findMemberById(1L)
                 .orElseThrow(() -> new IllegalStateException("호스트 멤버가 존재하지 않습니다."));
-        clubMemberService.addMemberToClub(
-                club.getId(),
-                hostMember,
-                ClubMemberRole.HOST
-        );
-
 
         // 추가할 멤버 (testInitData의 멤버 사용)
-        Member member1 = memberService.findMemberById(2L).orElseThrow(
+        Member member1 = memberService.findMemberById(3L).orElseThrow(
                 () -> new IllegalStateException("멤버가 존재하지 않습니다.")
         );
 
-        // 클럽에 멤버 추가
-        clubMemberService.addMemberToClub(club.getId(), member1, ClubMemberRole.PARTICIPANT);
-
-        assertThat(club.getClubMembers().size()).isEqualTo(2); // 클럽에 멤버가 1명 추가되었는지 확인
+        assertThat(club.getClubMembers().size()).isEqualTo(3);
 
         // JSON 데이터 파트 생성
         String jsonData = """
@@ -292,11 +232,11 @@ class ApiV1ClubMemberControllerTest {
                 () -> new IllegalStateException("클럽이 존재하지 않습니다.")
         );
 
-        assertThat(club.getClubMembers().size()).isEqualTo(2);
+        assertThat(club.getClubMembers().size()).isEqualTo(3);
         assertThat(club.getClubMembers().get(0).getMember().getEmail()).isEqualTo(hostMember.getEmail());
         assertThat(club.getClubMembers().get(0).getRole()).isEqualTo(ClubMemberRole.HOST);
-        assertThat(club.getClubMembers().get(1).getMember().getEmail()).isEqualTo(member1.getEmail());
-        assertThat(club.getClubMembers().get(1).getRole()).isEqualTo(ClubMemberRole.PARTICIPANT);
+        assertThat(club.getClubMembers().get(2).getMember().getEmail()).isEqualTo(member1.getEmail());
+        assertThat(club.getClubMembers().get(2).getRole()).isEqualTo(ClubMemberRole.PARTICIPANT);
     }
 
     @Test
@@ -329,7 +269,7 @@ class ApiV1ClubMemberControllerTest {
                 .andExpect(handler().methodName("addMembersToClub"))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.code").value(404))
-                .andExpect(jsonPath("$.message").value("클럽이 존재하지 않습니다."));
+                .andExpect(jsonPath("$.message").value("모임을 찾을 수 없습니다."));
     }
 
     @Test
@@ -337,29 +277,9 @@ class ApiV1ClubMemberControllerTest {
     @WithUserDetails(value = "hgd222@test.com") // 1번 멤버로 로그인
     void addMemberToClub_MemberNotFound() throws Exception {
         // given
-        Club club = clubService.createClub(
-                Club.builder()
-                        .name("테스트 그룹")
-                        .bio("테스트 그룹 설명")
-                        .category(ClubCategory.STUDY)
-                        .mainSpot("서울")
-                        .maximumCapacity(10)
-                        .eventType(EventType.ONE_TIME)
-                        .startDate(LocalDate.of(2023, 10, 1))
-                        .endDate(LocalDate.of(2023, 10, 31))
-                        .isPublic(true)
-                        .leaderId(1L)
-                        .build()
-        );
-
-        // 클럽에 호스트 멤버 추가
-        Member hostMember = memberService.findMemberById(1L)
-                .orElseThrow(() -> new IllegalStateException("호스트 멤버가 존재하지 않습니다."));
-        clubMemberService.addMemberToClub(
-                club.getId(),
-                hostMember,
-                ClubMemberRole.HOST
-        );
+        Long clubId = 1L; // 테스트를 위해 클럽 ID를 1로 고정
+        Club club = clubService.findClubById(clubId)
+                .orElseThrow(() -> new IllegalStateException("클럽이 존재하지 않습니다."));
 
         String jsonData = """
                 {
@@ -393,39 +313,9 @@ class ApiV1ClubMemberControllerTest {
     @DisplayName("클럽에 멤버 추가 - 권한 없는 멤버")
     @WithUserDetails(value = "chs4s@test.com") // 2번 멤버로 로그인 (호스트가 아님)
     void addMemberToClub_UnauthorizedMember() throws Exception {
-        Club club = clubService.createClub(
-                Club.builder()
-                        .name("테스트 그룹")
-                        .bio("테스트 그룹 설명")
-                        .category(ClubCategory.STUDY)
-                        .mainSpot("서울")
-                        .maximumCapacity(10)
-                        .eventType(EventType.ONE_TIME)
-                        .startDate(LocalDate.of(2023, 10, 1))
-                        .endDate(LocalDate.of(2023, 10, 31))
-                        .isPublic(true)
-                        .leaderId(1L)
-                        .build()
-        );
-
-        // 클럽에 호스트 멤버 추가
-        Member hostMember = memberService.findMemberById(1L)
-                .orElseThrow(() -> new IllegalStateException("호스트 멤버가 존재하지 않습니다."));
-        clubMemberService.addMemberToClub(
-                club.getId(),
-                hostMember,
-                ClubMemberRole.HOST
-        );
-
-        // 클럽에 호스트가 아닌 멤버 추가
-        Member unauthorizedMember = memberService.findMemberById(2L).orElseThrow(
-                () -> new IllegalStateException("멤버가 존재하지 않습니다.")
-        );
-        clubMemberService.addMemberToClub(
-                club.getId(),
-                unauthorizedMember,
-                ClubMemberRole.PARTICIPANT
-        );
+        Long clubId = 1L; // 테스트를 위해 클럽 ID를 1로 고정
+        Club club = clubService.findClubById(clubId)
+                .orElseThrow(() -> new IllegalStateException("클럽이 존재하지 않습니다."));
 
         // 추가할 멤버 (testInitData의 멤버 사용)
         Member member1 = memberService.findMemberById(3L).orElseThrow(
@@ -475,42 +365,13 @@ class ApiV1ClubMemberControllerTest {
     void addMemberToClub_ExceedMaximumCapacity() throws Exception {
         // given
         // 테스트 클럽 생성
-        Club club = clubService.createClub(
-                Club.builder()
-                        .name("테스트 그룹")
-                        .bio("테스트 그룹 설명")
-                        .category(ClubCategory.STUDY)
-                        .mainSpot("서울")
-                        .maximumCapacity(2) // 정원을 2명으로 설정
-                        .eventType(EventType.ONE_TIME)
-                        .startDate(LocalDate.of(2023, 10, 1))
-                        .endDate(LocalDate.of(2023, 10, 31))
-                        .isPublic(true)
-                        .leaderId(1L)
-                        .build()
-        );
+        Long clubId = 2L; // 테스트를 위해 클럽 ID를 1로 고정
+        Club club = clubService.findClubById(clubId)
+                .orElseThrow(() -> new IllegalStateException("클럽이 존재하지 않습니다."));
 
-        // 클럽에 호스트 멤버 추가
-        Member hostMember = memberService.findMemberById(1L)
-                .orElseThrow(() -> new IllegalStateException("호스트 멤버가 존재하지 않습니다."));
-        clubMemberService.addMemberToClub(
-                club.getId(),
-                hostMember,
-                ClubMemberRole.HOST
-        );
-
-        // 클럽에 호스트가 아닌 멤버 추가
-        Member unauthorizedMember = memberService.findMemberById(2L).orElseThrow(
-                () -> new IllegalStateException("멤버가 존재하지 않습니다.")
-        );
-        clubMemberService.addMemberToClub(
-                club.getId(),
-                unauthorizedMember,
-                ClubMemberRole.PARTICIPANT
-        );
 
         // 추가할 멤버 (testInitData의 멤버 사용)
-        Member member1 = memberService.findMemberById(3L).orElseThrow(
+        Member member1 = memberService.findMemberById(2L).orElseThrow(
                 () -> new IllegalStateException("멤버가 존재하지 않습니다.")
         );
 
@@ -553,7 +414,7 @@ class ApiV1ClubMemberControllerTest {
         club = clubService.getClubById(club.getId()).orElseThrow(
                 () -> new IllegalStateException("클럽이 존재하지 않습니다.")
         );
-        assertThat(club.getClubMembers().size()).isEqualTo(2); // 클럽에 멤버가 2명만 있어야 함 (호스트 + 참여자)
+        assertThat(club.getClubMembers().size()).isEqualTo(3); // 클럽에 멤버가 2명만 있어야 함 (호스트 + 참여자)
     }
 
     @Test

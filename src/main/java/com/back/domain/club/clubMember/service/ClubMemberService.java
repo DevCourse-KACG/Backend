@@ -67,9 +67,6 @@ public class ClubMemberService {
         Club club = clubService.getClubById(clubId)
                 .orElseThrow(() -> new ServiceException(404, "클럽이 존재하지 않습니다."));
 
-        // 권한 확인
-        clubService.validateHostPermission(clubId);
-
         // 1. 요청 데이터에서 이메일 기준 중복 제거 (나중에 들어온 정보가 우선)
         Map<String, ClubMemberDtos.ClubMemberRegisterInfo> uniqueMemberInfoByEmail = reqBody.members().stream()
                 .collect(Collectors.toMap(
