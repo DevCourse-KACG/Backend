@@ -47,7 +47,7 @@ public class PresetService {
       // TypeReference를 사용하여 Map<String, List<PresetDto>> 역직렬화
       tempMap = objectMapper.readValue(is, new TypeReference<Map<String, List<PresetDto>>>() {});
     } catch (IOException e) {
-      throw new NoSuchElementException("플랫폼의 프리셋 불러오기에 실패했습니다.");
+      throw new ServiceException(500, "플랫폼의 프리셋 불러오기에 실패했습니다.");
     }
 
     // ClubCategory Enum을 키로 사용하는 Map 세팅
