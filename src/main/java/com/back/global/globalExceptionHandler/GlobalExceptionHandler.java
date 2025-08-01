@@ -6,6 +6,8 @@ import jakarta.validation.ConstraintViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.authorization.AuthorizationDeniedException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.MissingRequestHeaderException;
@@ -164,4 +166,23 @@ public class GlobalExceptionHandler {
                 BAD_REQUEST
         );
     }
+
+    // @PreAuthorize 권한 에러
+    @ExceptionHandler(AuthorizationDeniedException.class)
+    public ResponseEntity<RsData<Void>> handleAuthorizationDenied(AuthorizationDeniedException ex) {
+      return new ResponseEntity<>(
+          RsData.of(403, "권한이 없습니다."),
+          HttpStatus.FORBIDDEN
+      );
+    }
+
+    // AccessDeniedException 에러 핸들러
+    @ExceptionHandler(AccessDeniedException.class)
+    public ResponseEntity<RsData<Void>> handleAccessDenied(AccessDeniedException ex) {
+      return new ResponseEntity<>(
+          RsData.of(403, "권한이 없습니다."),
+          HttpStatus.FORBIDDEN
+      );
+    }
+
 }
