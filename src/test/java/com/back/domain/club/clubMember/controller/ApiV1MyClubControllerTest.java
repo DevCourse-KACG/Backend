@@ -27,8 +27,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDate;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
@@ -92,7 +91,7 @@ class ApiV1MyClubControllerTest {
 
         // when
         ResultActions resultActions = mvc.perform(
-                        post("/api/v1/my-clubs/" + club.getId() + "/join")
+                        patch("/api/v1/my-clubs/" + club.getId() + "/join")
                 )
                 .andDo(print());
 
@@ -205,7 +204,7 @@ class ApiV1MyClubControllerTest {
 
         // when
         ResultActions resultActions = mvc.perform(
-                        post("/api/v1/my-clubs/" + club.getId() + "/join")
+                        patch("/api/v1/my-clubs/" + club.getId() + "/join")
                 )
                 .andDo(print());
 
@@ -261,7 +260,7 @@ class ApiV1MyClubControllerTest {
 
         // when
         ResultActions resultActions = mvc.perform(
-                        post("/api/v1/my-clubs/" + club.getId() + "/join")
+                        patch("/api/v1/my-clubs/" + club.getId() + "/join")
                 )
                 .andDo(print());
 
@@ -319,7 +318,7 @@ class ApiV1MyClubControllerTest {
 
         // when
         ResultActions resultActions = mvc.perform(
-                        post("/api/v1/my-clubs/" + club.getId() + "/join")
+                        patch("/api/v1/my-clubs/" + club.getId() + "/join")
                 )
                 .andDo(print());
 
@@ -339,7 +338,7 @@ class ApiV1MyClubControllerTest {
     public void acceptClubInvitation_InvalidClubId() throws Exception {
         // when
         ResultActions resultActions = mvc.perform(
-                        post("/api/v1/my-clubs/999/join") // 존재하지 않는 클럽 ID
+                        patch("/api/v1/my-clubs/999/join") // 존재하지 않는 클럽 ID
                 )
                 .andDo(print());
 
@@ -632,6 +631,118 @@ class ApiV1MyClubControllerTest {
                 .andExpect(status().isForbidden())
                 .andExpect(jsonPath("$.code").value(403))
                 .andExpect(jsonPath("$.message").value("비공개 클럽입니다. 가입 신청이 불가능합니다."));
+    }
+
+    @Test
+    @DisplayName("클럽에서의 내 정보 반환")
+    @WithUserDetails(value = "hgd222@test.com") // 1번 멤버로 로그인
+    public void getMyClubInfo() throws Exception {
+        // given
+        Club club = clubService.createClub(
+                Club.builder()
+                        .name("테스트 그룹")
+                        .bio("테스트 그룹 설명")
+                        .category(ClubCategory.STUDY)
+                        .mainSpot("서울")
+                        .maximumCapacity(10)
+                        .eventType(EventType.ONE_TIME)
+                        .startDate(LocalDate.of(2023, 10, 1))
+                        .endDate(LocalDate.of(2023, 10, 31))
+                        .isPublic(true)
+                        .leaderId(2L)
+                        .build()
+        );
+
+        // 클럽에 호스트 멤버 추가 (2번을 호스트로)
+        Member hostMember = memberService.findMemberById(2L)
+                .orElseThrow(() -> new IllegalStateException("호스트 멤버가 존재하지 않습니다."));
+        clubMemberService.addMemberToClub(
+                club.getId(),
+                hostMember,
+                ClubMemberRole.HOST
+        );
+
+        // 클럽에 멤버를 초대 (1번을 초대)
+        Member invitedMember = memberService.findMemberById(1L)
+                .orElseThrow(() -> new IllegalStateException("초대된 멤버가 존재하지 않습니다."));
+
+        clubMemberService.addMemberToClub(
+                club.getId(),
+                invitedMember,
+                ClubMemberRole.PARTICIPANT
+        );
+
+        // when
+        ResultActions resultActions = mvc.perform(
+                        get("/api/v1/my-clubs/" + club.getId())
+                )
+                .andDo(print());
+
+        // then
+        resultActions
+                .andExpect(handler().handlerType(ApiV1MyClubController.class))
+                .andExpect(handler().methodName("getMyClubInfo"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value(200))
+                .andExpect(jsonPath("$.message").value("클럽 멤버 정보를 조회했습니다."))
+                .andExpect(jsonPath("$.data.clubId").value(club.getId()))
+                .andExpect(jsonPath("$.data.clubName").value(club.getName()))
+                .andExpect(jsonPath("$.data.role").value("PARTICIPANT"))
+                .andExpect(jsonPath("$.data.state").value("INVITED"));
+    }
+
+    @Test
+    @DisplayName("클럽에서의 내 정보 반환 - 클럽이 존재하지 않는 경우 예외 발생")
+    @WithUserDetails(value = "hgd222@test.com") // 1번 멤버로 로그인
+    public void getMyClubInfo_InvalidClubId() throws Exception {
+        // when
+        ResultActions resultActions = mvc.perform(
+                        get("/api/v1/my-clubs/999") // 존재하지 않는 클럽 ID
+                )
+                .andDo(print());
+
+        // then
+        resultActions
+                .andExpect(handler().handlerType(ApiV1MyClubController.class))
+                .andExpect(handler().methodName("getMyClubInfo"))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.code").value(404))
+                .andExpect(jsonPath("$.message").value("클럽이 존재하지 않습니다."));
+    }
+
+    @Test
+    @DisplayName("클럽에서의 내 정보 반환 - 클럽에 가입하지 않은 경우 예외 발생")
+    @WithUserDetails(value = "hgd222@test.com") // 1번 멤버로 로그인
+    public void getMyClubInfo_NotJoined() throws Exception {
+        // given
+        Club club = clubService.createClub(
+                Club.builder()
+                        .name("테스트 그룹")
+                        .bio("테스트 그룹 설명")
+                        .category(ClubCategory.STUDY)
+                        .mainSpot("서울")
+                        .maximumCapacity(10)
+                        .eventType(EventType.ONE_TIME)
+                        .startDate(LocalDate.of(2023, 10, 1))
+                        .endDate(LocalDate.of(2023, 10, 31))
+                        .isPublic(true)
+                        .leaderId(2L)
+                        .build()
+        );
+
+        // when
+        ResultActions resultActions = mvc.perform(
+                        get("/api/v1/my-clubs/" + club.getId())
+                )
+                .andDo(print());
+
+        // then
+        resultActions
+                .andExpect(handler().handlerType(ApiV1MyClubController.class))
+                .andExpect(handler().methodName("getMyClubInfo"))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.code").value(404))
+                .andExpect(jsonPath("$.message").value("클럽 멤버 정보가 존재하지 않습니다."));
     }
 
 }

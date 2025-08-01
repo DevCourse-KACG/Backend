@@ -1,5 +1,8 @@
 package com.back.domain.club.clubMember.dtos;
 
+import com.back.global.enums.ClubMemberRole;
+import com.back.global.enums.ClubMemberState;
+
 public class MyClubControllerDtos {
 
     /**
@@ -11,4 +14,16 @@ public class MyClubControllerDtos {
             String clubName
     ) {
     }
+
+    /**
+     * 클럽 내 내 정보 조회 응답 DTO
+     * 클럽 멤버 ID, 클럽 ID, 클럽 이름, 역할, 상태를 포함
+     */
+    public static record MyInfoInClub(
+            Long clubMemberId,
+            Long clubId,
+            String clubName,
+            ClubMemberRole role,
+            ClubMemberState state
+    ){}
 }

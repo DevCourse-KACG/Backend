@@ -2,6 +2,7 @@ package com.back.domain.club.clubMember.controller;
 
 import com.back.domain.club.club.entity.Club;
 import com.back.domain.club.clubMember.dtos.MyClubControllerDtos;
+import com.back.domain.club.clubMember.entity.ClubMember;
 import com.back.domain.club.clubMember.service.MyClubService;
 import com.back.global.rsData.RsData;
 import io.swagger.v3.oas.annotations.Operation;
@@ -20,7 +21,30 @@ import org.springframework.web.bind.annotation.*;
 public class ApiV1MyClubController {
     private final MyClubService myClubService;
 
-    @PostMapping("{clubId}/join")
+
+    @GetMapping("{clubId}")
+    @Operation(summary = "클럽에서 내 정보 조회")
+    public RsData<MyClubControllerDtos.MyInfoInClub> getMyClubInfo(
+            @PathVariable Long clubId
+    ) {
+        // 클럽 멤버 정보를 조회하는 서비스 메서드를 호출
+        ClubMember clubMember = myClubService.getMyClubInfo(clubId);
+
+        // 조회된 클럽 멤버 정보를 응답으로 반환
+        return RsData.of(200,
+                "클럽 멤버 정보를 조회했습니다.",
+                new MyClubControllerDtos.MyInfoInClub(
+                        clubMember.getId(),
+                        clubMember.getClub().getId(),
+                        clubMember.getClub().getName(),
+                        clubMember.getRole(),
+                        clubMember.getState()
+                )
+        );
+    }
+
+
+    @PatchMapping("{clubId}/join")
     @Operation(summary = "클럽 초대 수락")
     public RsData<MyClubControllerDtos.SimpleClubInfo> acceptClubInvitation(
             @PathVariable Long clubId

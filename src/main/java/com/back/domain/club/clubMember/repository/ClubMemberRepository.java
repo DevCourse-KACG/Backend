@@ -37,11 +37,17 @@ public interface ClubMemberRepository extends JpaRepository<ClubMember, Long> {
 
     Optional<ClubMember> findByClubAndMember(Club club, Member member);
 
+    // 특정 모임에 특정 멤버가 특정 상태로 존재하는지 확인
+    Optional<ClubMember> findByClubAndMemberAndState(Club club, Member member, ClubMemberState clubMemberState);
+
     List<ClubMember> findByClubAndState(Club club, ClubMemberState clubMemberState);
 
     List<ClubMember> findByClub(Club club);
 
     boolean existsByClubAndMember(Club club, Member member);
+
+    // 특정 모임에 특정 멤버가 특정 상태로 존재하는지 확인
+    boolean existsByClubAndMemberAndState(Club club, Member member, ClubMemberState clubMemberState);
 
     boolean existsByClubAndMemberAndRoleIn(Club club, Member member, List<ClubMemberRole> roles);
 
