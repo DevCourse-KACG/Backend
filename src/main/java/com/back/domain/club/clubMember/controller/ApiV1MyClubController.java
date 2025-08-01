@@ -3,7 +3,9 @@ package com.back.domain.club.clubMember.controller;
 import com.back.domain.club.club.entity.Club;
 import com.back.domain.club.clubMember.dtos.MyClubControllerDtos;
 import com.back.domain.club.clubMember.entity.ClubMember;
+import com.back.domain.club.clubMember.service.ClubMemberService;
 import com.back.domain.club.clubMember.service.MyClubService;
+import com.back.global.rq.Rq;
 import com.back.global.rsData.RsData;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -20,6 +22,8 @@ import org.springframework.web.bind.annotation.*;
 @Tag(name = "MyClubController", description = "유저 본인 클럽 관련 API")
 public class ApiV1MyClubController {
     private final MyClubService myClubService;
+    private final ClubMemberService clubMemberService;
+    private final Rq rq;
 
 
     @GetMapping
@@ -134,23 +138,20 @@ public class ApiV1MyClubController {
         );
     }
 
-//    @DeleteMapping("{clubId}/withdraw")
-//    @Operation(summary = "클럽 탈퇴")
-//    public RsData<MyClubControllerDtos.SimpleClubInfo> withdrawFromClub(
-//            @PathVariable Long clubId
-//    ) {
-//        // 클럽 탈퇴 로직을 처리하는 서비스 메서드를 호출
-//        Club selectedClub = myClubService.withdrawFromClub(clubId);
-//
-//        // 성공적으로 클럽에서 탈퇴한 경우 응답 반환
-//        return RsData.of(
-//                200,
-//                "클럽에서 탈퇴했습니다.",
-//                new MyClubControllerDtos.SimpleClubInfo(
-//                        selectedClub.getId(),
-//                        selectedClub.getName()
-//                )
-//        );
-//    }
+    @DeleteMapping("{clubId}/withdraw")
+    @Operation(summary = "클럽 탈퇴")
+    public RsData<MyClubControllerDtos.SimpleClubInfo> withdrawFromClub(
+            @PathVariable Long clubId
+    ) {
+        // 클럽 탈퇴 로직을 처리하는 서비스 메서드를 호출
+        clubMemberService.withdrawMemberFromClub(clubId, rq.getActor().getId());
+
+        // 성공적으로 클럽에서 탈퇴한 경우 응답 반환
+        return RsData.of(
+                200,
+                "클럽에서 탈퇴했습니다.",
+                null
+        );
+    }
 
 }

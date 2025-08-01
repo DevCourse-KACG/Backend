@@ -955,6 +955,69 @@ class ApiV1MyClubControllerTest {
                 .andExpect(jsonPath("$.message").value("클럽이 존재하지 않습니다."));
     }
 
+    @Test
+    @DisplayName("클럽 탈퇴")
+    @WithUserDetails(value = "uny@test.com") // 6번 멤버로 로그인
+    public void leaveClub() throws Exception {
+        // given
+        Club club = clubService.createClub(
+                Club.builder()
+                        .name("테스트 그룹")
+                        .bio("테스트 그룹 설명")
+                        .category(ClubCategory.STUDY)
+                        .mainSpot("서울")
+                        .maximumCapacity(10)
+                        .eventType(EventType.ONE_TIME)
+                        .startDate(LocalDate.of(2023, 10, 1))
+                        .endDate(LocalDate.of(2023, 10, 31))
+                        .isPublic(true)
+                        .leaderId(2L)
+                        .build()
+        );
+
+        // 클럽에 호스트 멤버 추가 (2번을 호스트로)
+        Member hostMember = memberService.findMemberById(2L)
+                .orElseThrow(() -> new IllegalStateException("호스트 멤버가 존재하지 않습니다."));
+        clubMemberService.addMemberToClub(
+                club.getId(),
+                hostMember,
+                ClubMemberRole.HOST
+        );
+
+        // 클럽에 멤버를 초대 (6번을 초대)
+        Member invitedMember = memberService.findMemberById(6L)
+                .orElseThrow(() -> new IllegalStateException("초대된 멤버가 존재하지 않습니다."));
+
+        ClubMember clubMember = clubMemberService.addMemberToClub(
+                club.getId(),
+                invitedMember,
+                ClubMemberRole.PARTICIPANT
+        );
+        // 클럽 멤버 상태를 JOINING으로 업데이트
+        clubMember.updateState(ClubMemberState.JOINING);
+        clubMemberRepository.save(clubMember);
+
+        // when
+        ResultActions resultActions = mvc.perform(
+                        delete("/api/v1/my-clubs/" + club.getId() + "/withdraw")
+                )
+                .andDo(print());
+
+        // then
+        resultActions
+                .andExpect(handler().handlerType(ApiV1MyClubController.class))
+                .andExpect(handler().methodName("withdrawFromClub"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value(200))
+                .andExpect(jsonPath("$.message").value("클럽에서 탈퇴했습니다."));
+
+        // 추가 검증: 멤버가 실제로 제거되지 않고 상태가 WITHDRAWN으로 변경되었는지 확인
+        ClubMember leftClubMember = clubMemberRepository.findById(clubMember.getId())
+                .orElseThrow(() -> new IllegalStateException("탈퇴한 멤버가 존재하지 않습니다."));
+        assertThat(leftClubMember.getState()).isEqualTo(ClubMemberState.WITHDRAWN);
+
+    }
+
 
 
 }
