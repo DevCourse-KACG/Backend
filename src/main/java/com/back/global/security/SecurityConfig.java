@@ -28,6 +28,13 @@ public class SecurityConfig {
                         .requestMatchers("/favicon.ico").permitAll() // 파비콘 접근 허용 (검색 엔진 최적화)
                         .requestMatchers("/h2-console/**").permitAll() // H2 콘솔 접근 허용
                         .requestMatchers(
+                                "/swagger-ui/**",
+                                "/v3/api-docs/**",
+                                "/swagger-resources/**",
+                                "/swagger-resources",
+                                "/webjars/**"
+                        ).permitAll()
+                        .requestMatchers(
                                 "/api/v1/members/auth/register",
                                 "/api/v1/members/auth/login",
                                 "/api/v1/members/auth/guest-register",
