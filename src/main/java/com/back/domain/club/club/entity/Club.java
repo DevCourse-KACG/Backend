@@ -117,11 +117,62 @@ public class Club {
   }
 
   /**
+   * 클럽에 새로운 일정을 추가합니다.
+   * @param schedule
+   */
+  public void addClubSchedule(Schedule schedule) {
+      this.clubSchedules.add(schedule);
+      schedule.setClub(this); // 양방향 연관관계 설정
+  }
+  /**
    * 클럽의 이미지 URL을 업데이트합니다.
    * @param imageUrl
    */
   public void updateImageUrl(String imageUrl) {
       this.imageUrl = imageUrl;
   }
+
+    /**
+     * 클럽 정보를 업데이트합니다.
+     * @param name 클럽 이름
+     * @param bio 클럽 소개
+     * @param category 클럽 카테고리
+     * @param mainSpot 주 모임 장소
+     * @param maximumCapacity 최대 인원
+     * @param recruitingStatus 인원 모집 여부
+     * @param eventType 모집 유형
+     * @param startDate 시작 날짜
+     * @param endDate 종료 날짜
+     * @param isPublic 클럽 공개 여부
+     */
+    public void updateInfo(
+            String name,
+            String bio,
+            ClubCategory category,
+            String mainSpot,
+            int maximumCapacity,
+            boolean recruitingStatus,
+            EventType eventType,
+            LocalDate startDate,
+            LocalDate endDate,
+            boolean isPublic
+    ){
+        this.name = name;
+        this.bio = bio;
+        this.category = category;
+        this.mainSpot = mainSpot;
+        this.maximumCapacity = maximumCapacity;
+        this.recruitingStatus = recruitingStatus;
+        this.eventType = eventType;
+        this.startDate = startDate;
+        this.endDate = endDate;
+        this.isPublic = isPublic;
+    }
+
+    public void removeClubMember(ClubMember clubMember) {
+      this.clubMembers.remove(clubMember);
+      clubMember.setClub(null); // 양방향 연관관계 해제
+    }
+
 
 }

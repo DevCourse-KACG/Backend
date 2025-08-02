@@ -10,7 +10,6 @@ import java.util.List;
 @Entity
 @NoArgsConstructor
 @AllArgsConstructor
-@Builder
 @Getter
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
 public class CheckList {
@@ -28,9 +27,20 @@ public class CheckList {
     @JoinColumn(name = "schedule_id", nullable = false)
     private Schedule schedule;
 
-    @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL, mappedBy = "checkList")
+    @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL, mappedBy = "checkList", orphanRemoval = true)
     @Description("체크리스트 아이템들")
     private List<CheckListItem> checkListItems;
+
+    @Builder
+    public CheckList(boolean isActive, Schedule schedule, List<CheckListItem> checkListItems) {
+        this.isActive = isActive;
+        this.schedule = schedule;
+        if (checkListItems != null) {
+            this.checkListItems = checkListItems;
+            // 양방향 연관관계 설정
+            checkListItems.forEach(item -> item.setCheckList(this));
+        }
+    }
 
     public void deactivate() {
         this.isActive = false;
@@ -42,6 +52,19 @@ public class CheckList {
         // 양방향 관계 설정
         if (schedule.getCheckList() != this) {
             schedule.setCheckList(this);
+        }
+    }
+
+    public void updateIsActive(boolean isActive) {
+        this.isActive = isActive;
+    }
+
+    public void updateCheckListItems(List<CheckListItem> checkListItems) {
+        this.checkListItems = checkListItems;
+
+        // 양방향 연관관계 설정
+        if (checkListItems != null) {
+            checkListItems.forEach(item -> item.setCheckList(this));
         }
     }
 }

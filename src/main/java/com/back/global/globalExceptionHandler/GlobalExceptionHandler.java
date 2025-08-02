@@ -6,6 +6,8 @@ import jakarta.validation.ConstraintViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.authorization.AuthorizationDeniedException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.MissingRequestHeaderException;
@@ -13,6 +15,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+import org.springframework.web.multipart.support.MissingServletRequestPartException;
 
 import java.util.Comparator;
 import java.util.NoSuchElementException;
@@ -43,10 +46,12 @@ public class GlobalExceptionHandler {
     // NoSuchElementException: 데이터가 존재하지 않을 때 발생하는 예외
     @ExceptionHandler(NoSuchElementException.class)
     public ResponseEntity<RsData<Void>> handle(NoSuchElementException ex) {
+        String errorMessage = ex.getMessage() != null ? ex.getMessage() : "해당 데이터가 존재하지 않습니다.";
+
         return new ResponseEntity<>(
                 RsData.of(
                         404,
-                        "해당 데이터가 존재하지 않습니다."
+                        errorMessage
                 ),
                 NOT_FOUND
         );
@@ -148,4 +153,36 @@ public class GlobalExceptionHandler {
           BAD_REQUEST
       );
     }
+
+    //MissingServletRequestPartException: 요청된 multipart 요청에서 필수 파트가 누락되었을 때 발생하는 예외
+    @ExceptionHandler(MissingServletRequestPartException.class)
+    public ResponseEntity<RsData<Void>> handle(MissingServletRequestPartException ex) {
+        String message = "필수 multipart 파트 '%s'가 존재하지 않습니다.".formatted(ex.getRequestPartName());
+        return new ResponseEntity<>(
+                RsData.of(
+                        400,
+                        message
+                ),
+                BAD_REQUEST
+        );
+    }
+
+    // @PreAuthorize 권한 에러
+    @ExceptionHandler(AuthorizationDeniedException.class)
+    public ResponseEntity<RsData<Void>> handleAuthorizationDenied(AuthorizationDeniedException ex) {
+      return new ResponseEntity<>(
+          RsData.of(403, "권한이 없습니다."),
+          HttpStatus.FORBIDDEN
+      );
+    }
+
+    // AccessDeniedException 에러 핸들러
+    @ExceptionHandler(AccessDeniedException.class)
+    public ResponseEntity<RsData<Void>> handleAccessDenied(AccessDeniedException ex) {
+      return new ResponseEntity<>(
+          RsData.of(403, "권한이 없습니다."),
+          HttpStatus.FORBIDDEN
+      );
+    }
+
 }

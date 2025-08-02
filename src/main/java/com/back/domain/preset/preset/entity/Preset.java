@@ -38,4 +38,13 @@ public class Preset {
         }
     }
 
+    public void updateName(String name) {
+        this.name = name;
+    }
+
+    public void updatePresetItems(List<PresetItem> presetItems) {
+        this.presetItems.clear();
+        this.presetItems = presetItems;
+    }
+
 }

@@ -1,49 +1,78 @@
 package com.back.domain.preset.preset.service;
 
 import com.back.domain.member.member.entity.Member;
-import com.back.domain.member.member.repository.MemberRepository;
 import com.back.domain.preset.preset.dto.PresetDto;
-import com.back.domain.preset.preset.dto.PresetItemDto;
 import com.back.domain.preset.preset.dto.PresetWriteReqDto;
 import com.back.domain.preset.preset.entity.Preset;
 import com.back.domain.preset.preset.entity.PresetItem;
 import com.back.domain.preset.preset.repository.PresetRepository;
+import com.back.global.enums.ClubCategory;
+import com.back.global.exception.ServiceException;
 import com.back.global.rq.Rq;
 import com.back.global.rsData.RsData;
-import com.back.standard.util.Ut;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
 public class PresetService {
   private final PresetRepository presetRepository;
-  private final MemberRepository memberRepository;
   private final Rq rq;
 
-  @Value("${custom.jwt.secretKey}")
-  private String secretKey;
+  private Map<ClubCategory, List<PresetDto>> presetsByCategory;
 
-  public RsData<PresetDto> write(PresetWriteReqDto presetWriteReqDto) {
-    RsData<Map<String, Object>> jwtRsData = getJwtData();
+  /**
+   * 플랫폼 프리셋 세팅
+   * @throws IOException
+   */
+  @PostConstruct
+  public void init() throws IOException {
+    ObjectMapper objectMapper = new ObjectMapper();
 
-    // JWT 데이터가 유효하지 않은 경우 RsData 반환
-    if (jwtRsData.code() != 200) {
-      return RsData.of(jwtRsData.code(), jwtRsData.message());
+    // JSON 파일에서 읽어온 데이터를 임시로 저장할 맵
+    Map<String, List<PresetDto>> tempMap;
+
+    // JSON 파일 읽음
+    try (InputStream is = getClass().getResourceAsStream("/presets/preset-data.json")) {
+      // resource 폴더에 있는 JSON 파일을 읽어서 tempMap에 저장
+      // TypeReference를 사용하여 Map<String, List<PresetDto>> 역직렬화
+      tempMap = objectMapper.readValue(is, new TypeReference<Map<String, List<PresetDto>>>() {});
+    } catch (IOException e) {
+      throw new ServiceException(500, "플랫폼의 프리셋 불러오기에 실패했습니다.");
     }
-    // JWT에서 멤버 ID 추출
-    Map<String, Object> jwtData = jwtRsData.data();
-    long memberId = ((Number) jwtData.get("id")).longValue();
 
-    // 멤버 ID로 Member 엔티티 조회
-    Optional<Member> OtnMember = memberRepository.findById(memberId);
-    if (OtnMember.isEmpty()) return RsData.of(404, "멤버를 찾을 수 없습니다");
-    Member member = OtnMember.get();
+    // ClubCategory Enum을 키로 사용하는 Map 세팅
+    presetsByCategory = new EnumMap<>(ClubCategory.class);
+    for (Map.Entry<String, List<PresetDto>> entry : tempMap.entrySet()) {
+      // 카테고리 이름 String -> ClubCategory로 변환
+      ClubCategory key = ClubCategory.fromString(entry.getKey());
+      presetsByCategory.put(key, entry.getValue());
+    }
+  }
+
+  /**
+   * 모임 카테고리별 프리셋 목록
+   * @param category
+   * @return List<PresetDto> 특정 모임 카테고리의 프리셋 목록
+   */
+  public RsData<List<PresetDto>> getPresetsByCategory(ClubCategory category) {
+    List<PresetDto> presetDtos = presetsByCategory.getOrDefault(category, Collections.emptyList());
+
+    return RsData.of(200, "프리셋 목록 조회 성공", presetDtos);
+  }
+
+  @Transactional
+  public RsData<PresetDto> write(PresetWriteReqDto presetWriteReqDto) {
+    Member member = Optional.ofNullable(rq.getActor()).orElseThrow(() -> new ServiceException(404, "멤버를 찾을 수 없습니다"));
 
     // 전달 받은 presetWriteReqDto에서 Request받은 PresetItem를 PresetItem 엔티티로 변환 해서 리스트로 변환
     List<PresetItem> presetItems = presetWriteReqDto.presetItems().stream()
@@ -52,7 +81,7 @@ public class PresetService {
             .category(req.category())
             .sequence(req.sequence())
             .build())
-        .toList();
+        .collect(Collectors.toList());
 
     // 프리셋 빌더 생성
     Preset presetBuilder = Preset.builder()
@@ -71,15 +100,7 @@ public class PresetService {
   }
 
   public RsData<PresetDto> getPreset(Long presetId) {
-    RsData<Map<String, Object>> jwtRsData = getJwtData();
-
-    // JWT 데이터가 유효하지 않은 경우 RsData 반환
-    if (jwtRsData.code() != 200) {
-      return RsData.of(jwtRsData.code(), jwtRsData.message());
-    }
-    // JWT에서 멤버 ID 추출
-    Map<String, Object> jwtData = jwtRsData.data();
-    long memberId = ((Number) jwtData.get("id")).longValue();
+    Member member = Optional.ofNullable(rq.getActor()).orElseThrow(() -> new ServiceException(404, "멤버를 찾을 수 없습니다"));
 
     // 프리셋 ID로 프리셋 조회
     Optional<Preset> otnPreset = presetRepository.findById(presetId);
@@ -89,7 +110,7 @@ public class PresetService {
     Preset preset = otnPreset.get();
 
     // 프리셋의 소유자와 JWT에서 추출한 멤버 ID가 일치하지 않는 경우 RsData 반환
-    if (!preset.getOwner().getId().equals(memberId)) return RsData.of(403, "권한 없는 프리셋");
+    if (!preset.getOwner().getId().equals(member.getId())) return RsData.of(403, "권한 없는 프리셋");
 
     // 프리셋이 존재하는 경우 프리셋 DTO로 변환
     PresetDto presetDto = new PresetDto(preset);
@@ -98,21 +119,7 @@ public class PresetService {
   }
 
   public RsData<List<PresetDto>> getPresetList() {
-    RsData<Map<String, Object>> jwtRsData = getJwtData();
-
-    // JWT 데이터가 유효하지 않은 경우 RsData 반환
-    if (jwtRsData.code() != 200) {
-      return RsData.of(jwtRsData.code(), jwtRsData.message());
-    }
-    // JWT에서 멤버 ID 추출
-    Map<String, Object> jwtData = jwtRsData.data();
-    long memberId = ((Number) jwtData.get("id")).longValue();
-    // 멤버 ID로 Member 엔티티 조회
-    Optional<Member> otnMember = memberRepository.findById(memberId);
-    // 멤버가 존재하지 않는 경우 RsData 반환
-    if (otnMember.isEmpty()) return RsData.of(404, "멤버를 찾을 수 없습니다");
-    Member member = otnMember.get();
-    // 멤버의 프리셋 목록 조회
+    Member member = Optional.ofNullable(rq.getActor()).orElseThrow(() -> new ServiceException(404, "멤버를 찾을 수 없습니다"));
     List<Preset> presets = presetRepository.findByOwner(member);
 
     // 프리셋 목록을 PresetDTO로 변환
@@ -123,40 +130,9 @@ public class PresetService {
     return RsData.of(200, "프리셋 목록 조회 성공", presetDtos);
   }
 
-  RsData<Map<String, Object>> getJwtData() {
-    // JWT 토큰을 헤더에서 가져오기
-    String jwtToken = rq.getHeader("Authorization", null);
-
-    // JWT 토큰이 null인 경우 RsData 반환
-    if (jwtToken == null) return RsData.of(404, "AccessToken을 찾을 수 없습니다");
-    // JWT 토큰이 "Bearer "로 시작하지 않는 경우 RsData 반환
-    if (!jwtToken.startsWith("Bearer ")) return RsData.of(404, "AccessToken이 잘못되었습니다");
-
-    // JWT 토큰에서 "Bearer " 접두사를 제거
-    String cleanToken = jwtToken.substring(7);
-
-    // JWT 토큰이 유효하지 않은 경우 처리
-    boolean jwtIsValid = Ut.jwt.isValid(secretKey, cleanToken);
-
-    // JWT가 유효하지 않은 경우 RsData 반환
-    if (!jwtIsValid) return RsData.of(499, "AccessToken 만료");
-
-    // JWT 토큰에서 페이로드 추출
-    Map<String, Object> jwtData = Ut.jwt.payload(secretKey, cleanToken);
-    return RsData.of(200, "토큰 검증 성공", jwtData);
-
-  }
-
+  @Transactional
   public RsData<Void> deletePreset(Long presetId) {
-    RsData<Map<String, Object>> jwtRsData = getJwtData();
-
-    // JWT 데이터가 유효하지 않은 경우 RsData 반환
-    if (jwtRsData.code() != 200) {
-      return RsData.of(jwtRsData.code(), jwtRsData.message());
-    }
-    // JWT에서 멤버 ID 추출
-    Map<String, Object> jwtData = jwtRsData.data();
-    long memberId = ((Number) jwtData.get("id")).longValue();
+    Member member = Optional.ofNullable(rq.getActor()).orElseThrow(() -> new ServiceException(404, "멤버를 찾을 수 없습니다"));
 
     // 프리셋 ID로 프리셋 조회
     Optional<Preset> otnPreset = presetRepository.findById(presetId);
@@ -166,11 +142,48 @@ public class PresetService {
     Preset preset = otnPreset.get();
 
     // 프리셋의 소유자와 JWT에서 추출한 멤버 ID가 일치하지 않는 경우 RsData 반환
-    if (!preset.getOwner().getId().equals(memberId)) return RsData.of(403, "권한 없는 프리셋");
+    if (!preset.getOwner().getId().equals(member.getId())) return RsData.of(403, "권한 없는 프리셋");
 
     // 프리셋 삭제
     presetRepository.delete(preset);
 
     return RsData.of(200, "프리셋 삭제 성공");
   }
+
+  @Transactional
+  public RsData<PresetDto> updatePreset(Long presetId, PresetWriteReqDto presetWriteReqDto) {
+    Member member = Optional.ofNullable(rq.getActor()).orElseThrow(() -> new ServiceException(404, "멤버를 찾을 수 없습니다"));
+
+    // 프리셋 ID로 프리셋 조회
+    Optional<Preset> otnPreset = presetRepository.findById(presetId);
+
+    // 프리셋이 존재하지 않는 경우 RsData 반환
+    if (otnPreset.isEmpty()) return RsData.of(404, "프리셋을 찾을 수 없습니다");
+    Preset preset = otnPreset.get();
+    // 프리셋의 소유자와 JWT에서 추출한 멤버 ID가 일치하지 않는 경우 RsData 반환
+    if (!preset.getOwner().getId().equals(member.getId())) return RsData.of(403, "권한 없는 프리셋");
+
+    // 전달 받은 presetWriteReqDto에서 Request받은 PresetItem를 PresetItem 엔티티로 변환 해서 리스트로 변환
+    List<PresetItem> presetItems = presetWriteReqDto.presetItems().stream().map(
+        req -> PresetItem.builder()
+            .content(req.content())
+            .category(req.category())
+            .sequence(req.sequence())
+            .preset(preset)
+            .build()
+    ).collect(Collectors.toList());
+
+    // 프리셋 수정
+    preset.updateName(presetWriteReqDto.name());
+    preset.updatePresetItems(presetItems);
+
+    // 프리셋 저장
+    Preset modifyPreset = presetRepository.save(preset);
+
+    // 수정된 프리셋을 DTO로 변환
+    PresetDto updatedPresetDto = new PresetDto(modifyPreset);
+
+    return RsData.of(200, "프리셋 수정 성공", updatedPresetDto);
+  }
+
 }

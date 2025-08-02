@@ -1,5 +1,7 @@
 package com.back.global.enums;
 
+import com.back.global.exception.ServiceException;
+
 public enum ClubCategory {
     STUDY("스터디"),
     HOBBY("취미"),
@@ -8,6 +10,7 @@ public enum ClubCategory {
     CULTURE("문화"),
     FOOD("음식"),
     PARTY("파티"),
+    WORK("업무"),
     OTHER("기타");
 
     private final String description;
@@ -26,6 +29,6 @@ public enum ClubCategory {
                 return clubCategory;
             }
         }
-        throw new IllegalArgumentException("Unknown category: " + category);
+        throw new ServiceException(400, "Unknown Club category: " + category);
     }
 }

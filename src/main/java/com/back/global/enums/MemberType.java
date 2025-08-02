@@ -1,4 +1,4 @@
-package com.back.domain.member.member;
+package com.back.global.enums;
 
 public enum MemberType {
     MEMBER("회원"),

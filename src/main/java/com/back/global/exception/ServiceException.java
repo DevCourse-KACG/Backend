@@ -18,6 +18,12 @@ public class ServiceException extends RuntimeException {
         this.msg = msg;
     }
 
+    public ServiceException(ErrorCode errorCode) {
+        super(errorCode.getStatus() + " : " + errorCode.getMessage());
+        this.code = errorCode.getStatus();
+        this.msg = errorCode.getMessage();
+    }
+
     public RsData<Void> getRsData() {
         return RsData.of(code, msg);
     }
