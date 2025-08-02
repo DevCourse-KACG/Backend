@@ -7,7 +7,7 @@ spring:
     import: classpath:application-secret.yml
   jpa:
     hibernate:
-      ddl-auto: create     # DB 초기화 전략 (none, create, create-drop, update, validate)
+      ddl-auto: update     # DB 초기화 전략 (none, create, create-drop, update, validate)
     properties:
       hibernate:
         dialect: org.hibernate.dialect.H2Dialect
