@@ -4,8 +4,11 @@ import com.back.domain.club.club.entity.Club;
 import com.back.domain.club.club.error.ClubErrorCode;
 import com.back.domain.club.club.repository.ClubRepository;
 import com.back.domain.schedule.schedule.dto.DateTimeRange;
-import com.back.domain.schedule.schedule.dto.ScheduleCreateReqBody;
-import com.back.domain.schedule.schedule.dto.ScheduleUpdateReqBody;
+import com.back.domain.schedule.schedule.dto.request.ScheduleCreateReqBody;
+import com.back.domain.schedule.schedule.dto.request.ScheduleUpdateReqBody;
+import com.back.domain.schedule.schedule.dto.response.ScheduleDetailDto;
+import com.back.domain.schedule.schedule.dto.response.ScheduleDto;
+import com.back.domain.schedule.schedule.dto.response.ScheduleWithClubDto;
 import com.back.domain.schedule.schedule.entity.Schedule;
 import com.back.domain.schedule.schedule.error.ScheduleErrorCode;
 import com.back.domain.schedule.schedule.repository.ScheduleRepository;
@@ -32,15 +35,20 @@ public class ScheduleService {
      * @return schedules
      */
     @Transactional(readOnly = true)
-    public List<Schedule> getClubSchedules(Long clubId, LocalDate startDate, LocalDate endDate) {
+    public List<ScheduleDto> getClubSchedules(Long clubId, LocalDate startDate, LocalDate endDate) {
         // dateTimeRange 생성
         DateTimeRange dateTimeRange = getDateTimeRange(startDate, endDate);
         LocalDateTime startDateTime = dateTimeRange.startDateTime();
         LocalDateTime endDateTime = dateTimeRange.endDateTime();
 
         // 활성화된 일정 중, 범위 내에 있는 목록을 시작 날짜 기준으로 오름차순 정렬하여 조회
-        return scheduleRepository
+        List<Schedule> schedule =  scheduleRepository
                 .findSchedulesByClubAndDateRange(clubId, startDateTime, endDateTime);
+
+        return schedule
+                .stream()
+                .map(ScheduleDto::new)
+                .toList();
     }
 
     /**
@@ -51,40 +59,64 @@ public class ScheduleService {
      * @return
      */
     @Transactional(readOnly = true)
-    public List<Schedule> getMySchedules(Long memberId, LocalDate startDate, LocalDate endDate) {
+    public List<ScheduleWithClubDto> getMySchedules(Long memberId, LocalDate startDate, LocalDate endDate) {
         // dateTimeRange 생성
         DateTimeRange dateTimeRange = getDateTimeRange(startDate, endDate);
         LocalDateTime startDateTime = dateTimeRange.startDateTime();
         LocalDateTime endDateTime = dateTimeRange.endDateTime();
 
         // 나의 모든 모임 일정 목록을 월단위로 시작 날짜 기준으로 오름차순 정렬하여 조회
-        return scheduleRepository
+        List<Schedule> mySchedules = scheduleRepository
                 .findMonthlySchedulesByMemberId(memberId, startDateTime, endDateTime);
+
+        return mySchedules
+                .stream()
+                .map(ScheduleWithClubDto::new)
+                .toList();
     }
 
-
     /**
-     * 일정 조회
+     * 일정 엔티티 조회
      * @param scheduleId
      * @return schedule
      */
     @Transactional(readOnly = true)
-    public Schedule getScheduleById(Long scheduleId) {
+    public Schedule getScheduleEntityById(Long scheduleId) {
         return scheduleRepository
                 .findById(scheduleId)
                 .orElseThrow(() -> new NoSuchElementException(ScheduleErrorCode.SCHEDULE_NOT_FOUND.getMessage()));
     }
 
     /**
-     * 활성화된 일정 조회
+     * 일정 조회
      * @param scheduleId
-     * @return
+     * @return scheduleDetailDto
      */
     @Transactional(readOnly = true)
-    public Schedule getActiveScheduleById(Long scheduleId) {
+    public ScheduleDetailDto getScheduleById(Long scheduleId) {
+        return new ScheduleDetailDto(getScheduleEntityById(scheduleId));
+    }
+
+    /**
+     * 활성화된 일정 엔티티 조회
+     * @param scheduleId
+     * @return Schedule
+     */
+    @Transactional(readOnly = true)
+    public Schedule getActiveScheduleEntityById(Long scheduleId) {
         return scheduleRepository
                 .findActiveScheduleById(scheduleId)
                 .orElseThrow(() -> new NoSuchElementException(ScheduleErrorCode.SCHEDULE_NOT_FOUND.getMessage()));
+    }
+
+    /**
+     * 활성화된 일정 조회
+     * @param scheduleId
+     * @return ScheduleDetailDto
+     */
+    @Transactional(readOnly = true)
+    public ScheduleDetailDto getActiveScheduleById(Long scheduleId) {
+        return new ScheduleDetailDto(getActiveScheduleEntityById(scheduleId));
     }
 
     /**
@@ -93,10 +125,12 @@ public class ScheduleService {
      * @return schedule
      */
     @Transactional(readOnly = true)
-    public Schedule getLatestClubSchedule(Long clubId) {
-        return scheduleRepository
+    public ScheduleDetailDto getLatestClubSchedule(Long clubId) {
+        Schedule schedule = scheduleRepository
                 .findFirstByClubIdOrderByIdDesc(clubId)
                 .orElseThrow(() -> new NoSuchElementException(ScheduleErrorCode.SCHEDULE_NOT_FOUND.getMessage()));
+
+        return new ScheduleDetailDto(schedule);
     }
 
     /**
@@ -115,7 +149,7 @@ public class ScheduleService {
      * @return schedule
      */
     @Transactional
-    public Schedule createSchedule(ScheduleCreateReqBody reqBody) {
+    public ScheduleDetailDto createSchedule(ScheduleCreateReqBody reqBody) {
         Club club = getClubOrThrow(reqBody.clubId());
 
         // 날짜 유효성 검증
@@ -130,8 +164,9 @@ public class ScheduleService {
                 .spot(reqBody.spot())
                 .club(club)
                 .build();
+        scheduleRepository.save(schedule);
 
-        return scheduleRepository.save(schedule);
+        return new ScheduleDetailDto(schedule);
     }
 
     /**
@@ -190,7 +225,7 @@ public class ScheduleService {
         if (startDate != null && endDate != null) {
             // 시작일과 종료일이 모두 있는 경우, 해당 범위로 설정
             startDateTime = startDate.atStartOfDay();
-            endDateTime = endDate.atTime(23, 59, 59);
+            endDateTime = endDate.atStartOfDay();
 
             validateDate(startDateTime, endDateTime);
         } else if (startDate != null && endDate == null) {
@@ -198,14 +233,14 @@ public class ScheduleService {
             YearMonth month = YearMonth.from(startDate);
 
             startDateTime = startDate.atStartOfDay();
-            endDateTime = month.atEndOfMonth().atTime(23, 59, 59);
+            endDateTime = month.plusMonths(1).atDay(1).atStartOfDay();
 
             validateDate(startDateTime, endDateTime);
         } else {
             // 날짜 파라미터 없는 경우, 현재 달을 기준으로 설정
             YearMonth currentMonth = YearMonth.now();
             startDateTime = currentMonth.atDay(1).atStartOfDay();
-            endDateTime = currentMonth.atEndOfMonth().atTime(23, 59, 59);
+            endDateTime = currentMonth.plusMonths(1).atDay(1).atStartOfDay();
         }
         return new DateTimeRange(startDateTime, endDateTime);
     }
