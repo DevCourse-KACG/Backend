@@ -18,7 +18,8 @@ public interface ScheduleRepository extends JpaRepository<Schedule, Long> {
             SELECT s FROM Schedule s 
             WHERE s.club.id = :clubId 
             AND s.isActive = true 
-            AND s.startDate BETWEEN :startDateTime AND :endDateTime 
+            AND s.startDate < :endDateTime
+            AND s.endDate >= :startDateTime
             ORDER BY s.startDate
             """)
     List<Schedule> findSchedulesByClubAndDateRange(
@@ -34,7 +35,8 @@ public interface ScheduleRepository extends JpaRepository<Schedule, Long> {
             JOIN c.clubMembers cm
             WHERE cm.member.id = :memberId
             AND s.isActive = true
-            AND s.startDate BETWEEN :startDateTime AND :endDateTime
+            AND s.startDate < :endDateTime
+            AND s.endDate >= :startDateTime
             ORDER BY s.startDate
         """)
     List<Schedule> findMonthlySchedulesByMemberId(
@@ -47,7 +49,7 @@ public interface ScheduleRepository extends JpaRepository<Schedule, Long> {
     @Query("""
             SELECT s FROM Schedule s
             JOIN FETCH s.club
-            WHERE s.id = :scheduleId 
+            WHERE s.id = :scheduleId
             AND s.isActive = true
             """)
     Optional<Schedule> findActiveScheduleById(Long scheduleId);
