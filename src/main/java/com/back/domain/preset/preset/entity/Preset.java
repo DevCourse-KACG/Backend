@@ -44,7 +44,7 @@ public class Preset {
 
     public void updatePresetItems(List<PresetItem> presetItems) {
         this.presetItems.clear();
-        this.presetItems = presetItems;
+        this.presetItems.addAll(presetItems);
     }
 
 }
