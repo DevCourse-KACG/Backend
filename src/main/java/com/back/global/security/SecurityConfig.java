@@ -98,9 +98,9 @@ public class SecurityConfig {
         );
 
     // Profile test 일때 Mock 인증 필터를 특정 API에만 적용
-//    mockAuthFilterForSpecificApi.ifPresent(filter ->
-//        http.addFilterBefore(filter, UsernamePasswordAuthenticationFilter.class)
-//    );
+    mockAuthFilterForSpecificApi.ifPresent(filter ->
+        http.addFilterBefore(filter, UsernamePasswordAuthenticationFilter.class)
+    );
 
     return http.build();
   }
@@ -131,7 +131,7 @@ public class SecurityConfig {
     configuration.setAllowCredentials(true);
 
     UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-    source.registerCorsConfiguration("/**", configuration);
+    source.registerCorsConfiguration("/api/**", configuration); // API 경로만 CORS 허용
     return source;
   }
 }

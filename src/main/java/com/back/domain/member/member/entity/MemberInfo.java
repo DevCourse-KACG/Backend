@@ -19,6 +19,7 @@ public class MemberInfo {
     @EqualsAndHashCode.Include
     private Long id; // MemberInfo의 고유 ID
 
+    @Column(unique = true)
     private String email; // 회원 이메일
 
     private String bio; // 자기소개
