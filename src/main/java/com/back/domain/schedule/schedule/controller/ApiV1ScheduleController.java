@@ -1,8 +1,10 @@
 package com.back.domain.schedule.schedule.controller;
 
-import com.back.domain.schedule.schedule.dto.ScheduleCreateReqBody;
-import com.back.domain.schedule.schedule.dto.ScheduleDto;
-import com.back.domain.schedule.schedule.dto.ScheduleUpdateReqBody;
+import com.back.domain.schedule.schedule.dto.request.ScheduleCreateReqBody;
+import com.back.domain.schedule.schedule.dto.request.ScheduleUpdateReqBody;
+import com.back.domain.schedule.schedule.dto.response.ScheduleDetailDto;
+import com.back.domain.schedule.schedule.dto.response.ScheduleDto;
+import com.back.domain.schedule.schedule.dto.response.ScheduleWithClubDto;
 import com.back.domain.schedule.schedule.entity.Schedule;
 import com.back.domain.schedule.schedule.service.ScheduleService;
 import com.back.global.rsData.RsData;
@@ -35,64 +37,62 @@ public class ApiV1ScheduleController {
             @RequestParam(value = "endDate", required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate endDate,
             @AuthenticationPrincipal SecurityUser user
     ) {
-        List<Schedule> schedule = scheduleService.getClubSchedules(clubId, startDate, endDate);
-        List<ScheduleDto> scheduleDtos = schedule.stream()
-                .map(ScheduleDto::new)
-                .toList();
+        List<ScheduleDto> schedules = scheduleService.getClubSchedules(clubId, startDate, endDate);
 
         return RsData.of(
                 200,
-                "%s번 모임의 일정 목록이 조회되었습니다.".formatted(clubId),
-                scheduleDtos
+                "일정 목록이 조회되었습니다.",
+                schedules
         );
     }
 
     @GetMapping("/{scheduleId}")
     @Operation(summary = "일정 조회", description = "일정 조회는 모임의 참여자만 가능")
     @PreAuthorize("@scheduleAuthorizationChecker.isClubMember(#scheduleId, #user.getId())")
-    public RsData<ScheduleDto> getSchedule(
+    public RsData<ScheduleDetailDto> getSchedule(
             @PathVariable Long scheduleId,
             @AuthenticationPrincipal SecurityUser user
     ) {
-        Schedule schedule = scheduleService.getActiveScheduleById(scheduleId);
+        ScheduleDetailDto schedule = scheduleService.getActiveScheduleById(scheduleId);
+
         return RsData.of(
                 200,
-                "%s번 일정이 조회되었습니다.".formatted(scheduleId),
-                new ScheduleDto(schedule)
+                "일정이 조회되었습니다.",
+                schedule
         );
     }
 
     @PostMapping
     @Operation(summary = "일정 생성", description = "일정 생성은 호스트 권한이 있는 사용자만 가능")
     @PreAuthorize("@clubAuthorizationChecker.isActiveClubHost(#reqBody.clubId, #user.getId())")
-    public RsData<ScheduleDto> createSchedule(
+    public RsData<ScheduleDetailDto> createSchedule(
             @Valid @RequestBody ScheduleCreateReqBody reqBody,
             @AuthenticationPrincipal SecurityUser user
     ) {
-        Schedule schedule = scheduleService.createSchedule(reqBody);
+        ScheduleDetailDto schedule = scheduleService.createSchedule(reqBody);
 
         return RsData.of(
                 201,
-                "%s번 일정이 생성되었습니다.".formatted(schedule.getId()),
-                new ScheduleDto(schedule)
+                "일정이 생성되었습니다.",
+                schedule
         );
     }
 
     @PutMapping("{scheduleId}")
     @Operation(summary = "일정 수정", description = "일정 수정은 호스트 또는 매니저 권한이 있는 사용자만 가능")
     @PreAuthorize("@scheduleAuthorizationChecker.isActiveClubManagerOrHost(#scheduleId, #user.getId())")
-    public RsData<ScheduleDto> modifySchedule(
+    public RsData<ScheduleDetailDto> modifySchedule(
             @PathVariable Long scheduleId,
             @Valid @RequestBody ScheduleUpdateReqBody reqBody,
             @AuthenticationPrincipal SecurityUser user
     ) {
-        Schedule schedule = scheduleService.getActiveScheduleById(scheduleId);
+        Schedule schedule = scheduleService.getActiveScheduleEntityById(scheduleId);
         scheduleService.modifySchedule(schedule, reqBody);
 
         return RsData.of(
                 200,
-                "%s번 일정이 수정되었습니다.".formatted(schedule.getId()),
-                new ScheduleDto(schedule)
+                "일정이 수정되었습니다.",
+                new ScheduleDetailDto(schedule)
         );
     }
 
@@ -103,29 +103,27 @@ public class ApiV1ScheduleController {
             @PathVariable Long scheduleId,
             @AuthenticationPrincipal SecurityUser user
     ) {
-        Schedule schedule = scheduleService.getActiveScheduleById(scheduleId);
+        Schedule schedule = scheduleService.getActiveScheduleEntityById(scheduleId);
         scheduleService.deleteSchedule(schedule);
 
         return RsData.of(
                 200,
-                "%s번 일정이 삭제되었습니다.".formatted(scheduleId)
+                "일정이 삭제되었습니다."
         );
     }
 
     @GetMapping("/me")
     @Operation(summary = "나의 일정 목록 조회")
-    public RsData<List<ScheduleDto>> getMySchedules(
+    public RsData<List<ScheduleWithClubDto>> getMySchedules(
             @AuthenticationPrincipal SecurityUser user,
             @RequestParam(value = "startDate", required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate startDate,
             @RequestParam(value = "endDate", required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate endDate
     ) {
-        List<Schedule> mySchedules = scheduleService.getMySchedules(user.getId(), startDate, endDate);
+        List<ScheduleWithClubDto> mySchedules = scheduleService.getMySchedules(user.getId(), startDate, endDate);
         return RsData.of(
                 200,
                 "나의 일정 목록이 조회되었습니다.",
-                mySchedules.stream()
-                        .map(ScheduleDto::new)
-                        .toList()
+                mySchedules
         );
     }
 }

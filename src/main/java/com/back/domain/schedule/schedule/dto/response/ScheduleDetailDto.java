@@ -1,11 +1,11 @@
-package com.back.domain.schedule.schedule.dto;
+package com.back.domain.schedule.schedule.dto.response;
 
 import com.back.domain.schedule.schedule.entity.Schedule;
 import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.time.LocalDateTime;
 
-public record ScheduleDto (
+public record ScheduleDetailDto(
         @Schema(description = "일정 ID")
         Long id,
         @Schema(description = "일정 제목")
@@ -23,7 +23,7 @@ public record ScheduleDto (
         @Schema(description = "체크리스트 ID", nullable = true)
         Long checkListId
 ) {
-    public ScheduleDto(Schedule schedule) {
+    public ScheduleDetailDto(Schedule schedule) {
         this(
                 schedule.getId(),
                 schedule.getTitle(),

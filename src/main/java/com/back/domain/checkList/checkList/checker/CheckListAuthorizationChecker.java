@@ -99,7 +99,7 @@ public class CheckListAuthorizationChecker {
 
     private Club getClubByScheduleId(Long scheduleId) {
         // Schedule 엔티티 조회
-        Schedule schedule = scheduleService.getActiveScheduleById(scheduleId);
+        Schedule schedule = scheduleService.getActiveScheduleEntityById(scheduleId);
 
         if (schedule == null || !schedule.isActive()) {
             throw new NoSuchElementException("일정을 찾을 수 없습니다.");

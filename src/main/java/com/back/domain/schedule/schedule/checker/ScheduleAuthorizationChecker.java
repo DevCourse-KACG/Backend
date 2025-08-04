@@ -21,7 +21,7 @@ public class ScheduleAuthorizationChecker {
      */
     @Transactional(readOnly = true)
     public boolean isActiveClubHost(Long scheduleId, Long memberId) {
-        Schedule schedule = scheduleService.getActiveScheduleById(scheduleId);
+        Schedule schedule = scheduleService.getActiveScheduleEntityById(scheduleId);
         Long clubId = schedule.getClub().getId();
 
         return clubChecker.isActiveClubHost(clubId, memberId);
@@ -35,7 +35,7 @@ public class ScheduleAuthorizationChecker {
      */
     @Transactional(readOnly = true)
     public boolean isActiveClubManagerOrHost(Long scheduleId, Long memberId) {
-        Schedule schedule = scheduleService.getActiveScheduleById(scheduleId);
+        Schedule schedule = scheduleService.getActiveScheduleEntityById(scheduleId);
         Long clubId = schedule.getClub().getId();
 
         return clubChecker.isActiveClubManagerOrHost(clubId, memberId);
@@ -49,7 +49,7 @@ public class ScheduleAuthorizationChecker {
      */
     @Transactional(readOnly = true)
     public boolean isClubMember(Long scheduleId, Long memberId) {
-        Schedule schedule = scheduleService.getActiveScheduleById(scheduleId);
+        Schedule schedule = scheduleService.getActiveScheduleEntityById(scheduleId);
         Long clubId = schedule.getClub().getId();
 
         return clubChecker.isClubMember(clubId, memberId);
