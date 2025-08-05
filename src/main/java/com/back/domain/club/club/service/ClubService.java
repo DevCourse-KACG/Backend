@@ -248,6 +248,11 @@ public class ClubService {
             }
         }
 
+        // 비활성화된 클럽인 경우 예외 처리
+        if (!club.isState()) {
+            throw new ServiceException(404, "해당 클럽은 비활성화 상태입니다.");
+        }
+
         return new ClubControllerDtos.ClubInfoResponse(
                 club.getId(),
                 club.getName(),
