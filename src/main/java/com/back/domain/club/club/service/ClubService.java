@@ -4,6 +4,7 @@ import com.back.domain.club.club.dtos.ClubControllerDtos;
 import com.back.domain.club.club.entity.Club;
 import com.back.domain.club.club.error.ClubErrorCode;
 import com.back.domain.club.club.repository.ClubRepository;
+import com.back.domain.club.club.repository.ClubSpecification;
 import com.back.domain.club.clubMember.entity.ClubMember;
 import com.back.domain.club.clubMember.service.ClubMemberValidService;
 import com.back.domain.member.member.entity.Member;
@@ -19,8 +20,10 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
@@ -252,9 +255,38 @@ public class ClubService {
         );
     }
 
+    /**
+     * 공개 클럽 목록을 페이징하여 조회합니다.
+     * @param pageable 페이징 정보
+     * @param name 클럽 이름 (선택적)
+     * @param mainSpot 지역 (선택적)
+     * @param category 카테고리 (선택적)
+     * @param eventType 모집 유형 (선택적)
+     * @return 공개 클럽 목록 페이지
+     */
     @Transactional(readOnly = true)
-    public Page<ClubControllerDtos.SimpleClubInfoWithoutLeader> getPublicClubs(Pageable pageable) {
-        return clubRepository.findAllByIsPublicTrue(pageable)
+    public Page<ClubControllerDtos.SimpleClubInfoWithoutLeader> getPublicClubs(
+            Pageable pageable, String name, String mainSpot, ClubCategory category, EventType eventType
+            ) {
+        // 1. 기본 조건인 '공개된 클럽'으로 Specification을 시작합니다.
+        Specification<Club> spec = ClubSpecification.isPublic();
+
+        // 2. 각 필터 조건이 존재할 경우, 'and'로 연결합니다.
+        if (StringUtils.hasText(name)) {
+            spec = spec.and(ClubSpecification.likeName(name));
+        }
+        if (StringUtils.hasText(mainSpot)) {
+            spec = spec.and(ClubSpecification.likeMainSpot(mainSpot));
+        }
+        if (category != null) {
+            spec = spec.and(ClubSpecification.equalCategory(category));
+        }
+        if (eventType != null) {
+            spec = spec.and(ClubSpecification.equalEventType(eventType));
+        }
+
+        // 3. 최종적으로 조합된 Specification과 Pageable 객체로 JpaSpecificationExecutor의 findAll을 호출합니다.
+        return clubRepository.findAll(spec, pageable)
                 .map(club -> new ClubControllerDtos.SimpleClubInfoWithoutLeader(
                         club.getId(),
                         club.getName(),
