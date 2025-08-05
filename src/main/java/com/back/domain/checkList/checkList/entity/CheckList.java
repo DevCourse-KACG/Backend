@@ -60,7 +60,8 @@ public class CheckList {
     }
 
     public void updateCheckListItems(List<CheckListItem> checkListItems) {
-        this.checkListItems = checkListItems;
+        this.checkListItems.clear();
+        this.checkListItems.addAll(checkListItems);
 
         // 양방향 연관관계 설정
         if (checkListItems != null) {
