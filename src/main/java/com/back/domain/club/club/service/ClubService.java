@@ -220,6 +220,7 @@ public class ClubService {
 
         // 클럽 삭제
         club.changeState(false); // 클럽 상태를 비활성화로 변경
+        clubRepository.save(club); // 변경된 클럽 상태를 저장
     }
 
     /**
