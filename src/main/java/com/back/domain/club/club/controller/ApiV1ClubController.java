@@ -3,6 +3,8 @@ package com.back.domain.club.club.controller;
 import com.back.domain.club.club.dtos.ClubControllerDtos;
 import com.back.domain.club.club.entity.Club;
 import com.back.domain.club.club.service.ClubService;
+import com.back.global.enums.ClubCategory;
+import com.back.global.enums.EventType;
 import com.back.global.rsData.RsData;
 import com.back.global.security.SecurityUser;
 import io.swagger.v3.oas.annotations.Operation;
@@ -82,10 +84,14 @@ public class ApiV1ClubController {
 
     @GetMapping("/public")
     @Operation(summary = "공개 클럽 목록 조회 (페이징 가능)")
-    public RsData<Page<ClubControllerDtos.SimpleClubInfoResponse>> getPublicClubs(
-            @ParameterObject Pageable pageable
+    public RsData<Page<ClubControllerDtos.SimpleClubInfoWithoutLeader>> getPublicClubs(
+            @ParameterObject Pageable pageable,
+            @RequestParam(required = false) String name,
+            @RequestParam(required = false) String mainSpot,
+            @RequestParam(required = false) ClubCategory category,
+            @RequestParam(required = false) EventType eventType
     ) {
-        Page<ClubControllerDtos.SimpleClubInfoResponse> response = clubService.getPublicClubs(pageable);
+        Page<ClubControllerDtos.SimpleClubInfoWithoutLeader> response = clubService.getPublicClubs(pageable, name, mainSpot, category, eventType);
         return new RsData<>(200, "공개 클럽 목록이 조회됐습니다.", response);
     }
 }

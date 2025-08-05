@@ -740,8 +740,6 @@ class ApiV1ClubControllerTest {
                 .andExpect(jsonPath("$.data.content[0].eventType").value(club1.getEventType().name()))
                 .andExpect(jsonPath("$.data.content[0].startDate").value(club1.getStartDate().toString()))
                 .andExpect(jsonPath("$.data.content[0].endDate").value(club1.getEndDate().toString()))
-                .andExpect(jsonPath("$.data.content[0].leaderId").value(club1.getLeaderId()))
-                .andExpect(jsonPath("$.data.content[0].leaderName").value("홍길동"))
 
                 .andExpect(jsonPath("$.data.content[1].clubId").value(club2.getId()))
                 .andExpect(jsonPath("$.data.content[1].name").value(club2.getName()))
@@ -750,9 +748,7 @@ class ApiV1ClubControllerTest {
                 .andExpect(jsonPath("$.data.content[1].mainSpot").value(club2.getMainSpot()))
                 .andExpect(jsonPath("$.data.content[1].eventType").value(club2.getEventType().name()))
                 .andExpect(jsonPath("$.data.content[1].startDate").value(club2.getStartDate().toString()))
-                .andExpect(jsonPath("$.data.content[1].endDate").value(club2.getEndDate().toString()))
-                .andExpect(jsonPath("$.data.content[1].leaderId").value(club2.getLeaderId()))
-                .andExpect(jsonPath("$.data.content[1].leaderName").value("최지우"));
+                .andExpect(jsonPath("$.data.content[1].endDate").value(club2.getEndDate().toString()));
     }
 
 

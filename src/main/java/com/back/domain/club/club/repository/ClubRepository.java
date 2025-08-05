@@ -4,12 +4,13 @@ import com.back.domain.club.club.entity.Club;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.util.Optional;
 
-public interface ClubRepository extends JpaRepository<Club, Long> {
+public interface ClubRepository extends JpaRepository<Club, Long>, JpaSpecificationExecutor<Club> {
     /**
      * 마지막으로 생성된 클럽을 반환합니다.
      * @return 마지막으로 생성된 클럽
