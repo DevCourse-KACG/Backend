@@ -106,4 +106,15 @@ public class ClubControllerDtos {
             Long leaderId,
             String leaderName
     ) {}
+
+    public static record SimpleClubInfoWithoutLeader(
+            Long clubId,
+            String name,
+            String category,
+            String imageUrl,
+            String mainSpot,
+            String eventType,
+            String startDate,
+            String endDate
+    ) {}
 }

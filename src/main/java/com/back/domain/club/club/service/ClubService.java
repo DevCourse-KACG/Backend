@@ -253,9 +253,9 @@ public class ClubService {
     }
 
     @Transactional(readOnly = true)
-    public Page<ClubControllerDtos.SimpleClubInfoResponse> getPublicClubs(Pageable pageable) {
+    public Page<ClubControllerDtos.SimpleClubInfoWithoutLeader> getPublicClubs(Pageable pageable) {
         return clubRepository.findAllByIsPublicTrue(pageable)
-                .map(club -> new ClubControllerDtos.SimpleClubInfoResponse(
+                .map(club -> new ClubControllerDtos.SimpleClubInfoWithoutLeader(
                         club.getId(),
                         club.getName(),
                         club.getCategory().toString(),
@@ -263,11 +263,7 @@ public class ClubService {
                         club.getMainSpot(),
                         club.getEventType().toString(),
                         club.getStartDate().toString(),
-                        club.getEndDate().toString(),
-                        club.getLeaderId(),
-                        memberService.findMemberById(club.getLeaderId())
-                                .map(Member::getNickname)
-                                .orElse("Unknown Leader")
+                        club.getEndDate().toString()
                 ));
     }
 

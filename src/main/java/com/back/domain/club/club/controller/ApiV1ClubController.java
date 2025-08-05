@@ -82,10 +82,10 @@ public class ApiV1ClubController {
 
     @GetMapping("/public")
     @Operation(summary = "공개 클럽 목록 조회 (페이징 가능)")
-    public RsData<Page<ClubControllerDtos.SimpleClubInfoResponse>> getPublicClubs(
+    public RsData<Page<ClubControllerDtos.SimpleClubInfoWithoutLeader>> getPublicClubs(
             @ParameterObject Pageable pageable
     ) {
-        Page<ClubControllerDtos.SimpleClubInfoResponse> response = clubService.getPublicClubs(pageable);
+        Page<ClubControllerDtos.SimpleClubInfoWithoutLeader> response = clubService.getPublicClubs(pageable);
         return new RsData<>(200, "공개 클럽 목록이 조회됐습니다.", response);
     }
 }
