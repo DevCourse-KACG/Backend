@@ -269,8 +269,8 @@ class ApiV1ScheduleControllerTest {
     }
 
     @Test
-    @DisplayName("일정 생성 - 모임장이 아닌 매니저/참여자인 경우 예외 처리")
-    @WithUserDetails(value = "chs4s@test.com") // 매니저 계정
+    @DisplayName("일정 생성 - 모임장/매니저가 아닌 참여자인 경우 예외 처리")
+    @WithUserDetails(value = "lyh3@test.com") // 참여자 계정
     void tc3() throws Exception {
         Long clubId = 1L;
 
@@ -517,7 +517,7 @@ class ApiV1ScheduleControllerTest {
     }
 
     @Test
-    @DisplayName("일정 삭제 - 모임장이 아닌 경우 예외 처리")
+    @DisplayName("일정 삭제 - 모임장/매니저가 아닌 경우 예외 처리")
     @WithUserDetails(value = "pms4@test.com") // 모임 참여자 계정
     void td3() throws Exception {
         Long scheduleId = 6L;
