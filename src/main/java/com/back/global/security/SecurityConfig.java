@@ -5,6 +5,7 @@ import com.back.standard.util.Ut;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
@@ -29,6 +30,7 @@ public class SecurityConfig {
     http
         .cors(cors -> cors.configurationSource(corsConfigurationSource())) // CORS 설정 추가
         .authorizeHttpRequests(auth -> auth
+                .requestMatchers(HttpMethod.GET, "/api/v1/clubs/invitations/**").permitAll()
             .requestMatchers("/favicon.ico").permitAll() // 파비콘 접근 허용 (검색 엔진 최적화)
             .requestMatchers("/h2-console/**").permitAll() // H2 콘솔 접근 허용
             .requestMatchers(
@@ -48,6 +50,7 @@ public class SecurityConfig {
                 "/api/v1/clubs/{clubId}",
                 "/api/v1/clubs/public"
             ).permitAll() // 클럽 정보 조회 및 공개 클럽 목록 접근 허용
+            .requestMatchers(HttpMethod.POST, "/api/v1/clubs/invitations/{token}/apply").authenticated()
             .anyRequest().authenticated() // 나머지 요청은 인증 필요
         )
         .csrf(AbstractHttpConfigurer::disable) // CSRF 보호 비활성화 (API 서버에서는 일반적으로 비활성화)
