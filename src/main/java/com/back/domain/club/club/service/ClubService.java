@@ -267,8 +267,7 @@ public class ClubService {
                 club.isPublic(),
                 club.getImageUrl(),
                 club.getLeaderId(),
-                leader.getNickname(),
-                club.isState()
+                leader.getNickname()
         );
     }
 

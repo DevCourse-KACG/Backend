@@ -90,8 +90,7 @@ public class ClubControllerDtos {
             Boolean isPublic,
             String imageUrl,
             Long leaderId,
-            String leaderName,
-            boolean state
+            String leaderName
     ) {
     }
 
