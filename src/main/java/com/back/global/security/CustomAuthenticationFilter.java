@@ -61,7 +61,6 @@ public class CustomAuthenticationFilter extends OncePerRequestFilter {
                 "/api/v1/members/auth/register",
                 "/api/v1/members/auth/guest-register",
                 "/api/v1/members/auth/guest-login",
-                "/api/v1/clubs/{clubId}",
                 "/api/v1/clubs/public"
         ).contains(request.getRequestURI())) {
             filterChain.doFilter(request, response);
