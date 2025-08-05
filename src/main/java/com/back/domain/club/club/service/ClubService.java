@@ -295,7 +295,8 @@ public class ClubService {
                         club.getMainSpot(),
                         club.getEventType().toString(),
                         club.getStartDate().toString(),
-                        club.getEndDate().toString()
+                        club.getEndDate().toString(),
+                        club.getBio()
                 ));
     }
 

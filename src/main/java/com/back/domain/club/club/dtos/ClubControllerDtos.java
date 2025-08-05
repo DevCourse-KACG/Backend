@@ -115,6 +115,7 @@ public class ClubControllerDtos {
             String mainSpot,
             String eventType,
             String startDate,
-            String endDate
+            String endDate,
+            String bio
     ) {}
 }
