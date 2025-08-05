@@ -45,7 +45,7 @@ public class SecurityConfig {
                 "/api/v1/members/auth/guest-login"
             ).permitAll() // 회원가입, 로그인 허용
             .requestMatchers(
-                "/api/v1/clubs/{clubId}",
+                "/api/v1/clubs/**",
                 "/api/v1/clubs/public"
             ).permitAll() // 클럽 정보 조회 및 공개 클럽 목록 접근 허용
             .anyRequest().authenticated() // 나머지 요청은 인증 필요

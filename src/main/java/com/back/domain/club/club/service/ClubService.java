@@ -138,6 +138,11 @@ public class ClubService {
         );
         // 2. 이미지가 제공된 경우 S3에 업로드
         if (image != null && !image.isEmpty()){
+            // 이미지 파일 크기 제한 (5MB)
+            if (image.getSize() > (5 * 1024 * 1024)) { // 5MB
+                throw new ServiceException(400, "이미지 파일 크기는 5MB를 초과할 수 없습니다.");
+            }
+
             String imageUrl = s3Service.upload(image, "club/" + club.getId() + "/profile");
             club.updateImageUrl(imageUrl); // 클럽에 이미지 URL 설정
             clubRepository.save(club); // 이미지 URL 업데이트 후 클럽 정보 저장
