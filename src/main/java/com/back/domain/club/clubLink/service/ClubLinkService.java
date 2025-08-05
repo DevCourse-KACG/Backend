@@ -45,7 +45,9 @@ public class ClubLinkService {
         Optional<ClubLink> existingLink = clubLinkRepository.findByClubAndExpiresAtAfter(club, now);
         if (existingLink.isPresent()) {
             String existingCode = existingLink.get().getInviteCode();
-            return new ClubLinkDtos.CreateClubLinkResponse(existingCode);
+            // 기존 링크가 존재하면, 완전한 URL 형태로 반환
+            String link = "http://localhost:3000/clubs/invite?token=" + existingCode;
+            return new ClubLinkDtos.CreateClubLinkResponse(link);
         }
 
         //UUID 기반 초대 코드 생성
@@ -63,8 +65,7 @@ public class ClubLinkService {
 
         clubLinkRepository.save(clubLink);
 
-        String link = "https://supplies.com/clubs/invite?token=" + inviteCode;
-
+        String link = "http://localhost:3000/clubs/invite?token=" + inviteCode;
         return new ClubLinkDtos.CreateClubLinkResponse(link);
     }
 
@@ -79,7 +80,9 @@ public class ClubLinkService {
         ClubLink existingLink = clubLinkRepository.findByClubAndExpiresAtAfter(club, now)
                 .orElseThrow(() -> new ServiceException(400, "활성화된 초대 링크를 찾을 수 없습니다."));
 
-        return new ClubLinkDtos.CreateClubLinkResponse(existingLink.getInviteCode());
+        // 기존 링크를 완전한 URL 형태로 반환
+        String link = "http://localhost:3000/clubs/invite?token=" + existingLink.getInviteCode();
+        return new ClubLinkDtos.CreateClubLinkResponse(link);
     }
 
     public ClubApplyResult applyToPrivateClub(Member user, String token) {
@@ -118,17 +121,17 @@ public class ClubLinkService {
                 .orElseThrow(() -> new ServiceException(400, "해당 아이디의 모임장을 찾을 수 없습니다."));
 
         return new ClubControllerDtos.SimpleClubInfoResponse(
-                    club.getId(),
-                    club.getName(),
-                    club.getCategory().name(),
-                    club.getImageUrl(),
-                    club.getMainSpot(),
-                    club.getEventType().name(),
-                    club.getStartDate().toString(),
-                    club.getEndDate().toString(),
-                    club.getLeaderId(),
-                    leader.getNickname()
-            );
+                club.getId(),
+                club.getName(),
+                club.getCategory().name(),
+                club.getImageUrl(),
+                club.getMainSpot(),
+                club.getEventType().name(),
+                club.getStartDate().toString(),
+                club.getEndDate().toString(),
+                club.getLeaderId(),
+                leader.getNickname()
+        );
     }
 
     //===============================기타 메서드================================
