@@ -88,6 +88,12 @@ public class MyClubService {
                 throw new ServiceException(400, "이미 가입 신청 상태입니다.");
             else if (existingMember.getState() == ClubMemberState.INVITED)
                 throw new ServiceException(400, "클럽 초대 상태입니다. 초대를 수락해주세요.");
+            else if (existingMember.getState() == ClubMemberState.WITHDRAWN){
+                // 탈퇴 상태면, 기존 클럽 멤버를 가져와서 APPLYING 상태로 변경
+                existingMember.updateState(ClubMemberState.APPLYING); // 상태를 APPLYING으로 변경
+                clubMemberRepository.save(existingMember); // 클럽 멤버 저장
+                return club; // 클럽 반환
+            }
         }
 
         // 클럽 멤버 생성 및 저장
