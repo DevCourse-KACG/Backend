@@ -63,8 +63,8 @@ public class ApiV1ScheduleController {
     }
 
     @PostMapping
-    @Operation(summary = "일정 생성", description = "일정 생성은 호스트 권한이 있는 사용자만 가능")
-    @PreAuthorize("@clubAuthorizationChecker.isActiveClubHost(#reqBody.clubId, #user.getId())")
+    @Operation(summary = "일정 생성", description = "일정 생성은 호스트 또는 매니저 권한이 있는 사용자만 가능")
+    @PreAuthorize("@clubAuthorizationChecker.isActiveClubManagerOrHost(#reqBody.clubId, #user.getId())")
     public RsData<ScheduleDetailDto> createSchedule(
             @Valid @RequestBody ScheduleCreateReqBody reqBody,
             @AuthenticationPrincipal SecurityUser user
@@ -97,8 +97,8 @@ public class ApiV1ScheduleController {
     }
 
     @DeleteMapping("{scheduleId}")
-    @Operation(summary = "일정 삭제")
-    @PreAuthorize("@scheduleAuthorizationChecker.isActiveClubHost(#scheduleId, #user.getId())")
+    @Operation(summary = "일정 삭제", description = "일정 삭제는 호스트 또는 매니저 권한이 있는 사용자만 가능")
+    @PreAuthorize("@scheduleAuthorizationChecker.isActiveClubManagerOrHost(#scheduleId, #user.getId())")
     public RsData<Void> deleteSchedule(
             @PathVariable Long scheduleId,
             @AuthenticationPrincipal SecurityUser user
