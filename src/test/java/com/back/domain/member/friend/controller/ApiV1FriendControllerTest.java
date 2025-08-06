@@ -1,8 +1,8 @@
 package com.back.domain.member.friend.controller;
 
 import com.back.domain.member.friend.dto.FriendDto;
+import com.back.domain.member.friend.dto.FriendStatusDto;
 import com.back.domain.member.friend.entity.Friend;
-import com.back.domain.member.friend.entity.FriendStatus;
 import com.back.domain.member.friend.error.FriendErrorCode;
 import com.back.domain.member.friend.repository.FriendRepository;
 import com.back.domain.member.friend.service.FriendService;
@@ -124,7 +124,7 @@ class ApiV1FriendControllerTest {
                 )
                 .andDo(print());
 
-        List<FriendDto> friends = friendService.getFriends(memberId, FriendStatus.ACCEPTED);
+        List<FriendDto> friends = friendService.getFriends(memberId, FriendStatusDto.ACCEPTED);
 
         resultActions
                 .andExpect(handler().handlerType(ApiV1FriendController.class))
