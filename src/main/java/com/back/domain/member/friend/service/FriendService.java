@@ -1,8 +1,8 @@
 package com.back.domain.member.friend.service;
 
-import com.back.domain.member.friend.dto.FriendMemberDto;
-import com.back.domain.member.friend.dto.FriendWithBioDto;
 import com.back.domain.member.friend.dto.FriendDto;
+import com.back.domain.member.friend.dto.FriendMemberDto;
+import com.back.domain.member.friend.dto.FriendStatusDto;
 import com.back.domain.member.friend.entity.Friend;
 import com.back.domain.member.friend.entity.FriendStatus;
 import com.back.domain.member.friend.error.FriendErrorCode;
@@ -36,20 +36,42 @@ public class FriendService {
      * @param memberId 로그인 회원 아이디
      * @return List<FriendsResDto>
      */
-    public List<FriendDto> getFriends(Long memberId, FriendStatus statusFilter) {
+    public List<FriendDto> getFriends(Long memberId, FriendStatusDto statusFilter) {
         // 로그인 회원
         Member member = memberRepository.findWithFriendsById(memberId)
                 .orElseThrow(() -> new NoSuchElementException(MemberErrorCode.MEMBER_NOT_FOUND.getMessage()));
 
-        // 친구 목록 조회 - 우선 친구만 조회
-        // TODO: 정렬, 페이징 추가 예정
-        return Stream.concat(
-                        member.getFriendshipsAsMember1().stream(), // member1로 등록된 친구 관계
-                        member.getFriendshipsAsMember2().stream()  // member2로 등록된 친구 관계
-                )
-                .filter(friend ->
-                        statusFilter == null || friend.getStatus() == statusFilter
-                ) // 상태 필터링 (없을 시 전체 조회)
+        Stream<Friend> allFriends = Stream.concat(
+                member.getFriendshipsAsMember1().stream(), // member1로 등록된 친구 관계
+                member.getFriendshipsAsMember2().stream()  // member2로 등록된 친구 관계
+        );
+
+        Stream<Friend> filteredFriendsStream;
+        if (statusFilter == null) {
+            filteredFriendsStream = allFriends;
+        } else {
+            filteredFriendsStream = switch (statusFilter) {
+                // 친구
+                case ACCEPTED -> allFriends
+                        .filter(friend ->
+                                friend.getStatus() == FriendStatus.ACCEPTED
+                        );
+                // 내가 보낸 요청
+                case SENT -> allFriends
+                        .filter(friend ->
+                                friend.getStatus() == FriendStatus.PENDING && friend.getRequestedBy().getId().equals(memberId)
+                        );
+                // 내가 받은 요청
+                case RECEIVED -> allFriends
+                        .filter(friend ->
+                                friend.getStatus() == FriendStatus.PENDING && !friend.getRequestedBy().getId().equals(memberId)
+                        );
+                default -> Stream.empty();
+            };
+        }
+
+        // 친구 목록 조회
+        return filteredFriendsStream
                 .map(friend -> new FriendDto(friend, friend.getOther(member))) // DTO 변환
                 .sorted(Comparator.comparing(FriendDto::friendNickname))             // 이름 오름차순
                 .collect(Collectors.toList());
@@ -73,7 +95,7 @@ public class FriendService {
      * @return FriendDto
      */
     @Transactional
-    public FriendWithBioDto addFriend(Long memberId, String friendEmail) {
+    public FriendDto addFriend(Long memberId, String friendEmail) {
         // 로그인 회원(친구 요청을 보낸 회원)
         Member requester = getMember(memberId);
 
@@ -123,7 +145,7 @@ public class FriendService {
         // 친구 요청 저장
         friendRepository.save(friend);
 
-        return new FriendWithBioDto(friend, responder);
+        return new FriendDto(friend, responder);
     }
 
     /**
@@ -133,7 +155,7 @@ public class FriendService {
      * @return FriendDto
      */
     @Transactional
-    public FriendWithBioDto acceptFriend(Long memberId, Long friendId) {
+    public FriendDto acceptFriend(Long memberId, Long friendId) {
         // 로그인 회원(친구 요청을 받은 회원)
         Member me = getMember(memberId);
 
@@ -159,7 +181,7 @@ public class FriendService {
         // 친구 요청 수락
         friend.setStatus(FriendStatus.ACCEPTED);
 
-        return new FriendWithBioDto(friend, friendMember);
+        return new FriendDto(friend, friendMember);
     }
 
     /**
@@ -169,7 +191,7 @@ public class FriendService {
      * @return FriendDto
      */
     @Transactional
-    public FriendWithBioDto rejectFriend(Long memberId, Long friendId) {
+    public FriendDto rejectFriend(Long memberId, Long friendId) {
         // 로그인 회원(친구 요청을 받은 회원)
         Member me = getMember(memberId);
 
@@ -193,7 +215,7 @@ public class FriendService {
 
         // 친구 요청을 보낸 회원
         Member friendMember = friend.getOther(me);
-        return new FriendWithBioDto(friend, friendMember);
+        return new FriendDto(friend, friendMember);
     }
 
     /**
